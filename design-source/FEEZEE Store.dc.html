@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&amp;family=Jost:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #faf6ee; }
+  body { font-family: 'Jost', sans-serif; color: #2b2118; -webkit-font-smoothing: antialiased; }
+  a { color: #a5802e; text-decoration: none; }
+  a:hover { color: #7c5f20; }
+  * { box-sizing: border-box; }
+  img { display: block; }
+</style>
+</helmet>
+
+<div data-screen-label="FEEZEE Home" style="background:#faf6ee; min-height:100vh">
+
+  <sc-if value="{{ showAnnouncement }}" hint-placeholder-val="{{ true }}">
+    <div style="background:#2b2118; color:#e8d9b0; text-align:center; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; padding:9px 16px">Free nationwide delivery on orders over {{ freeShipLabel }}</div>
+  </sc-if>
+
+  <header style="position:sticky; top:0; z-index:50; background:rgba(250,246,238,0.96); backdrop-filter:blur(8px); border-bottom:1px solid #e6dcc6">
+    <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; padding:12px 14px; max-width:1280px; margin:0 auto">
+      <div style="display:flex; justify-content:flex-start">
+        <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ toggleMenu }}" aria-label="Menu" style="background:none; border:none; padding:6px; cursor:pointer; display:flex; flex-direction:column; gap:5px; min-width:44px; min-height:44px; justify-content:center">
+            <span style="display:block; width:22px; height:1.5px; background:#2b2118"></span>
+            <span style="display:block; width:22px; height:1.5px; background:#2b2118"></span>
+            <span style="display:block; width:14px; height:1.5px; background:#2b2118"></span>
+          </button>
+        </sc-if>
+      </div>
+      <a href="#top" style="text-align:center; color:#2b2118">
+        <div style="font-family:'Marcellus', serif; font-size:clamp(19px, 5vw, 24px); letter-spacing:0.26em; color:#a5802e; line-height:1; white-space:nowrap; margin-right:-0.26em">FEEZEE</div>
+        <div style="font-size:8px; letter-spacing:0.4em; color:#8a7a5e; text-transform:uppercase; margin-top:4px; display:flex; align-items:center; justify-content:center; gap:5px; white-space:nowrap"><span style="display:inline-block; width:12px; height:1px; background:#a5802e"></span><span style="margin-right:-0.4em">Fashion</span><span style="display:inline-block; width:12px; height:1px; background:#a5802e"></span></div>
+      </a>
+      <div style="display:flex; align-items:center; gap:0; justify-content:flex-end">
+        <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ false }}">
+          <button aria-label="Search" style="background:none; border:none; cursor:pointer; padding:10px">
+            <svg width="19" height="19" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="6" stroke="#2b2118" stroke-width="1.5"></circle><line x1="13" y1="13" x2="18" y2="18" stroke="#2b2118" stroke-width="1.5"></line></svg>
+          </button>
+        </sc-if>
+        <button aria-label="Bag" style="background:none; border:none; cursor:pointer; padding:10px; position:relative; min-width:44px; min-height:44px">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="6" width="14" height="12" rx="1.5" stroke="#2b2118" stroke-width="1.5"></rect><path d="M7 6 V5 a3 3 0 0 1 6 0 V6" stroke="#2b2118" stroke-width="1.5" fill="none"></path></svg>
+          <sc-if value="{{ hasBagItems }}" hint-placeholder-val="{{ false }}">
+            <span style="position:absolute; top:4px; right:2px; background:#8f2d4f; color:#fff; font-size:10px; min-width:16px; height:16px; border-radius:8px; display:flex; align-items:center; justify-content:center; padding:0 4px">{{ bagCount }}</span>
+          </sc-if>
+        </button>
+      </div>
+    </div>
+    <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ false }}">
+      <nav style="display:flex; justify-content:center; gap:34px; padding:0 18px 13px; font-size:13px; letter-spacing:0.16em; text-transform:uppercase">
+        <a href="#new" style="color:#2b2118">New In</a>
+        <a href="#categories" style="color:#2b2118">Ready to Wear</a>
+        <a href="#categories" style="color:#2b2118">Luxury Pret</a>
+        <a href="#categories" style="color:#2b2118">Printed Lawn</a>
+        <a href="#silai" style="color:#2b2118">Silai — Made to Order</a>
+        <a href="#new" style="color:#8f2d4f">Sale</a>
+      </nav>
+    </sc-if>
+  </header>
+
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ toggleMenu }}" style="position:fixed; inset:0; background:rgba(43,33,24,0.45); z-index:90"></div>
+    <div style="position:fixed; top:0; left:0; bottom:0; width:78%; max-width:320px; background:#faf6ee; z-index:100; padding:28px 26px; display:flex; flex-direction:column; gap:4px; box-shadow:8px 0 40px rgba(43,33,24,0.25)">
+      <div style="margin-bottom:18px">
+        <div style="font-family:'Marcellus', serif; font-size:22px; letter-spacing:0.3em; color:#a5802e; line-height:1">FEEZEE</div>
+        <div style="font-size:8px; letter-spacing:0.48em; color:#8a7a5e; text-transform:uppercase; margin-top:4px; display:flex; align-items:center; gap:6px"><span style="display:inline-block; width:12px; height:1px; background:#a5802e"></span>Fashion<span style="display:inline-block; width:12px; height:1px; background:#a5802e"></span></div>
+      </div>
+      <a href="#new" onClick="{{ toggleMenu }}" style="color:#2b2118; font-size:16px; letter-spacing:0.1em; text-transform:uppercase; padding:12px 0; border-bottom:1px solid #e6dcc6">New In</a>
+      <a href="#categories" onClick="{{ toggleMenu }}" style="color:#2b2118; font-size:16px; letter-spacing:0.1em; text-transform:uppercase; padding:12px 0; border-bottom:1px solid #e6dcc6">Ready to Wear</a>
+      <a href="#categories" onClick="{{ toggleMenu }}" style="color:#2b2118; font-size:16px; letter-spacing:0.1em; text-transform:uppercase; padding:12px 0; border-bottom:1px solid #e6dcc6">Luxury Pret</a>
+      <a href="#categories" onClick="{{ toggleMenu }}" style="color:#2b2118; font-size:16px; letter-spacing:0.1em; text-transform:uppercase; padding:12px 0; border-bottom:1px solid #e6dcc6">Printed Lawn</a>
+      <a href="#silai" onClick="{{ toggleMenu }}" style="color:#2b2118; font-size:16px; letter-spacing:0.1em; text-transform:uppercase; padding:12px 0; border-bottom:1px solid #e6dcc6">Silai — Made to Order</a>
+      <a href="#new" onClick="{{ toggleMenu }}" style="color:#8f2d4f; font-size:16px; letter-spacing:0.1em; text-transform:uppercase; padding:12px 0">Sale</a>
+      <div style="margin-top:auto; font-size:12px; color:#8a7a5e; letter-spacing:0.08em">WhatsApp orders · Cash on delivery</div>
+    </div>
+  </sc-if>
+
+  <section id="top" data-screen-label="Hero" style="position:relative; height:clamp(540px, 82vh, 760px); overflow:hidden">
+    <img src="img/p19.jpg" alt="FEEZEE festive anarkali" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 18%">
+    <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(43,33,24,0) 34%, rgba(43,33,24,0.72) 100%)"></div>
+    <div style="position:absolute; left:0; right:0; bottom:0; padding:0 22px 46px; max-width:1280px; margin:0 auto; color:#faf6ee">
+      <div style="font-size:12px; letter-spacing:0.34em; text-transform:uppercase; color:#e8d9b0; margin-bottom:12px">Festive '26 Collection</div>
+      <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(34px, 6vw, 62px); line-height:1.08; margin:0 0 18px; max-width:14ch; text-wrap:pretty">Elegance, stitched the Pakistani way</h1>
+      <div style="display:flex; gap:12px; flex-wrap:wrap">
+        <a href="#new" style="display:inline-block; background:#faf6ee; color:#2b2118; padding:14px 30px; font-size:13px; letter-spacing:0.18em; text-transform:uppercase">Shop New In</a>
+        <a href="#silai" style="display:inline-block; border:1px solid rgba(250,246,238,0.7); color:#faf6ee; padding:14px 30px; font-size:13px; letter-spacing:0.18em; text-transform:uppercase">Made to Order</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="categories" data-screen-label="Categories" style="max-width:1280px; margin:0 auto; padding:clamp(40px,7vw,84px) 18px 0">
+    <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(24px,3.4vw,36px); text-align:center; margin:0 0 8px">Shop by Category</h2>
+    <div style="text-align:center; font-size:13px; letter-spacing:0.2em; text-transform:uppercase; color:#8a7a5e; margin-bottom:28px">Kurtas · Suits · Co-ords · Dupattas</div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px">
+      <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="4">
+        <a href="#new" style="position:relative; display:block; aspect-ratio:3/4; overflow:hidden; background:#efe6d2">
+          <img src="{{ cat.img }}" alt="{{ cat.name }}" style="width:100%; height:100%; object-fit:cover; object-position:top center; transition:transform 0.5s" style-hover="transform:scale(1.04)">
+          <span style="position:absolute; left:0; right:0; bottom:0; background:linear-gradient(180deg, rgba(43,33,24,0), rgba(43,33,24,0.7)); color:#faf6ee; padding:36px 12px 12px; font-size:13px; letter-spacing:0.16em; text-transform:uppercase; text-align:center">{{ cat.name }}</span>
+        </a>
+      </sc-for>
+    </div>
+  </section>
+
+  <section id="new" data-screen-label="New Arrivals" style="max-width:1280px; margin:0 auto; padding:clamp(44px,7vw,90px) 18px 0">
+    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:24px; flex-wrap:wrap">
+      <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(24px,3.4vw,36px); margin:0">New Arrivals</h2>
+      <a href="#new" style="font-size:13px; letter-spacing:0.16em; text-transform:uppercase">View all →</a>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:16px 12px">
+      <sc-for list="{{ products }}" as="p" hint-placeholder-count="8">
+        <div style="display:flex; flex-direction:column">
+          <div style="position:relative; aspect-ratio:3/4; overflow:hidden; background:#efe6d2">
+            <img src="{{ p.img }}" alt="{{ p.name }}" style="width:100%; height:100%; object-fit:cover; object-position:top center; transition:transform 0.5s" style-hover="transform:scale(1.04)">
+            <sc-if value="{{ p.badge }}" hint-placeholder-val="{{ false }}">
+              <span style="position:absolute; top:10px; left:10px; background:{{ p.badgeBg }}; color:#faf6ee; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; padding:4px 9px">{{ p.badge }}</span>
+            </sc-if>
+            <button onClick="{{ p.onWish }}" aria-label="Wishlist" style="position:absolute; top:6px; right:6px; width:38px; height:38px; border:none; border-radius:19px; background:rgba(250,246,238,0.92); cursor:pointer; font-size:16px; color:{{ p.heartColor }}; display:flex; align-items:center; justify-content:center">{{ p.heart }}</button>
+          </div>
+          <div style="padding:10px 2px 0; display:flex; flex-direction:column; gap:3px">
+            <div style="font-size:14.5px; letter-spacing:0.02em">{{ p.name }}</div>
+            <div style="font-size:12px; color:#8a7a5e; letter-spacing:0.06em">{{ p.fabric }}</div>
+            <div style="display:flex; gap:8px; align-items:baseline">
+              <span style="font-size:14.5px; font-weight:500">{{ p.price }}</span>
+              <sc-if value="{{ p.wasPrice }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:12.5px; color:#8a7a5e; text-decoration:line-through">{{ p.wasPrice }}</span>
+              </sc-if>
+            </div>
+            <button onClick="{{ p.onAdd }}" style="margin-top:7px; background:none; border:1px solid #2b2118; color:#2b2118; padding:10px 0; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; cursor:pointer; font-family:'Jost', sans-serif; transition:background 0.2s, color 0.2s" style-hover="background:#2b2118; color:#faf6ee">Add to Bag</button>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section id="silai" data-screen-label="Silai Made to Order" style="max-width:1280px; margin:0 auto; padding:clamp(48px,8vw,100px) 18px 0">
+    <div style="display:flex; flex-wrap:wrap; background:#f1e7d3">
+      <div style="flex:1 1 320px; min-height:340px; position:relative; overflow:hidden">
+        <img src="img/p14.jpg" alt="Teal anarkali, made to order" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:top center">
+      </div>
+      <div style="flex:1 1 320px; padding:clamp(30px,5vw,64px); display:flex; flex-direction:column; justify-content:center; gap:16px">
+        <div style="font-size:12px; letter-spacing:0.32em; text-transform:uppercase; color:#a5802e">Silai Fashion</div>
+        <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(26px,3.6vw,40px); line-height:1.15; margin:0; text-wrap:pretty">Stitched to your measurements, delivered to your door</h2>
+        <p style="margin:0; font-size:15.5px; line-height:1.7; color:#5b4c39; max-width:46ch">Choose any design, share your measurements on WhatsApp, and our tailors cut and finish each piece by hand. Free alterations on every order.</p>
+        <a href="#footer" style="align-self:flex-start; background:#2b2118; color:#faf6ee; padding:14px 30px; font-size:13px; letter-spacing:0.18em; text-transform:uppercase">Start a Silai Order</a>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="Values" style="max-width:1280px; margin:0 auto; padding:clamp(40px,6vw,72px) 18px 0">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:22px; text-align:center; border-top:1px solid #e6dcc6; border-bottom:1px solid #e6dcc6; padding:30px 0">
+      <sc-for list="{{ values }}" as="v" hint-placeholder-count="4">
+        <div style="display:flex; flex-direction:column; gap:5px; padding:0 8px">
+          <div style="font-family:'Marcellus', serif; font-size:17px; color:#a5802e">{{ v.title }}</div>
+          <div style="font-size:13px; color:#5b4c39; line-height:1.5">{{ v.text }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section data-screen-label="Lookbook" style="padding:clamp(40px,6vw,72px) 0 0">
+    <div style="text-align:center; font-size:12px; letter-spacing:0.3em; text-transform:uppercase; color:#8a7a5e; margin-bottom:6px">@feezee.fashion</div>
+    <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(22px,3vw,30px); text-align:center; margin:0 0 24px">From the Boutique</h2>
+    <div style="display:flex; gap:8px; overflow-x:auto; padding:0 18px 8px; scrollbar-width:none">
+      <sc-for list="{{ lookbook }}" as="l" hint-placeholder-count="6">
+        <img src="{{ l.img }}" alt="FEEZEE lookbook" style="width:180px; height:240px; object-fit:cover; object-position:top center; flex-shrink:0">
+      </sc-for>
+    </div>
+  </section>
+
+  <footer id="footer" data-screen-label="Footer" style="background:#2b2118; color:#d8cbb0; margin-top:clamp(48px,7vw,90px); padding:clamp(40px,6vw,70px) 18px 30px">
+    <div style="max-width:1280px; margin:0 auto; display:flex; flex-wrap:wrap; gap:38px">
+      <div style="flex:1 1 260px; display:flex; flex-direction:column; gap:12px">
+        <div style="font-family:'Marcellus', serif; font-size:24px; letter-spacing:0.3em; color:#e8d9b0">FEEZEE</div>
+        <div style="font-size:10px; letter-spacing:0.48em; text-transform:uppercase; color:#9c8b6a; margin-top:-6px; display:flex; align-items:center; gap:7px"><span style="display:inline-block; width:14px; height:1px; background:#9c8b6a"></span>Fashion<span style="display:inline-block; width:14px; height:1px; background:#9c8b6a"></span></div>
+        <p style="margin:6px 0 0; font-size:14px; line-height:1.7; max-width:38ch">FEEZEE Fashion — embroidered kurtas, luxury pret and made-to-order silai for women, shipped nationwide and worldwide.</p>
+      </div>
+      <div style="flex:1 1 150px; display:flex; flex-direction:column; gap:10px; font-size:14px">
+        <div style="font-size:12px; letter-spacing:0.22em; text-transform:uppercase; color:#9c8b6a; margin-bottom:4px">Shop</div>
+        <a href="#new" style="color:#d8cbb0">New In</a>
+        <a href="#categories" style="color:#d8cbb0">Ready to Wear</a>
+        <a href="#categories" style="color:#d8cbb0">Luxury Pret</a>
+        <a href="#silai" style="color:#d8cbb0">Made to Order</a>
+      </div>
+      <div style="flex:1 1 150px; display:flex; flex-direction:column; gap:10px; font-size:14px">
+        <div style="font-size:12px; letter-spacing:0.22em; text-transform:uppercase; color:#9c8b6a; margin-bottom:4px">Help</div>
+        <a href="#footer" style="color:#d8cbb0">Size Guide</a>
+        <a href="#footer" style="color:#d8cbb0">Shipping &amp; Returns</a>
+        <a href="#footer" style="color:#d8cbb0">WhatsApp Us</a>
+        <a href="#footer" style="color:#d8cbb0">Track Order</a>
+      </div>
+      <div style="flex:1 1 260px; display:flex; flex-direction:column; gap:12px">
+        <div style="font-size:12px; letter-spacing:0.22em; text-transform:uppercase; color:#9c8b6a">Stay in touch</div>
+        <p style="margin:0; font-size:14px; line-height:1.6">New drops and festive edits, straight to your inbox.</p>
+        <div style="display:flex; gap:0">
+          <input type="email" placeholder="Email address" style="flex:1; background:none; border:1px solid #6b5b3e; border-right:none; color:#faf6ee; padding:12px 14px; font-family:'Jost', sans-serif; font-size:14px; outline:none; min-width:0">
+          <button style="background:#a5802e; color:#2b2118; border:none; padding:12px 20px; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; cursor:pointer; font-family:'Jost', sans-serif">Join</button>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1280px; margin:34px auto 0; border-top:1px solid #453824; padding-top:18px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font-size:12px; color:#9c8b6a">
+      <span>© 2026 FEEZEE Fashion</span>
+      <span>Cash on Delivery · Bank Transfer · Cards</span>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;currency&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;PKR&quot;, &quot;options&quot;: [&quot;PKR&quot;, &quot;AED&quot;, &quot;GBP&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Store&quot; },
+  &quot;showAnnouncement&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Store&quot; }
+}">
+class Component extends DCLogic {
+  state = { isMobile: typeof window !== 'undefined' ? window.innerWidth < 860 : true, menuOpen: false, bag: 0, wished: {} };
+
+  componentDidMount() {
+    this._onResize = () => this.setState({ isMobile: window.innerWidth < 860 });
+    window.addEventListener('resize', this._onResize);
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this._onResize); }
+
+  fmt(pkr) {
+    const cur = this.props.currency ?? 'PKR';
+    if (cur === 'AED') return 'AED ' + Math.round(pkr / 76).toLocaleString();
+    if (cur === 'GBP') return '£' + Math.round(pkr / 355).toLocaleString();
+    return 'Rs ' + pkr.toLocaleString();
+  }
+
+  renderVals() {
+    const wished = this.state.wished;
+    const base = [
+      { id: 1, name: 'Gulbahar Pearl Kurta', fabric: 'Embroidered cotton silk', pkr: 6850, img: 'img/p02.jpg', badge: 'New', badgeBg: '#a5802e' },
+      { id: 2, name: 'Shirin Zari Kurta', fabric: 'Maroon raw silk', pkr: 8450, img: 'img/p09.jpg' },
+      { id: 3, name: 'Feroza Tissue Suit', fabric: 'Pistachio tissue, 2 pc', pkr: 12900, img: 'img/p15.jpg', badge: 'New', badgeBg: '#a5802e' },
+      { id: 4, name: 'Laila Heritage Print', fabric: 'Printed viscose', pkr: 7250, img: 'img/p11.jpg', badge: 'Best Seller', badgeBg: '#8f2d4f' },
+      { id: 5, name: 'Noor Midnight Kurta', fabric: 'Black embroidered lawn', pkr: 9200, img: 'img/p23.jpg' },
+      { id: 6, name: 'Sahar Ivory Pret', fabric: 'Self-embroidered grip', pkr: 7900, img: 'img/p25.jpg' },
+      { id: 7, name: 'Zainab Block Print', fabric: 'Printed cambric', pkr: 5450, wasPkr: 6800, img: 'img/p30.jpg', badge: 'Sale', badgeBg: '#8f2d4f' },
+      { id: 8, name: 'Mehr Mint Luxury Suit', fabric: 'Chikankari lawn, 3 pc', pkr: 14500, img: 'img/p28.jpg' }
+    ];
+    const products = base.map(p => ({
+      ...p,
+      price: this.fmt(p.pkr),
+      wasPrice: p.wasPkr ? this.fmt(p.wasPkr) : null,
+      badge: p.badge || null,
+      heart: wished[p.id] ? '\u2665' : '\u2661',
+      heartColor: wished[p.id] ? '#8f2d4f' : '#2b2118',
+      onWish: () => this.setState(s => ({ wished: { ...s.wished, [p.id]: !s.wished[p.id] } })),
+      onAdd: () => this.setState(s => ({ bag: s.bag + 1 }))
+    }));
+    return {
+      isMobile: this.state.isMobile,
+      isDesktop: !this.state.isMobile,
+      menuOpen: this.state.menuOpen,
+      toggleMenu: () => this.setState(s => ({ menuOpen: !s.menuOpen })),
+      bagCount: this.state.bag,
+      hasBagItems: this.state.bag > 0,
+      showAnnouncement: this.props.showAnnouncement ?? true,
+      freeShipLabel: this.fmt(5000),
+      products,
+      categories: [
+        { name: 'Luxury Pret', img: 'img/p29.jpg' },
+        { name: 'Printed Lawn', img: 'img/p22.jpg' },
+        { name: 'Festive Formals', img: 'img/p27.jpg' },
+        { name: 'Co-ord Sets', img: 'img/p20.jpg' }
+      ],
+      values: [
+        { title: 'Stitched in Pakistan', text: 'Cut and finished by our in-house tailors' },
+        { title: 'Free Alterations', text: 'Every silai order, altered until it fits' },
+        { title: 'Cash on Delivery', text: 'Pay at your door, anywhere in Pakistan' },
+        { title: 'Worldwide Shipping', text: 'UAE, UK and beyond in 5–7 days' }
+      ],
+      lookbook: [
+        { img: 'img/p13.jpg' }, { img: 'img/p24.jpg' }, { img: 'img/p26.jpg' },
+        { img: 'img/p31.jpg' }, { img: 'img/p16.jpg' }, { img: 'img/p03.jpg' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

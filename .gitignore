@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Claude Design export — the design definition is tracked, but its binary
+# folders are not: img/ is already shipped in public/img, and uploads/ and
+# sheets/ are ~8MB of raw source photos that don't belong in git history.
+/design-source/img/
+/design-source/uploads/
+/design-source/sheets/

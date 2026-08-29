@@ -1,26 +1,68 @@
 @import "tailwindcss";
+@import "../styles/tokens.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Map design tokens onto Tailwind namespaces: bg-cream, text-muted, … */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-cream: var(--fz-cream);
+  --color-sand: var(--fz-sand);
+  --color-panel: var(--fz-panel);
+  --color-ink: var(--fz-ink);
+  --color-cocoa: var(--fz-cocoa);
+  --color-gold: var(--fz-gold);
+  --color-gold-dark: var(--fz-gold-dark);
+  --color-wine: var(--fz-wine);
+  --color-champagne: var(--fz-champagne);
+  --color-muted: var(--fz-muted);
+  --color-line: var(--fz-line);
+  --color-sandstone: var(--fz-sandstone);
+  --color-taupe: var(--fz-taupe);
+  --color-ink-line: var(--fz-ink-line);
+  --color-ink-border: var(--fz-ink-border);
+
+  --font-body: var(--font-jost), sans-serif;
+  --font-display: var(--font-marcellus), serif;
+
+  /* The design switches between the mobile drawer and the desktop nav at 860px. */
+  --breakpoint-nav: 860px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+ * Base element styles must live in @layer base: unlayered rules beat every
+ * layered utility regardless of specificity, which would make `text-ink` on a
+ * link lose to a bare `a { color: … }`.
+ */
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--fz-cream);
+  }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--fz-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: var(--fz-gold);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--fz-gold-dark);
+  }
+
+  img {
+    display: block;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Lookbook rail: scrollable, no visible scrollbar (design uses scrollbar-width:none) */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

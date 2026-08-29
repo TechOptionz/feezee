@@ -1,0 +1,3 @@
+# The Claude Design export is kept in the repo as the design's source of truth,
+# but it must not be uploaded on deploy — the shipped assets live in public/img.
+design-source

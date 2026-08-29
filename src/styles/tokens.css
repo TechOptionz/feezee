@@ -1,0 +1,35 @@
+/**
+ * Design tokens — transcribed from `FEEZEE Store.dc.html`.
+ *
+ * Every colour, radius and layout constant the design uses lives here and
+ * nowhere else. Components reference them through the Tailwind utilities that
+ * `globals.css` maps them onto, so a palette change never touches a component.
+ */
+
+:root {
+  /* Surfaces */
+  --fz-cream: #faf6ee; /* page background */
+  --fz-sand: #efe6d2; /* image placeholder behind product photos */
+  --fz-panel: #f1e7d3; /* Silai feature panel */
+
+  /* Ink (dark brown) */
+  --fz-ink: #2b2118; /* body text, footer background */
+  --fz-cocoa: #5b4c39; /* secondary paragraph text */
+
+  /* Accents */
+  --fz-gold: #a5802e; /* brand gold, links, "New" badge */
+  --fz-gold-dark: #7c5f20; /* link hover */
+  --fz-wine: #8f2d4f; /* sale, bag count, wishlist active */
+  --fz-champagne: #e8d9b0; /* on-ink headings, announcement text */
+
+  /* Muted / lines */
+  --fz-muted: #8a7a5e; /* eyebrow + meta text on cream */
+  --fz-line: #e6dcc6; /* hairlines on cream */
+  --fz-sandstone: #d8cbb0; /* body text on ink */
+  --fz-taupe: #9c8b6a; /* muted text on ink */
+  --fz-ink-line: #453824; /* hairline on ink */
+  --fz-ink-border: #6b5b3e; /* input border on ink */
+
+  /* Layout */
+  --fz-container: 1280px;
+}
