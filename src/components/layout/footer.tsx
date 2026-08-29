@@ -1,5 +1,6 @@
 import { Wordmark } from "@/components/ui/wordmark";
 import { footerNav } from "@/content/navigation";
+import { site } from "@/lib/site";
 
 function LinkColumn({
   title,
@@ -29,10 +30,7 @@ export function Footer() {
       <div className="max-w-[var(--fz-container)] mx-auto flex flex-wrap gap-[38px]">
         <div className="flex-[1_1_260px] flex flex-col gap-3">
           <Wordmark variant="footer" />
-          <p className="mt-1.5 text-sm leading-[1.7] max-w-[38ch]">
-            FEEZEE Fashion — embroidered kurtas, luxury pret and made-to-order silai for women,
-            shipped nationwide and worldwide.
-          </p>
+          <p className="mt-1.5 text-sm leading-[1.7] max-w-[38ch]">{site.description}</p>
         </div>
 
         <LinkColumn title="Shop" links={footerNav.shop} />
@@ -62,7 +60,9 @@ export function Footer() {
       </div>
 
       <div className="max-w-[var(--fz-container)] mx-auto mt-[34px] border-t border-ink-line pt-[18px] flex justify-between gap-3 flex-wrap text-xs text-taupe">
-        <span>© 2026 FEEZEE Fashion</span>
+        <span>
+          © {new Date().getFullYear()} {site.name} Fashion
+        </span>
         <span>Cash on Delivery · Bank Transfer · Cards</span>
       </div>
     </footer>

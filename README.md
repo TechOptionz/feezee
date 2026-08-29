@@ -36,7 +36,7 @@ src/
   styles/
     tokens.css           Every design colour and layout constant
 public/
-  img/                   Design images, original filenames (p01–p33)
+  img/                   Design images, original filenames (p01–p31)
 design-source/           The original Claude Design export, kept for reference
 ```
 

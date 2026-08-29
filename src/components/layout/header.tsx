@@ -7,7 +7,7 @@ import { primaryNav } from "@/content/navigation";
 import { cn } from "@/lib/utils";
 
 export function Header() {
-  const { bagCount, toggleMenu } = useStore();
+  const { bagCount, menuOpen, toggleMenu } = useStore();
 
   return (
     <header className="sticky top-0 z-50 bg-cream/96 backdrop-blur-[8px] border-b border-line">
@@ -17,6 +17,8 @@ export function Header() {
             type="button"
             onClick={toggleMenu}
             aria-label="Menu"
+            aria-expanded={menuOpen}
+            aria-haspopup="dialog"
             className="nav:hidden bg-transparent border-none p-1.5 cursor-pointer flex flex-col gap-[5px] min-w-11 min-h-11 justify-center"
           >
             <span className="block w-[22px] h-[1.5px] bg-ink" />
