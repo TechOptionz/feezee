@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Wordmark } from "@/components/ui/wordmark";
+import { Logo } from "@/components/ui/logo";
 import { useStore } from "@/components/store/store-provider";
 import { primaryNav } from "@/content/navigation";
 import { cn } from "@/lib/utils";
@@ -72,7 +72,7 @@ export function MobileMenu() {
         className="fixed top-0 left-0 bottom-0 w-[78%] max-w-[320px] bg-cream z-100 px-[26px] py-7 flex flex-col gap-1 shadow-[8px_0_40px_rgba(43,33,24,0.25)]"
       >
         <div className="flex items-start justify-between mb-[18px]">
-          <Wordmark variant="drawer" />
+          <Logo className="h-[34px]" />
           <button
             type="button"
             onClick={closeMenu}

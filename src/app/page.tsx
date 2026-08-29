@@ -1,4 +1,4 @@
-import { AnnouncementBar } from "@/components/layout/announcement-bar";
+import { ChatWidget } from "@/components/chat/chat-widget";
 import { Header } from "@/components/layout/header";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { Footer } from "@/components/layout/footer";
@@ -12,7 +12,6 @@ import { Lookbook } from "@/components/sections/lookbook";
 export default function HomePage() {
   return (
     <div className="bg-cream min-h-screen">
-      <AnnouncementBar />
       <Header />
       <MobileMenu />
       <main>
@@ -24,6 +23,7 @@ export default function HomePage() {
         <Lookbook />
       </main>
       <Footer />
+      <ChatWidget />
     </div>
   );
 }

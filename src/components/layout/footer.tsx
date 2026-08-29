@@ -1,4 +1,4 @@
-import { Wordmark } from "@/components/ui/wordmark";
+import { Logo } from "@/components/ui/logo";
 import { footerNav } from "@/content/navigation";
 import { site } from "@/lib/site";
 
@@ -29,7 +29,7 @@ export function Footer() {
     >
       <div className="max-w-[var(--fz-container)] mx-auto flex flex-wrap gap-[38px]">
         <div className="flex-[1_1_260px] flex flex-col gap-3">
-          <Wordmark variant="footer" />
+          <Logo tone="light" className="h-[42px]" />
           <p className="mt-1.5 text-sm leading-[1.7] max-w-[38ch]">{site.description}</p>
         </div>
 
