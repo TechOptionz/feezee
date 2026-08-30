@@ -31,10 +31,10 @@ export type Product = {
    * (the three lines together) and "Sale" from ever showing the same garment.
    */
   collection: Collection;
-  /** Price in PKR — formatted per currency at render time. */
-  pkr: number;
-  /** Original price in PKR, when the item is discounted. */
-  wasPkr?: number;
+  /** Price in AED — formatted per currency at render time. */
+  aed: number;
+  /** Original price in AED, when the item is discounted. */
+  wasAed?: number;
   img: string;
   badge?: { label: string; tone: "gold" | "wine" };
 };
@@ -68,7 +68,7 @@ export const products: Product[] = [
     pieces: 3,
     withDupatta: true,
     collection: "Luxury Pret",
-    pkr: 15900,
+    aed: 209,
     img: "suit-sage-tissue.jpg",
     badge: { label: "New", tone: "gold" },
   },
@@ -81,8 +81,8 @@ export const products: Product[] = [
     pieces: 3,
     withDupatta: true,
     collection: "Sale",
-    pkr: 8680,
-    wasPkr: 12400,
+    aed: 114,
+    wasAed: 163,
     img: "suit-rose-pink.jpg",
     badge: { label: "Sale", tone: "wine" },
   },
@@ -95,7 +95,7 @@ export const products: Product[] = [
     pieces: 3,
     withDupatta: true,
     collection: "Printed Lawn",
-    pkr: 11800,
+    aed: 155,
     img: "dupatta-ivory-lace.jpg",
     badge: { label: "Best Seller", tone: "wine" },
   },
@@ -108,7 +108,7 @@ export const products: Product[] = [
     pieces: 2,
     withDupatta: false,
     collection: "Luxury Pret",
-    pkr: 11500,
+    aed: 151,
     img: "coord-gold-silk.png",
   },
   {
@@ -120,7 +120,7 @@ export const products: Product[] = [
     pieces: 2,
     withDupatta: false,
     collection: "Ready to Wear",
-    pkr: 8950,
+    aed: 118,
     img: "kurta-maroon-zari.png",
   },
   {
@@ -132,7 +132,7 @@ export const products: Product[] = [
     pieces: 1,
     withDupatta: false,
     collection: "Printed Lawn",
-    pkr: 7250,
+    aed: 95,
     img: "kurta-patola-print.jpg",
   },
   {
@@ -144,8 +144,8 @@ export const products: Product[] = [
     pieces: 3,
     withDupatta: true,
     collection: "Sale",
-    pkr: 7090,
-    wasPkr: 9450,
+    aed: 93,
+    wasAed: 124,
     img: "dupatta-printed-chiffon.jpg",
     badge: { label: "Sale", tone: "wine" },
   },
@@ -158,7 +158,7 @@ export const products: Product[] = [
     pieces: 3,
     withDupatta: true,
     collection: "Ready to Wear",
-    pkr: 13200,
+    aed: 174,
     img: "suit-feroza-lace.jpg",
   },
   {
@@ -170,7 +170,7 @@ export const products: Product[] = [
     pieces: 2,
     withDupatta: false,
     collection: "Luxury Pret",
-    pkr: 18500,
+    aed: 243,
     img: "suit-sea-green-anarkali.jpg",
     badge: { label: "New", tone: "gold" },
   },
@@ -183,7 +183,7 @@ export const products: Product[] = [
     pieces: 2,
     withDupatta: true,
     collection: "Printed Lawn",
-    pkr: 7450,
+    aed: 98,
     img: "coord-ajrak.jpg",
   },
   {
@@ -195,7 +195,7 @@ export const products: Product[] = [
     pieces: 3,
     withDupatta: true,
     collection: "Luxury Pret",
-    pkr: 13800,
+    aed: 182,
     img: "suit-teal-embroidered.jpg",
   },
   {
@@ -207,8 +207,8 @@ export const products: Product[] = [
     pieces: 1,
     withDupatta: false,
     collection: "Sale",
-    pkr: 5590,
-    wasPkr: 8600,
+    aed: 74,
+    wasAed: 113,
     img: "kurta-ivory-palm.jpg",
     badge: { label: "Sale", tone: "wine" },
   },
@@ -221,7 +221,7 @@ export const products: Product[] = [
     pieces: 1,
     withDupatta: false,
     collection: "Ready to Wear",
-    pkr: 9200,
+    aed: 121,
     img: "kurta-noir-midnight.jpg",
   },
   {
@@ -233,7 +233,7 @@ export const products: Product[] = [
     pieces: 1,
     withDupatta: false,
     collection: "Ready to Wear",
-    pkr: 7900,
+    aed: 104,
     img: "kurta-sahar-ivory.jpg",
   },
   {
@@ -245,8 +245,8 @@ export const products: Product[] = [
     pieces: 1,
     withDupatta: false,
     collection: "Sale",
-    pkr: 3950,
-    wasPkr: 5650,
+    aed: 52,
+    wasAed: 74,
     img: "kurta-grey-blossom.jpg",
     badge: { label: "Sale", tone: "wine" },
   },
@@ -259,7 +259,7 @@ export const products: Product[] = [
     pieces: 3,
     withDupatta: true,
     collection: "Luxury Pret",
-    pkr: 16900,
+    aed: 222,
     img: "dupatta-black-net.jpg",
     badge: { label: "New", tone: "gold" },
   },
@@ -272,7 +272,7 @@ export const products: Product[] = [
     pieces: 3,
     withDupatta: true,
     collection: "Luxury Pret",
-    pkr: 14500,
+    aed: 191,
     img: "dupatta-mint-organza.jpg",
   },
   {
@@ -284,7 +284,7 @@ export const products: Product[] = [
     pieces: 1,
     withDupatta: false,
     collection: "Ready to Wear",
-    pkr: 8450,
+    aed: 111,
     img: "kurta-rani-zari.jpg",
   },
   {
@@ -296,7 +296,7 @@ export const products: Product[] = [
     pieces: 2,
     withDupatta: true,
     collection: "Printed Lawn",
-    pkr: 7850,
+    aed: 103,
     img: "coord-black-ajrak.jpg",
     badge: { label: "Best Seller", tone: "wine" },
   },
@@ -309,8 +309,8 @@ export const products: Product[] = [
     pieces: 2,
     withDupatta: false,
     collection: "Sale",
-    pkr: 4870,
-    wasPkr: 6950,
+    aed: 64,
+    wasAed: 91,
     img: "coord-monochrome.jpg",
     badge: { label: "Sale", tone: "wine" },
   },
@@ -323,8 +323,8 @@ export const products: Product[] = [
     pieces: 1,
     withDupatta: false,
     collection: "Sale",
-    pkr: 3390,
-    wasPkr: 4850,
+    aed: 45,
+    wasAed: 64,
     img: "kurta-rose-print.jpg",
     badge: { label: "Sale", tone: "wine" },
   },
@@ -361,8 +361,8 @@ export function newInProducts(): Product[] {
 
 /** Percentage off, rounded, for a discounted piece — or null at full price. */
 export function discountPct(product: Product): number | null {
-  if (!product.wasPkr || product.wasPkr <= product.pkr) return null;
-  return Math.round((1 - product.pkr / product.wasPkr) * 100);
+  if (!product.wasAed || product.wasAed <= product.aed) return null;
+  return Math.round((1 - product.aed / product.wasAed) * 100);
 }
 
 /**

@@ -33,8 +33,8 @@ type StoreState = {
   cart: CartLine[];
   /** Total garments in the bag, which is what the header badge counts. */
   bagCount: number;
-  /** Bag total in PKR, before delivery. */
-  subtotalPkr: number;
+  /** Bag total in AED, before delivery. */
+  subtotalAed: number;
   addToBag: (id: number, qty?: number, size?: string) => void;
   setQty: (id: number, qty: number, size?: string) => void;
   removeFromBag: (id: number, size?: string) => void;
@@ -188,10 +188,10 @@ export function StoreProvider({
     [cart],
   );
 
-  const subtotalPkr = useMemo(
+  const subtotalAed = useMemo(
     () =>
       cart.reduce(
-        (sum, line) => sum + (productById(line.id)?.pkr ?? 0) * line.qty,
+        (sum, line) => sum + (productById(line.id)?.aed ?? 0) * line.qty,
         0,
       ),
     [cart],
@@ -210,7 +210,7 @@ export function StoreProvider({
       currency,
       cart,
       bagCount,
-      subtotalPkr,
+      subtotalAed,
       addToBag,
       setQty,
       removeFromBag,
@@ -231,7 +231,7 @@ export function StoreProvider({
       currency,
       cart,
       bagCount,
-      subtotalPkr,
+      subtotalAed,
       addToBag,
       setQty,
       removeFromBag,

@@ -38,7 +38,7 @@ export function WishlistContents() {
     );
   }
 
-  const total = saved.reduce((sum, product) => sum + product.pkr, 0);
+  const total = saved.reduce((sum, product) => sum + product.aed, 0);
 
   return (
     <>

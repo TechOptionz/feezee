@@ -71,7 +71,7 @@ export default async function ProductPage({
   return (
     <PageFrame>
       {/*
-        The catalogue as a search engine reads it. Price is quoted in PKR
+        The catalogue as a search engine reads it. Price is quoted in AED
         whatever the shop is displaying, because the conversion in
         `lib/currency` is a courtesy at render time, not a second price list.
       */}
@@ -91,8 +91,8 @@ export default async function ProductPage({
             offers: {
               "@type": "Offer",
               url,
-              priceCurrency: "PKR",
-              price: product.pkr,
+              priceCurrency: "AED",
+              price: product.aed,
               availability: inStock
                 ? "https://schema.org/InStock"
                 : "https://schema.org/OutOfStock",

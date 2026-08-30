@@ -69,10 +69,10 @@ const ALL_FACETS: Facet[] = [
     id: "price",
     title: "Price",
     options: [
-      { label: "Under Rs 6,000", match: (p) => p.pkr < 6000 },
-      { label: "Rs 6,000 – 10,000", match: (p) => p.pkr >= 6000 && p.pkr < 10000 },
-      { label: "Rs 10,000 – 15,000", match: (p) => p.pkr >= 10000 && p.pkr < 15000 },
-      { label: "Above Rs 15,000", match: (p) => p.pkr >= 15000 },
+      { label: "Under AED 80", match: (p) => p.aed < 80 },
+      { label: "AED 80 – 130", match: (p) => p.aed >= 80 && p.aed < 130 },
+      { label: "AED 130 – 200", match: (p) => p.aed >= 130 && p.aed < 200 },
+      { label: "Above AED 200", match: (p) => p.aed >= 200 },
     ],
   },
 ];
@@ -142,9 +142,9 @@ export function applySort(products: Product[], sort: Sort): Product[] {
   const out = [...products];
   switch (sort) {
     case "Price: Low to High":
-      return out.sort((a, b) => a.pkr - b.pkr);
+      return out.sort((a, b) => a.aed - b.aed);
     case "Price: High to Low":
-      return out.sort((a, b) => b.pkr - a.pkr);
+      return out.sort((a, b) => b.aed - a.aed);
     case "Biggest Discount":
       return out.sort((a, b) => off(b) - off(a));
     case "Name: A – Z":
@@ -156,8 +156,8 @@ export function applySort(products: Product[], sort: Sort): Product[] {
 
 /** Fraction off, or 0 at full price — the key "Biggest Discount" sorts on. */
 function off(product: Product): number {
-  if (!product.wasPkr || product.wasPkr <= product.pkr) return 0;
-  return 1 - product.pkr / product.wasPkr;
+  if (!product.wasAed || product.wasAed <= product.aed) return 0;
+  return 1 - product.aed / product.wasAed;
 }
 
 /** Every ticked option across every facet, as chips for the toolbar. */

@@ -94,15 +94,15 @@ export function ProductPanel({
         <span
           className={cn(
             "text-[21px] font-medium",
-            product.wasPkr && "text-wine",
+            product.wasAed && "text-wine",
           )}
         >
-          {formatPrice(product.pkr, currency)}
+          {formatPrice(product.aed, currency)}
         </span>
-        {product.wasPkr && (
+        {product.wasAed && (
           <>
             <span className="text-[15px] text-muted line-through">
-              {formatPrice(product.wasPkr, currency)}
+              {formatPrice(product.wasAed, currency)}
             </span>
             {off && (
               <span className="text-[12px] tracking-[0.14em] uppercase text-wine">
@@ -289,7 +289,7 @@ export function ProductPanel({
               <p className="m-0">{detail.description}</p>
               <p className="m-0">
                 Cut and finished in our own studio in Karachi, and dispatched
-                within 48 hours. Free delivery over Rs 5,000.
+                within 48 hours. Free delivery over AED 1,000.
               </p>
             </div>
           )}

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 export function AnnouncementBar({ overlay = false }: { overlay?: boolean }) {
   if (!storeConfig.showAnnouncement) return null;
 
-  const threshold = formatPrice(storeConfig.freeShippingThresholdPkr);
+  const threshold = formatPrice(storeConfig.freeShippingThresholdAed);
 
   return (
     <div

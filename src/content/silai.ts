@@ -78,7 +78,7 @@ export const silaiServices: SilaiService[] = [
     name: "Kurtas & Shirts",
     blurb:
       "Straight, A-line or kalidar, in lawn, cambric or khaddar. The everyday cut, stitched to sit at your own shoulder.",
-    from: "Rs 1,800",
+    from: "AED 24",
     turnaround: "7–10 days",
     image: "kurta-ivory-palm.jpg",
   },
@@ -86,7 +86,7 @@ export const silaiServices: SilaiService[] = [
     name: "Two & Three Piece Suits",
     blurb:
       "Shirt, trouser and dupatta finished together so the fall matches. Lining, piping and pico included on every three-piece.",
-    from: "Rs 3,200",
+    from: "AED 42",
     turnaround: "10–14 days",
     image: "suit-teal-embroidered.jpg",
   },
@@ -94,7 +94,7 @@ export const silaiServices: SilaiService[] = [
     name: "Anarkalis & Frocks",
     blurb:
       "Panelled and flared, with the kalis set by hand so the hem hangs level all the way round. Cancan and lining on request.",
-    from: "Rs 4,500",
+    from: "AED 59",
     turnaround: "12–16 days",
     image: "suit-sea-green-anarkali.jpg",
   },
@@ -102,7 +102,7 @@ export const silaiServices: SilaiService[] = [
     name: "Bridal & Heavy Formals",
     blurb:
       "Embroidered panels cut before they are joined, with two fittings on the way. Booked by appointment, six weeks ahead.",
-    from: "Rs 12,000",
+    from: "AED 158",
     turnaround: "4–6 weeks",
     image: "suit-rose-pink.jpg",
   },
@@ -194,37 +194,37 @@ export const silaiPricing: PriceRow[] = [
   {
     garment: "Kurta",
     detail: "Shirt only, plain or printed",
-    stitching: "Rs 1,800",
+    stitching: "AED 24",
     turnaround: "7–10 days",
   },
   {
     garment: "Two piece",
     detail: "Shirt and trouser",
-    stitching: "Rs 2,600",
+    stitching: "AED 34",
     turnaround: "8–12 days",
   },
   {
     garment: "Three piece",
     detail: "Shirt, trouser and dupatta finish",
-    stitching: "Rs 3,200",
+    stitching: "AED 42",
     turnaround: "10–14 days",
   },
   {
     garment: "Anarkali / frock",
     detail: "Panelled, lined, cancan optional",
-    stitching: "Rs 4,500",
+    stitching: "AED 59",
     turnaround: "12–16 days",
   },
   {
     garment: "Sharara / gharara set",
     detail: "Shirt with panelled bottoms",
-    stitching: "Rs 6,500",
+    stitching: "AED 86",
     turnaround: "14–18 days",
   },
   {
     garment: "Bridal / heavy formal",
     detail: "Embroidered panels, two fittings",
-    stitching: "From Rs 12,000",
+    stitching: "From AED 158",
     turnaround: "4–6 weeks",
   },
 ];
@@ -273,7 +273,7 @@ export const silaiVoices: Voice[] = [
   },
   {
     quote:
-      "The sleeve was a touch tight. They collected it, moved the armhole and had it back in four days without charging a rupee.",
+      "The sleeve was a touch tight. They collected it, moved the armhole and had it back in four days without charging a dirham.",
     name: "Hira K.",
     city: "Karachi",
   },

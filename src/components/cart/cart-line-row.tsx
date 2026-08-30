@@ -71,16 +71,16 @@ export function CartLineRow({
             )}
           >
             <span className="text-[14.5px] font-medium">
-              {formatPrice(product.pkr * qty, currency)}
+              {formatPrice(product.aed * qty, currency)}
             </span>
-            {product.wasPkr && (
+            {product.wasAed && (
               <span className="text-[12.5px] text-muted line-through">
-                {formatPrice(product.wasPkr * qty, currency)}
+                {formatPrice(product.wasAed * qty, currency)}
               </span>
             )}
             {qty > 1 && (
               <span className="text-[12px] text-muted">
-                {formatPrice(product.pkr, currency)} each
+                {formatPrice(product.aed, currency)} each
               </span>
             )}
           </div>

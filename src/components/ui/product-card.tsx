@@ -143,14 +143,14 @@ export function ProductCard({
           <span
             className={cn(
               "whitespace-nowrap text-[14.5px] font-medium",
-              product.wasPkr && "text-wine",
+              product.wasAed && "text-wine",
             )}
           >
-            {formatPrice(product.pkr, currency)}
+            {formatPrice(product.aed, currency)}
           </span>
-          {product.wasPkr && (
+          {product.wasAed && (
             <span className="whitespace-nowrap text-[13px] text-muted line-through">
-              {formatPrice(product.wasPkr, currency)}
+              {formatPrice(product.wasAed, currency)}
             </span>
           )}
         </div>

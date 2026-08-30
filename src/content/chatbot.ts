@@ -16,8 +16,8 @@ import { contact, storeConfig } from "@/lib/site";
  * sections render from, so a price is never written down twice.
  */
 
-/** Formats a PKR amount in the visitor's chosen currency. */
-export type PriceFormatter = (pkr: number) => string;
+/** Formats an AED amount in the visitor's chosen currency. */
+export type PriceFormatter = (aed: number) => string;
 
 export type ChatTopic = {
   id: string;
@@ -35,13 +35,13 @@ export type ChatTopic = {
 
 const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
-/** "Rs 4,850 – Rs 8,950" across the given pieces. */
+/** "AED 64 – AED 118" across the given pieces. */
 function range(ids: readonly number[], price: PriceFormatter) {
-  const amounts = productsByIds(ids).map((p) => p.pkr);
+  const amounts = productsByIds(ids).map((p) => p.aed);
   return `${price(Math.min(...amounts))} – ${price(Math.max(...amounts))}`;
 }
 
-const saleIds = products.filter((p) => p.wasPkr).map((p) => p.id);
+const saleIds = products.filter((p) => p.wasAed).map((p) => p.id);
 const bestSellerIds = products.filter((p) => p.badge?.label === "Best Seller").map((p) => p.id);
 const newIds = products.filter((p) => p.badge?.label === "New").map((p) => p.id);
 /** How many pieces a line actually holds — the grid and the reply agree. */
@@ -169,7 +169,7 @@ const staticTopics: ChatTopic[] = [
     keywords: ["price", "prices", "cost", "how much", "rate", "budget", "expensive"],
     lines: (price) => [
       `Kurtas start around ${price(4850)} and dupattas around ${price(2450)}. Luxury pret suits run up to ${price(18500)}.`,
-      "Prices show in PKR, AED or GBP — the currency switch sits in the header.",
+      "Prices show in AED across the site, delivery included.",
     ],
     followUps: ["payment", "sale", "categories"],
   },
@@ -232,7 +232,7 @@ const staticTopics: ChatTopic[] = [
     question: "Shipping & delivery",
     keywords: ["ship", "shipping", "delivery", "deliver", "courier", "international", "worldwide", "abroad"],
     lines: (price) => [
-      `Free nationwide delivery on orders over ${price(storeConfig.freeShippingThresholdPkr)}; below that a flat courier charge applies.`,
+      `Free nationwide delivery on orders over ${price(storeConfig.freeShippingThresholdAed)}; below that a flat courier charge applies.`,
       "Pakistan: 2–4 working days. UAE, UK and the rest of the world: 5–7 days.",
       "Silai orders add 7–10 working days of stitching before they ship.",
     ],

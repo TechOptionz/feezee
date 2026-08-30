@@ -24,9 +24,9 @@ export default function SalePage() {
    * can never leave the banner claiming a discount that no longer exists.
    */
   const deepest = Math.max(...products.map((p) => discountPct(p) ?? 0));
-  const cheapest = Math.min(...products.map((p) => p.pkr));
+  const cheapest = Math.min(...products.map((p) => p.aed));
   const saving = products.reduce(
-    (sum, p) => sum + ((p.wasPkr ?? p.pkr) - p.pkr),
+    (sum, p) => sum + ((p.wasAed ?? p.aed) - p.aed),
     0,
   );
 
