@@ -30,7 +30,7 @@ export function WishlistContents() {
         </p>
         <Link
           href="/new-in"
-          className="bg-ink text-cream hover:text-cream px-7 py-3.5 text-[12px] tracking-[0.18em] uppercase"
+          className="bg-ink text-cream hover:text-cream px-7 py-3.5 text-[13px] tracking-[0.18em] uppercase"
         >
           Shop New In
         </Link>
@@ -43,14 +43,16 @@ export function WishlistContents() {
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y border-line py-4">
-        <span className="text-[12px] tracking-[0.14em] uppercase text-muted">
+        <span className="text-[13px] tracking-[0.14em] uppercase text-muted">
           {saved.length} {saved.length === 1 ? "piece" : "pieces"} saved ·{" "}
           {formatPrice(total, currency)}
         </span>
+        {/* Wrapped, this has a line to itself, so it takes the width of it
+            rather than stopping short of the right edge. */}
         <button
           type="button"
           onClick={() => saved.forEach((product) => addToBag(product.id))}
-          className="bg-ink text-cream border-none cursor-pointer px-6 py-3 text-[11.5px] tracking-[0.16em] uppercase"
+          className="w-full sm:w-auto bg-ink text-cream border-none cursor-pointer px-6 py-3.5 sm:py-3 text-[12.5px] tracking-[0.16em] uppercase"
         >
           Add all to bag
         </button>

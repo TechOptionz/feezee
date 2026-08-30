@@ -46,7 +46,7 @@ export function SilaiBanner() {
       <div className="relative max-w-[var(--fz-container)] w-full mx-auto px-[18px] pt-[clamp(60px,12vh,120px)] pb-[clamp(34px,5.5vw,64px)]">
         <Breadcrumb trail={["Woman", "Silai — Made to Order"]} tone="light" />
 
-        <p className="m-0 mt-[clamp(20px,3vw,34px)] flex items-center gap-3 text-[11.5px] tracking-[0.3em] uppercase text-champagne">
+        <p className="m-0 mt-[clamp(20px,3vw,34px)] flex items-center gap-3 text-[12.5px] tracking-[0.3em] uppercase text-champagne">
           <span aria-hidden className="h-px w-[clamp(22px,3vw,40px)] bg-gold" />
           {silaiBanner.eyebrow}
         </p>
@@ -65,13 +65,13 @@ export function SilaiBanner() {
         <div className="mt-[clamp(24px,3vw,34px)] flex flex-col sm:flex-row sm:flex-wrap gap-3">
           <a
             href={silaiOrderHref}
-            className="block sm:inline-block text-center bg-gold text-ink hover:text-ink px-[clamp(28px,3vw,40px)] py-4 text-[13.5px] tracking-[0.18em] uppercase transition-transform duration-300 hover:-translate-y-0.5"
+            className="block sm:inline-block text-center bg-gold text-ink hover:text-ink px-[clamp(28px,3vw,40px)] py-4 text-[14.5px] tracking-[0.18em] uppercase transition-transform duration-300 hover:-translate-y-0.5"
           >
             Start a Silai Order
           </a>
           <a
             href="#how"
-            className="block sm:inline-block text-center border border-cream/60 text-cream hover:text-cream px-[clamp(28px,3vw,40px)] py-4 text-[13.5px] tracking-[0.18em] uppercase transition-colors duration-300 hover:bg-cream/10"
+            className="block sm:inline-block text-center border border-cream/60 text-cream hover:text-cream px-[clamp(28px,3vw,40px)] py-4 text-[14.5px] tracking-[0.18em] uppercase transition-colors duration-300 hover:bg-cream/10"
           >
             How it works
           </a>
@@ -86,7 +86,7 @@ export function SilaiBanner() {
         <dl className="mt-[clamp(28px,4vw,44px)] grid grid-cols-2 gap-x-6 gap-y-6 sm:flex sm:flex-wrap sm:gap-x-[clamp(28px,5vw,72px)] sm:gap-y-5 border-t border-cream/15 pt-[clamp(18px,2.4vw,28px)]">
           {silaiBanner.stats.map((stat) => (
             <div key={stat.label} className="flex flex-col gap-1">
-              <dt className="order-2 text-[11.5px] tracking-[0.2em] uppercase text-taupe">
+              <dt className="order-2 text-[12.5px] tracking-[0.2em] uppercase text-taupe">
                 {stat.label}
               </dt>
               <dd className="order-1 m-0 font-display text-[clamp(20px,2.4vw,28px)] leading-none text-champagne">

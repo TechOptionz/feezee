@@ -13,15 +13,15 @@ export function MadeToOrderBand({
 }) {
   return (
     <section className="max-w-[var(--fz-container)] mx-auto px-[18px] pt-[clamp(44px,7vw,90px)]">
-      <div className="bg-ink text-sandstone px-[clamp(26px,4.4vw,60px)] py-[clamp(30px,4vw,54px)] flex flex-wrap items-center justify-between gap-x-10 gap-y-6">
+      <div className="bg-ink text-sandstone px-[clamp(22px,4.4vw,60px)] py-[clamp(30px,4vw,54px)] flex flex-wrap items-center justify-between gap-x-10 gap-y-6">
         <div className="flex-[1_1_360px] flex flex-col gap-2.5">
-          <div className="text-xs tracking-[0.32em] uppercase text-gold">
+          <div className="text-[13px] tracking-[0.32em] uppercase text-gold">
             Silai — Made to Order
           </div>
           <h2 className="font-display font-normal text-[clamp(23px,3vw,34px)] leading-[1.18] m-0 text-champagne text-pretty">
             {line}
           </h2>
-          <p className="m-0 text-[14.5px] leading-[1.65] max-w-[52ch]">
+          <p className="m-0 text-[15.5px] leading-[1.65] max-w-[52ch]">
             Send your measurements on WhatsApp and our tailors cut any design in
             this collection by hand. Free alterations on every order.
           </p>
@@ -31,7 +31,7 @@ export function MadeToOrderBand({
             it takes the width of it rather than sitting short of the edge. */}
         <Link
           href="/silai"
-          className="w-full text-center nav:w-auto shrink-0 bg-gold text-ink hover:text-ink px-[30px] py-4 nav:py-3.5 text-[12.5px] tracking-[0.18em] uppercase"
+          className="w-full text-center nav:w-auto shrink-0 bg-gold text-ink hover:text-ink px-[30px] py-4 nav:py-3.5 text-[13.5px] tracking-[0.18em] uppercase"
         >
           Start a Silai Order
         </Link>

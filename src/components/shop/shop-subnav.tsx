@@ -32,7 +32,7 @@ export function ShopSubnav() {
               /* Most of the extra height a thumb needs is taken above the word,
                  so the rule underneath still reads as hung off it. */
               "relative shrink-0 whitespace-nowrap pt-3 pb-2 nav:py-1",
-              "text-[clamp(12.5px,1vw,15px)] tracking-[0.18em] uppercase",
+              "text-[clamp(13.5px,1vw,15px)] tracking-[0.18em] uppercase",
               "after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-px",
               "after:bg-current after:transition-[width] after:duration-300",
               here

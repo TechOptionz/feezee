@@ -48,7 +48,7 @@ export function FilterTabs({
               /* The names are the control, so on a phone each one carries a
                  thumb's worth of height above and below its own word. */
               "pt-2.5 pb-3.5 nav:pt-1 nav:pb-[clamp(11px,1.1vw,15px)]",
-              "text-[clamp(14px,1.15vw,18px)] tracking-[0.2em] uppercase",
+              "text-[clamp(15px,1.15vw,18px)] tracking-[0.2em] uppercase",
               "transition-colors duration-200",
               "after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-[2px]",
               "after:bg-current after:transition-[width] after:duration-300 after:ease-[cubic-bezier(0.22,0.61,0.36,1)]",

@@ -52,13 +52,13 @@ export function CartContents() {
         <div className="flex flex-wrap justify-center gap-3">
           <Link
             href="/new-in"
-            className="bg-ink text-cream hover:text-cream px-7 py-3.5 text-[12px] tracking-[0.18em] uppercase"
+            className="bg-ink text-cream hover:text-cream px-7 py-3.5 text-[13px] tracking-[0.18em] uppercase"
           >
             Shop New In
           </Link>
           <Link
             href="/sale"
-            className="border border-line text-ink hover:text-ink px-7 py-3.5 text-[12px] tracking-[0.18em] uppercase"
+            className="border border-line text-ink hover:text-ink px-7 py-3.5 text-[13px] tracking-[0.18em] uppercase"
           >
             Shop Sale
           </Link>
@@ -77,18 +77,18 @@ export function CartContents() {
         <button
           type="button"
           onClick={clearBag}
-          className="mt-5 bg-transparent border-none cursor-pointer text-[11px] tracking-[0.14em] uppercase text-muted hover:text-wine"
+          className="mt-5 bg-transparent border-none cursor-pointer text-[12px] tracking-[0.14em] uppercase text-muted hover:text-wine"
         >
           Empty bag
         </button>
       </div>
 
       <aside className="flex-[1_1_300px] bg-panel p-[clamp(22px,3vw,34px)] flex flex-col gap-4">
-        <h2 className="m-0 text-[12px] tracking-[0.22em] uppercase font-normal">
+        <h2 className="m-0 text-[13px] tracking-[0.22em] uppercase font-normal">
           Order Summary
         </h2>
 
-        <dl className="m-0 flex flex-col gap-3 text-[14px]">
+        <dl className="m-0 flex flex-col gap-3 text-[15px]">
           <div className="flex justify-between gap-4">
             <dt className="text-cocoa">Subtotal</dt>
             <dd className="m-0">{formatPrice(subtotalPkr, currency)}</dd>
@@ -106,7 +106,7 @@ export function CartContents() {
             </dd>
           </div>
           <div className="flex justify-between gap-4 border-t border-line pt-3 text-[16px]">
-            <dt className="tracking-[0.14em] uppercase text-[12px] self-center">
+            <dt className="tracking-[0.14em] uppercase text-[13px] self-center">
               Total
             </dt>
             <dd className="m-0 font-medium">
@@ -116,7 +116,7 @@ export function CartContents() {
         </dl>
 
         {shortOfFreeDelivery > 0 && (
-          <p className="m-0 text-[11.5px] leading-[1.5] text-muted">
+          <p className="m-0 text-[12.5px] leading-[1.5] text-muted">
             Add {formatPrice(shortOfFreeDelivery, currency)} more for free
             nationwide delivery.
           </p>
@@ -126,11 +126,11 @@ export function CartContents() {
             provider when one is chosen. */}
         <button
           type="button"
-          className="bg-ink text-cream border-none cursor-pointer px-7 py-4 text-[12px] tracking-[0.18em] uppercase"
+          className="bg-ink text-cream border-none cursor-pointer px-7 py-4 text-[13px] tracking-[0.18em] uppercase"
         >
           Checkout
         </button>
-        <p className="m-0 text-[11.5px] leading-[1.5] text-muted">
+        <p className="m-0 text-[12.5px] leading-[1.5] text-muted">
           Cash on delivery, bank transfer and cards. Orders confirmed on
           WhatsApp before dispatch.
         </p>

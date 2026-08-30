@@ -15,7 +15,7 @@ export function SilaiServices() {
     <section className="max-w-[var(--fz-container)] mx-auto px-[18px] pt-[clamp(48px,8vw,100px)]">
       <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
         <div>
-          <p className="m-0 flex items-center gap-3 text-[11.5px] tracking-[0.3em] uppercase text-muted">
+          <p className="m-0 flex items-center gap-3 text-[12.5px] tracking-[0.3em] uppercase text-muted">
             <span aria-hidden className="h-px w-[clamp(22px,3vw,40px)] bg-gold/70" />
             What we stitch
           </p>
@@ -23,7 +23,7 @@ export function SilaiServices() {
             From an everyday kurta to a bridal shirt
           </h2>
         </div>
-        <p className="m-0 max-w-[42ch] text-[14.5px] leading-[1.7] text-cocoa">
+        <p className="m-0 max-w-[42ch] text-[15.5px] leading-[1.7] text-cocoa">
           Prices are for stitching. Bring your own cloth or buy it with the
           order — either way the charge below is the whole of it.
         </p>
@@ -48,7 +48,7 @@ export function SilaiServices() {
                 aria-hidden
                 className="absolute inset-x-0 bottom-0 h-1/3 bg-[linear-gradient(180deg,rgba(43,33,24,0)_0%,rgba(43,33,24,0.55)_100%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
               />
-              <span className="absolute left-0 bottom-0 m-3.5 border border-ink/10 bg-cream/95 px-3 py-1.5 text-[11px] tracking-[0.16em] uppercase text-ink">
+              <span className="absolute left-0 bottom-0 m-3.5 border border-ink/10 bg-cream/95 px-3 py-1.5 text-[12px] tracking-[0.16em] uppercase text-ink">
                 {service.turnaround}
               </span>
             </a>
@@ -57,7 +57,7 @@ export function SilaiServices() {
               <h3 className="m-0 font-display font-normal text-[clamp(18px,1.6vw,21px)] leading-[1.25] text-ink">
                 {service.name}
               </h3>
-              <p className="mt-2 mb-0 text-[14px] leading-[1.65] text-cocoa">
+              <p className="mt-2 mb-0 text-[15px] leading-[1.65] text-cocoa">
                 {service.blurb}
               </p>
               {/*
@@ -67,7 +67,7 @@ export function SilaiServices() {
                 them wrapping into each other.
               */}
               <div className="mt-auto flex flex-col gap-0.5 border-t border-line pt-3 nav:flex-row nav:items-baseline nav:justify-between nav:gap-3">
-                <span className="text-[11px] tracking-[0.2em] uppercase text-muted">
+                <span className="text-[12px] tracking-[0.2em] uppercase text-muted">
                   Stitching from
                 </span>
                 <span className="font-display text-[17px] text-gold-dark whitespace-nowrap">

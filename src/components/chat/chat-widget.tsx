@@ -155,7 +155,7 @@ export function ChatWidget() {
               <span className="font-display text-[17px] leading-none text-champagne">
                 FEEZEE Assistant
               </span>
-              <span className="text-[11px] tracking-[0.18em] uppercase text-taupe">
+              <span className="text-[12px] tracking-[0.18em] uppercase text-taupe">
                 Answers in seconds
               </span>
             </div>
@@ -189,7 +189,7 @@ export function ChatWidget() {
                   onClick={() => ask(topic.question, topic)}
                   className={cn(
                     "cursor-pointer rounded-full border border-line bg-transparent",
-                    "px-3.5 py-2 text-[12.5px] text-cocoa transition-colors duration-200",
+                    "px-3.5 py-2 text-[13.5px] text-cocoa transition-colors duration-200",
                     "hover:border-gold hover:text-ink",
                   )}
                 >
@@ -208,7 +208,7 @@ export function ChatWidget() {
               aria-label="Ask the assistant a question"
               className={cn(
                 "min-w-0 flex-1 border border-line bg-transparent px-3.5 py-3",
-                "text-sm text-ink outline-none placeholder:text-muted focus:border-gold",
+                "text-[15px] text-ink outline-none placeholder:text-muted focus:border-gold",
               )}
             />
             <button
@@ -238,7 +238,7 @@ function Bubble({ message, price }: { message: Message; price: (pkr: number) => 
     <div className={cn("flex flex-col gap-2", fromBot ? "items-start" : "items-end")}>
       <div
         className={cn(
-          "max-w-[85%] px-4 py-3 text-[13.5px] leading-[1.65]",
+          "max-w-[85%] px-4 py-3 text-[14.5px] leading-[1.65]",
           fromBot ? "bg-panel text-cocoa" : "bg-ink text-sandstone",
         )}
       >
@@ -263,9 +263,9 @@ function Bubble({ message, price }: { message: Message; price: (pkr: number) => 
                 />
               </div>
               <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="truncate text-[13px] text-ink">{product.name}</span>
-                <span className="truncate text-[11.5px] text-muted">{product.fabric}</span>
-                <span className="text-[12.5px] text-ink">
+                <span className="truncate text-[14px] text-ink">{product.name}</span>
+                <span className="truncate text-[12.5px] text-muted">{product.fabric}</span>
+                <span className="text-[13.5px] text-ink">
                   {price(product.pkr)}
                   {product.wasPkr && (
                     <span className="ml-2 text-muted line-through">{price(product.wasPkr)}</span>

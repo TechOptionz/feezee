@@ -19,8 +19,8 @@ function LinkColumn({
      * anything on the page. From `nav` up the gap comes back and the links sit
      * as tightly as the design draws them.
      */
-    <div className="flex-[1_1_150px] flex flex-col gap-y-0.5 nav:gap-y-2.5 text-sm">
-      <div className="text-xs tracking-[0.22em] uppercase text-taupe mb-1">{title}</div>
+    <div className="flex-[1_1_150px] flex flex-col gap-y-0.5 nav:gap-y-2.5 text-[15px]">
+      <div className="text-[13px] tracking-[0.22em] uppercase text-taupe mb-1">{title}</div>
       {links.map((link) =>
         /* WhatsApp and the like leave the site, so they get a plain anchor
            with the tab and the rel a router link would not carry. */
@@ -57,7 +57,7 @@ export function Footer() {
       <div className="max-w-[var(--fz-container)] mx-auto flex flex-wrap gap-[38px]">
         <div className="flex-[1_1_260px] flex flex-col gap-3">
           <Logo tone="light" className="h-[42px]" />
-          <p className="mt-1.5 text-sm leading-[1.7] max-w-[38ch]">{site.description}</p>
+          <p className="mt-1.5 text-[15px] leading-[1.7] max-w-[38ch]">{site.description}</p>
         </div>
 
         {/*
@@ -75,8 +75,8 @@ export function Footer() {
 
         {/* The details off the shop's own invoice — one column, so a visitor
             who has scrolled this far can walk in, write, or open a chat. */}
-        <div className="flex-[1_1_230px] flex flex-col gap-2.5 text-sm">
-          <div className="text-xs tracking-[0.22em] uppercase text-taupe mb-1">
+        <div className="flex-[1_1_230px] flex flex-col gap-2.5 text-[15px]">
+          <div className="text-[13px] tracking-[0.22em] uppercase text-taupe mb-1">
             Visit us
           </div>
           <address className="not-italic leading-[1.7]">
@@ -108,12 +108,12 @@ export function Footer() {
             <WhatsAppIcon />
             {contact.whatsapp.display}
           </a>
-          <p className="m-0 text-xs text-taupe">{contact.hours}</p>
+          <p className="m-0 text-[13px] text-taupe">{contact.hours}</p>
         </div>
 
         <div className="flex-[1_1_240px] flex flex-col gap-3">
-          <div className="text-xs tracking-[0.22em] uppercase text-taupe">Stay in touch</div>
-          <p className="text-sm leading-[1.6]">
+          <div className="text-[13px] tracking-[0.22em] uppercase text-taupe">Stay in touch</div>
+          <p className="text-[15px] leading-[1.6]">
             New drops and festive edits, straight to your inbox.
           </p>
           {/* Presentational, as in the design — wire to a list provider when ready. */}
@@ -122,11 +122,11 @@ export function Footer() {
               type="email"
               placeholder="Email address"
               aria-label="Email address"
-              className="flex-1 bg-transparent border border-ink-border border-r-0 text-cream px-3.5 py-3 text-sm outline-none min-w-0 placeholder:text-taupe"
+              className="flex-1 bg-transparent border border-ink-border border-r-0 text-cream px-3.5 py-3 text-[15px] outline-none min-w-0 placeholder:text-taupe"
             />
             <button
               type="button"
-              className="bg-gold text-ink border-none px-5 py-3 text-xs tracking-[0.16em] uppercase cursor-pointer"
+              className="bg-gold text-ink border-none px-5 py-3 text-[13px] tracking-[0.16em] uppercase cursor-pointer"
             >
               Join
             </button>
@@ -134,7 +134,7 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="max-w-[var(--fz-container)] mx-auto mt-[34px] border-t border-ink-line pt-[18px] flex justify-between gap-3 flex-wrap text-xs text-taupe">
+      <div className="max-w-[var(--fz-container)] mx-auto mt-[34px] border-t border-ink-line pt-[18px] flex justify-between gap-3 flex-wrap text-[13px] text-taupe">
         <span>
           © {new Date().getFullYear()} {contact.legalName}
         </span>

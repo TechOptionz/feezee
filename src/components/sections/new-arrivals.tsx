@@ -25,7 +25,7 @@ export function NewArrivals() {
     <section id="new" className="pt-[clamp(48px,7.5vw,96px)]">
       {/* Same shape as "Shop by Category": copy on top, four looks beneath. */}
       <div className="max-w-[var(--fz-container)] mx-auto px-[18px]">
-        <p className="m-0 flex items-center gap-3 text-[11.5px] tracking-[0.3em] uppercase text-muted">
+        <p className="m-0 flex items-center gap-3 text-[12.5px] tracking-[0.3em] uppercase text-muted">
           <span
             className="h-px w-[clamp(22px,3vw,40px)] bg-gold/70"
             aria-hidden

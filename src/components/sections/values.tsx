@@ -20,7 +20,7 @@ export function Values() {
             className="grid grid-rows-subgrid row-span-2 gap-[5px] px-2"
           >
             <div className="font-display text-[17px] text-gold">{value.title}</div>
-            <div className="text-[13px] text-cocoa leading-[1.5]">{value.text}</div>
+            <div className="text-[14px] text-cocoa leading-[1.5]">{value.text}</div>
           </div>
         ))}
       </div>

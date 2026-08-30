@@ -24,8 +24,8 @@ export function SilaiMeasurements() {
           />
         </div>
 
-        <div className="flex-[2_1_460px] p-[clamp(28px,4.4vw,60px)] flex flex-col gap-5">
-          <p className="m-0 text-xs tracking-[0.32em] uppercase text-gold">
+        <div className="flex-[2_1_460px] p-[clamp(24px,4.4vw,60px)] flex flex-col gap-5">
+          <p className="m-0 text-[13px] tracking-[0.32em] uppercase text-gold">
             What we need from you
           </p>
           <h2 className="m-0 font-display font-normal text-[clamp(24px,3.4vw,38px)] leading-[1.15] max-w-[20ch] text-pretty">
@@ -35,14 +35,14 @@ export function SilaiMeasurements() {
           <div className="grid grid-cols-1 nav:grid-cols-3 gap-x-[clamp(18px,2.4vw,34px)] gap-y-7 border-y border-ink/10 py-[clamp(20px,2.6vw,30px)]">
             {silaiMeasurements.groups.map((group) => (
               <div key={group.title} className="flex flex-col gap-3">
-                <h3 className="m-0 text-[11.5px] tracking-[0.22em] uppercase text-cocoa">
+                <h3 className="m-0 text-[12.5px] tracking-[0.22em] uppercase text-cocoa">
                   {group.title}
                 </h3>
                 <ul className="m-0 p-0 list-none flex flex-col gap-2">
                   {group.items.map((item) => (
                     <li
                       key={item}
-                      className="flex gap-2.5 text-[14px] leading-[1.5] text-ink"
+                      className="flex gap-2.5 text-[15px] leading-[1.5] text-ink"
                     >
                       <span
                         aria-hidden
@@ -56,7 +56,7 @@ export function SilaiMeasurements() {
             ))}
           </div>
 
-          <p className="m-0 max-w-[62ch] text-[14.5px] leading-[1.7] text-cocoa">
+          <p className="m-0 max-w-[62ch] text-[15.5px] leading-[1.7] text-cocoa">
             {silaiMeasurements.note}
           </p>
         </div>

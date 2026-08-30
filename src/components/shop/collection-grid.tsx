@@ -88,7 +88,7 @@ export function CollectionGrid({
           <div className="fz-rise grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-x-10 gap-y-8 border-b border-line py-8">
             {facets.map((facet) => (
               <fieldset key={facet.id} className="m-0 p-0 border-none">
-                <legend className="mb-3 p-0 text-[11px] tracking-[0.24em] uppercase text-muted">
+                <legend className="mb-3 p-0 text-[12px] tracking-[0.24em] uppercase text-muted">
                   {facet.title}
                 </legend>
                 <div className="flex flex-col gap-2.5">
@@ -98,7 +98,7 @@ export function CollectionGrid({
                     return (
                       <label
                         key={option.label}
-                        className="flex items-center gap-2.5 cursor-pointer text-[13.5px] text-cocoa hover:text-ink"
+                        className="flex items-center gap-2.5 cursor-pointer text-[14.5px] text-cocoa hover:text-ink"
                       >
                         <input
                           type="checkbox"
@@ -113,7 +113,7 @@ export function CollectionGrid({
                         <span className={cn(on && "text-ink")}>
                           {option.label}
                         </span>
-                        <span className="text-[11.5px] text-muted tabular-nums">
+                        <span className="text-[12.5px] text-muted tabular-nums">
                           ({option.count})
                         </span>
                       </label>
@@ -141,7 +141,7 @@ export function CollectionGrid({
                   setOpenPanel(null);
                 }}
                 className={cn(
-                  "bg-transparent border-none cursor-pointer text-[13px] tracking-[0.1em]",
+                  "bg-transparent border-none cursor-pointer text-[14px] tracking-[0.1em]",
                   sort === name
                     ? "text-ink underline underline-offset-4"
                     : "text-muted hover:text-ink",
@@ -157,7 +157,7 @@ export function CollectionGrid({
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3 py-4">
           <span
             aria-live="polite"
-            className="text-[12px] tracking-[0.14em] uppercase text-muted"
+            className="text-[13px] tracking-[0.14em] uppercase text-muted"
           >
             {shown.length} {shown.length === 1 ? "Product" : "Products"} Found
           </span>
@@ -170,7 +170,7 @@ export function CollectionGrid({
                 setSelection((s) => toggleOption(s, chip.facet, chip.label))
               }
               aria-label={`Remove filter ${chip.label}`}
-              className="flex items-center gap-2 border-l border-line pl-4 bg-transparent cursor-pointer text-[12px] tracking-[0.08em] text-ink hover:text-wine"
+              className="flex items-center gap-2 border-l border-line pl-4 bg-transparent cursor-pointer text-[13px] tracking-[0.08em] text-ink hover:text-wine"
             >
               <span aria-hidden>&times;</span>
               {chip.label}
@@ -181,7 +181,7 @@ export function CollectionGrid({
             <button
               type="button"
               onClick={() => setSelection({})}
-              className="rounded-full bg-ink text-cream px-4 py-1.5 text-[11.5px] tracking-[0.12em] cursor-pointer border-none"
+              className="rounded-full bg-ink text-cream px-4 py-1.5 text-[12.5px] tracking-[0.12em] cursor-pointer border-none"
             >
               &times; Clear all
             </button>
@@ -212,13 +212,13 @@ export function CollectionGrid({
           <p className="m-0 font-display text-[clamp(20px,2.6vw,28px)]">
             Nothing matches that combination.
           </p>
-          <p className="mt-3 mb-6 text-[14.5px] text-cocoa">
+          <p className="mt-3 mb-6 text-[15.5px] text-cocoa">
             Loosen a filter and the rail fills back up.
           </p>
           <button
             type="button"
             onClick={() => setSelection({})}
-            className="bg-ink text-cream border-none cursor-pointer px-7 py-3.5 text-[12px] tracking-[0.18em] uppercase"
+            className="bg-ink text-cream border-none cursor-pointer px-7 py-3.5 text-[13px] tracking-[0.18em] uppercase"
           >
             Clear all filters
           </button>
@@ -274,7 +274,7 @@ function ToolbarButton({
       aria-expanded={open}
       className={cn(
         "flex items-center gap-2.5 bg-transparent border-none py-4",
-        "text-[12px] tracking-[0.22em] uppercase",
+        "text-[13px] tracking-[0.22em] uppercase",
         align === "right" && "flex-row-reverse",
         disabled
           ? "text-line cursor-default"

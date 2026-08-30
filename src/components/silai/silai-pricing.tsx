@@ -18,7 +18,7 @@ export function SilaiPricing() {
         every cream section above and below it.
       */}
       <div className="max-w-[var(--fz-container)] mx-auto px-[18px]">
-        <p className="m-0 flex items-center gap-3 text-[11.5px] tracking-[0.3em] uppercase text-gold">
+        <p className="m-0 flex items-center gap-3 text-[12.5px] tracking-[0.3em] uppercase text-gold">
           <span aria-hidden className="h-px w-[clamp(22px,3vw,40px)] bg-gold" />
           Stitching charges
         </p>
@@ -27,7 +27,7 @@ export function SilaiPricing() {
           <h2 className="m-0 font-display font-normal text-champagne text-[clamp(26px,3.8vw,44px)] leading-[1.1] max-w-[18ch] text-pretty">
             What it costs, before you ask
           </h2>
-          <p className="m-0 max-w-[40ch] text-[14.5px] leading-[1.7]">
+          <p className="m-0 max-w-[40ch] text-[15.5px] leading-[1.7]">
             No quotation to wait for on a standard cut. These are the rates the
             workshop runs on, and they are the same in July as in Ramzan.
           </p>
@@ -41,7 +41,7 @@ export function SilaiPricing() {
             <tr className="border-b border-ink-border">
               <th
                 scope="col"
-                className="py-3 pr-4 text-[11px] font-normal tracking-[0.2em] uppercase text-taupe"
+                className="py-3 pr-4 text-[12px] font-normal tracking-[0.2em] uppercase text-taupe"
               >
                 Garment
               </th>
@@ -56,13 +56,13 @@ export function SilaiPricing() {
               */}
               <th
                 scope="col"
-                className="py-3 px-4 text-right text-[11px] font-normal tracking-[0.2em] uppercase text-taupe whitespace-nowrap"
+                className="py-3 px-4 text-right text-[12px] font-normal tracking-[0.2em] uppercase text-taupe whitespace-nowrap"
               >
                 Stitching
               </th>
               <th
                 scope="col"
-                className="hidden nav:table-cell py-3 pl-4 text-right text-[11px] font-normal tracking-[0.2em] uppercase text-taupe whitespace-nowrap"
+                className="hidden nav:table-cell py-3 pl-4 text-right text-[12px] font-normal tracking-[0.2em] uppercase text-taupe whitespace-nowrap"
               >
                 Ready in
               </th>
@@ -81,17 +81,17 @@ export function SilaiPricing() {
                   <span className="block font-display text-[clamp(16px,1.5vw,19px)] leading-[1.3] text-champagne">
                     {row.garment}
                   </span>
-                  <span className="mt-1 block text-[13px] leading-[1.5] text-taupe">
+                  <span className="mt-1 block text-[14px] leading-[1.5] text-taupe">
                     {row.detail}
                   </span>
                 </th>
                 <td className="py-[clamp(14px,1.8vw,20px)] pl-3 nav:px-4 text-right align-top font-display text-[clamp(16px,1.5vw,19px)] text-gold whitespace-nowrap">
                   {row.stitching}
-                  <span className="nav:hidden mt-1 block font-body text-[13px] text-sandstone">
+                  <span className="nav:hidden mt-1 block font-body text-[14px] text-sandstone">
                     {row.turnaround}
                   </span>
                 </td>
-                <td className="hidden nav:table-cell py-[clamp(14px,1.8vw,20px)] pl-4 text-right align-top text-[13.5px] whitespace-nowrap">
+                <td className="hidden nav:table-cell py-[clamp(14px,1.8vw,20px)] pl-4 text-right align-top text-[14.5px] whitespace-nowrap">
                   {row.turnaround}
                 </td>
               </tr>
@@ -103,7 +103,7 @@ export function SilaiPricing() {
           {silaiPricingNotes.map((note) => (
             <li
               key={note}
-              className="flex gap-3 text-[13px] leading-[1.6] text-taupe"
+              className="flex gap-3 text-[14px] leading-[1.6] text-taupe"
             >
               <span aria-hidden className="mt-[10px] h-px w-3.5 shrink-0 bg-gold" />
               {note}

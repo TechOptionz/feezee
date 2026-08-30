@@ -49,7 +49,7 @@ export function CartDrawer() {
         className="fixed top-0 right-0 bottom-0 w-[92%] max-w-[440px] bg-cream z-100 flex flex-col shadow-[-8px_0_40px_rgba(43,33,24,0.25)]"
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-line">
-          <h2 className="m-0 text-[13px] tracking-[0.22em] uppercase font-normal">
+          <h2 className="m-0 text-[14px] tracking-[0.22em] uppercase font-normal">
             Your Bag{bagCount > 0 && ` (${bagCount})`}
           </h2>
           <button
@@ -71,7 +71,7 @@ export function CartDrawer() {
             <Link
               href="/new-in"
               onClick={closeCart}
-              className="bg-ink text-cream hover:text-cream px-7 py-3.5 text-[12px] tracking-[0.18em] uppercase"
+              className="bg-ink text-cream hover:text-cream px-7 py-3.5 text-[13px] tracking-[0.18em] uppercase"
             >
               Shop New In
             </Link>
@@ -95,7 +95,7 @@ export function CartDrawer() {
               <button
                 type="button"
                 onClick={clearBag}
-                className="my-5 bg-transparent border-none cursor-pointer text-[11px] tracking-[0.14em] uppercase text-muted hover:text-wine"
+                className="my-5 bg-transparent border-none cursor-pointer text-[12px] tracking-[0.14em] uppercase text-muted hover:text-wine"
               >
                 Empty bag
               </button>
@@ -104,14 +104,14 @@ export function CartDrawer() {
             <div className="border-t border-line px-6 py-5 flex flex-col gap-3">
               {/* The one number that changes what someone does next: how far
                   off free delivery they are, or that they have cleared it. */}
-              <p className="m-0 text-[11.5px] tracking-[0.08em] text-muted">
+              <p className="m-0 text-[12.5px] tracking-[0.08em] text-muted">
                 {shortOfFreeDelivery > 0
                   ? `${formatPrice(shortOfFreeDelivery, currency)} away from free nationwide delivery`
                   : "Free nationwide delivery unlocked"}
               </p>
 
               <div className="flex justify-between items-baseline">
-                <span className="text-[12px] tracking-[0.18em] uppercase">
+                <span className="text-[13px] tracking-[0.18em] uppercase">
                   Subtotal
                 </span>
                 <span className="text-[17px] font-medium">
@@ -122,14 +122,14 @@ export function CartDrawer() {
               <Link
                 href="/cart"
                 onClick={closeCart}
-                className="text-center bg-ink text-cream hover:text-cream px-7 py-4 text-[12px] tracking-[0.18em] uppercase"
+                className="text-center bg-ink text-cream hover:text-cream px-7 py-4 text-[13px] tracking-[0.18em] uppercase"
               >
                 View Bag & Checkout
               </Link>
               <button
                 type="button"
                 onClick={closeCart}
-                className="bg-transparent border-none cursor-pointer text-[11.5px] tracking-[0.14em] uppercase text-gold-dark hover:text-ink"
+                className="bg-transparent border-none cursor-pointer text-[12.5px] tracking-[0.14em] uppercase text-gold-dark hover:text-ink"
               >
                 Continue shopping
               </button>

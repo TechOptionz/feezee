@@ -11,7 +11,7 @@ import { silaiFinishes } from "@/content/silai";
 export function SilaiFinishes() {
   return (
     <section className="max-w-[var(--fz-container)] mx-auto px-[18px] pt-[clamp(48px,8vw,100px)]">
-      <p className="m-0 flex items-center gap-3 text-[11.5px] tracking-[0.3em] uppercase text-muted">
+      <p className="m-0 flex items-center gap-3 text-[12.5px] tracking-[0.3em] uppercase text-muted">
         <span aria-hidden className="h-px w-[clamp(22px,3vw,40px)] bg-gold/70" />
         Choose the finish
       </p>
@@ -38,14 +38,14 @@ export function SilaiFinishes() {
               own and hands the whole width back, so the chips set two and
               three abreast instead.
             */}
-            <dt className="w-full shrink-0 nav:w-[clamp(96px,12vw,150px)] text-[11.5px] tracking-[0.22em] uppercase text-muted">
+            <dt className="w-full shrink-0 nav:w-[clamp(96px,12vw,150px)] text-[12.5px] tracking-[0.22em] uppercase text-muted">
               {group.title}
             </dt>
             <dd className="m-0 flex flex-1 flex-wrap gap-2">
               {group.options.map((option) => (
                 <span
                   key={option}
-                  className="border border-line bg-cream px-3.5 py-2 text-[13px] tracking-[0.05em] text-ink transition-colors duration-200 hover:border-gold hover:text-gold-dark"
+                  className="border border-line bg-cream px-3.5 py-2 text-[14px] tracking-[0.05em] text-ink transition-colors duration-200 hover:border-gold hover:text-gold-dark"
                 >
                   {option}
                 </span>

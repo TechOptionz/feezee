@@ -14,7 +14,7 @@ export function SilaiSteps() {
       id="how"
       className="max-w-[var(--fz-container)] mx-auto px-[18px] pt-[clamp(48px,8vw,100px)] scroll-mt-24"
     >
-      <p className="m-0 flex items-center gap-3 text-[11.5px] tracking-[0.3em] uppercase text-muted">
+      <p className="m-0 flex items-center gap-3 text-[12.5px] tracking-[0.3em] uppercase text-muted">
         <span aria-hidden className="h-px w-[clamp(22px,3vw,40px)] bg-gold/70" />
         The process
       </p>
@@ -59,7 +59,7 @@ export function SilaiSteps() {
             <h3 className="m-0 font-display font-normal text-[clamp(18px,1.6vw,21px)] leading-[1.25] text-ink">
               {step.title}
             </h3>
-            <p className="m-0 text-[14.5px] leading-[1.7] text-cocoa max-w-[38ch]">
+            <p className="m-0 text-[15.5px] leading-[1.7] text-cocoa max-w-[38ch]">
               {step.body}
             </p>
           </li>

@@ -39,13 +39,13 @@ export function LineStrip({
               />
             </div>
             <div className="pt-4 flex flex-col gap-1.5">
-              <div className="text-[13px] tracking-[0.2em] uppercase text-ink">
+              <div className="text-[14px] tracking-[0.2em] uppercase text-ink">
                 {page.nav}
               </div>
-              <div className="text-[12px] text-muted tracking-[0.06em]">
+              <div className="text-[13px] text-muted tracking-[0.06em]">
                 {productsForPage(page).length} pieces · {page.eyebrow}
               </div>
-              <span className="mt-1 self-start text-[12px] tracking-[0.14em] uppercase text-gold-dark border-b border-current pb-0.5 group-hover:text-ink">
+              <span className="mt-1 self-start text-[13px] tracking-[0.14em] uppercase text-gold-dark border-b border-current pb-0.5 group-hover:text-ink">
                 Shop the line →
               </span>
             </div>

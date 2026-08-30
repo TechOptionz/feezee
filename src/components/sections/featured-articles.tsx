@@ -24,7 +24,7 @@ export function FeaturedArticles({
 
   return (
     <section className="max-w-[var(--fz-container)] mx-auto px-[18px] pt-[clamp(48px,7.5vw,96px)]">
-      <p className="m-0 flex items-center gap-3 text-[11.5px] tracking-[0.3em] uppercase text-muted">
+      <p className="m-0 flex items-center gap-3 text-[12.5px] tracking-[0.3em] uppercase text-muted">
         <span aria-hidden className="h-px w-[clamp(22px,3vw,40px)] bg-gold/70" />
         The FEEZEE Journal
       </p>
@@ -51,7 +51,7 @@ export function FeaturedArticles({
               />
             </Link>
 
-            <p className="mt-4 mb-0 flex items-center gap-2.5 text-[11px] tracking-[0.22em] uppercase text-muted">
+            <p className="mt-4 mb-0 flex items-center gap-2.5 text-[12px] tracking-[0.22em] uppercase text-muted">
               {article.category}
               <span aria-hidden className="text-line">
                 ·
@@ -68,11 +68,11 @@ export function FeaturedArticles({
               </Link>
             </h3>
 
-            <p className="mt-2.5 mb-0 text-[14px] leading-[1.7] text-cocoa">
+            <p className="mt-2.5 mb-0 text-[15px] leading-[1.7] text-cocoa">
               {article.standfirst}
             </p>
 
-            <p className="mt-3.5 mb-0 text-[11.5px] tracking-[0.16em] uppercase text-gold-dark">
+            <p className="mt-3.5 mb-0 text-[12.5px] tracking-[0.16em] uppercase text-gold-dark">
               Read the piece →
             </p>
           </article>

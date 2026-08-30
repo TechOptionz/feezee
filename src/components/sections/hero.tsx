@@ -116,7 +116,7 @@ export function Hero() {
         {/* The rule between the two halves is what tips this line over on a
             phone, and it is the one part of it carrying no words — so below
             `sm` the two sit on the same line without it. */}
-        <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-[12px] sm:text-[14px] tracking-[0.28em] sm:tracking-[0.34em] uppercase text-champagne mb-3">
+        <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-[13px] sm:text-[15px] tracking-[0.28em] sm:tracking-[0.34em] uppercase text-champagne mb-3">
           <span>Festive &apos;26 Collection</span>
           <span className="hidden sm:block h-px w-8 bg-champagne/45" aria-hidden />
           <span key={slide.caption} className="fz-rise text-cream/85">

@@ -48,7 +48,7 @@ export default function SalePage() {
             they take a row of three equal columns instead, so the numbers line
             up whatever the words above them do.
           */}
-          <dl className="m-0 grid grid-cols-3 gap-x-4 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-[clamp(24px,4vw,56px)] text-[12px] tracking-[0.14em] uppercase">
+          <dl className="m-0 grid grid-cols-3 gap-x-4 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-[clamp(24px,4vw,56px)] text-[13px] tracking-[0.14em] uppercase">
             <div className="grid grid-rows-subgrid row-span-2 gap-1 sm:flex sm:flex-col">
               <dt className="text-cream/70">Pieces reduced</dt>
               <dd className="m-0 text-[15px] tracking-[0.08em]">

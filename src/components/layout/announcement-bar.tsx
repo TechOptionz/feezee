@@ -14,7 +14,7 @@ export function AnnouncementBar({ overlay = false }: { overlay?: boolean }) {
   return (
     <div
       className={cn(
-        "text-center text-[13px] tracking-[0.16em] uppercase px-4 py-[11px] transition-colors duration-500",
+        "text-center text-[14px] tracking-[0.16em] uppercase px-4 py-[11px] transition-colors duration-500",
         overlay ? "bg-transparent text-cream/90" : "bg-ink text-champagne",
       )}
     >

@@ -22,7 +22,7 @@ export function CollectionHeader({
 
       <p
         className={cn(
-          "m-0 mt-[clamp(20px,3vw,34px)] flex items-center gap-3 text-[11.5px] tracking-[0.3em] uppercase",
+          "m-0 mt-[clamp(20px,3vw,34px)] flex items-center gap-3 text-[12.5px] tracking-[0.3em] uppercase",
           page.tone === "sale" ? "text-wine" : "text-muted",
         )}
       >

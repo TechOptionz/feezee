@@ -70,7 +70,7 @@ export function ProductPanel({
 
   return (
     <div className="flex flex-col">
-      <p className="m-0 flex items-center gap-3 text-[11px] tracking-[0.3em] uppercase text-muted">
+      <p className="m-0 flex items-center gap-3 text-[12px] tracking-[0.3em] uppercase text-muted">
         <span
           aria-hidden
           className={cn(
@@ -105,7 +105,7 @@ export function ProductPanel({
               {formatPrice(product.wasPkr, currency)}
             </span>
             {off && (
-              <span className="text-[11px] tracking-[0.14em] uppercase text-wine">
+              <span className="text-[12px] tracking-[0.14em] uppercase text-wine">
                 {off}% off
               </span>
             )}
@@ -113,19 +113,19 @@ export function ProductPanel({
         )}
       </div>
 
-      <p className="mt-2.5 mb-0 text-[11px] tracking-[0.16em] uppercase text-muted">
+      <p className="mt-2.5 mb-0 text-[12px] tracking-[0.16em] uppercase text-muted">
         SKU: {productSku(product)}
         {size ? `-${size}` : ""}
       </p>
 
-      <p className="mt-4 mb-0 text-[14.5px] leading-[1.7] text-cocoa">
+      <p className="mt-4 mb-0 text-[15.5px] leading-[1.7] text-cocoa">
         {detail.cut}. {product.fabric}.
       </p>
 
       {/* ---- Size ---------------------------------------------------------- */}
       <div className="mt-[clamp(22px,2.6vw,32px)] border-t border-line pt-[clamp(20px,2.4vw,28px)]">
         <div className="flex items-center justify-between gap-4">
-          <p className="m-0 text-[11.5px] tracking-[0.2em] uppercase">
+          <p className="m-0 text-[12.5px] tracking-[0.2em] uppercase">
             Size:{" "}
             <span className="text-cocoa">{size ?? "Select a size"}</span>
             {chosen?.state === "low" && (
@@ -136,7 +136,7 @@ export function ProductPanel({
           <button
             type="button"
             onClick={openSizeGuide}
-            className="bg-transparent border-0 border-b border-current p-0 cursor-pointer text-[11px] tracking-[0.16em] uppercase text-gold-dark hover:text-ink"
+            className="bg-transparent border-0 border-b border-current p-0 cursor-pointer text-[12px] tracking-[0.16em] uppercase text-gold-dark hover:text-ink"
           >
             Size Chart
           </button>
@@ -161,7 +161,7 @@ export function ProductPanel({
                   setMissingSize(false);
                 }}
                 className={cn(
-                  "relative min-w-[52px] px-3 py-2.5 text-[12px] tracking-[0.14em] uppercase border transition-colors duration-200",
+                  "relative min-w-[52px] px-3 py-2.5 text-[13px] tracking-[0.14em] uppercase border transition-colors duration-200",
                   out
                     ? "border-line text-muted/60 cursor-not-allowed line-through"
                     : "cursor-pointer",
@@ -185,7 +185,7 @@ export function ProductPanel({
         </div>
 
         {missingSize && (
-          <p className="mt-3 mb-0 text-[12px] text-wine" role="alert">
+          <p className="mt-3 mb-0 text-[13px] text-wine" role="alert">
             Choose a size to add this to your bag.
           </p>
         )}
@@ -198,7 +198,7 @@ export function ProductPanel({
           onClick={add}
           disabled={soldOut}
           className={cn(
-            "w-full px-7 py-4 text-[12px] tracking-[0.22em] uppercase border-0 transition-colors duration-200",
+            "w-full px-7 py-4 text-[13px] tracking-[0.22em] uppercase border-0 transition-colors duration-200",
             soldOut
               ? "bg-sand text-muted cursor-not-allowed"
               : "bg-ink text-cream cursor-pointer hover:bg-cocoa",
@@ -212,7 +212,7 @@ export function ProductPanel({
           onClick={() => toggleWish(product.id)}
           aria-pressed={isWished}
           className={cn(
-            "w-full px-7 py-3.5 text-[11.5px] tracking-[0.2em] uppercase border cursor-pointer bg-transparent flex items-center justify-center gap-2.5 transition-colors duration-200",
+            "w-full px-7 py-3.5 text-[12.5px] tracking-[0.2em] uppercase border cursor-pointer bg-transparent flex items-center justify-center gap-2.5 transition-colors duration-200",
             isWished
               ? "border-wine text-wine"
               : "border-line text-ink hover:border-ink",
@@ -226,14 +226,14 @@ export function ProductPanel({
       {/* Every garment on this site can be cut to measure, and a sold-out size
           is the moment that is worth saying. */}
       <div className="mt-[clamp(18px,2.2vw,24px)] bg-panel px-5 py-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-        <p className="m-0 text-[13px] leading-[1.6] text-cocoa max-w-[38ch]">
+        <p className="m-0 text-[14px] leading-[1.6] text-cocoa max-w-[38ch]">
           {soldOut
             ? "Gone from the rail — but this design can still be stitched to your own measurements."
             : "Prefer it in your own measurements? Silai stitches this design to order."}
         </p>
         <Link
           href="/silai"
-          className="text-[11px] tracking-[0.18em] uppercase text-gold-dark hover:text-ink border-b border-current pb-0.5"
+          className="text-[12px] tracking-[0.18em] uppercase text-gold-dark hover:text-ink border-b border-current pb-0.5"
         >
           Silai →
         </Link>
@@ -250,7 +250,7 @@ export function ProductPanel({
               aria-selected={tab === name}
               onClick={() => setTab(name)}
               className={cn(
-                "-mb-px bg-transparent border-0 border-b-2 px-0 pb-2.5 pt-1 text-[11.5px] tracking-[0.18em] uppercase cursor-pointer transition-colors duration-200",
+                "-mb-px bg-transparent border-0 border-b-2 px-0 pb-2.5 pt-1 text-[12.5px] tracking-[0.18em] uppercase cursor-pointer transition-colors duration-200",
                 tab === name
                   ? "border-ink text-ink"
                   : "border-transparent text-muted hover:text-ink",
@@ -261,7 +261,7 @@ export function ProductPanel({
           ))}
         </div>
 
-        <div className="pt-5 text-[14px] leading-[1.75] text-cocoa">
+        <div className="pt-5 text-[15px] leading-[1.75] text-cocoa">
           {tab === "Details" && (
             <div className="flex flex-col gap-4">
               {detail.components.map((component) => (
@@ -278,7 +278,7 @@ export function ProductPanel({
                 </div>
                 <div>{detail.care}</div>
               </div>
-              <p className="m-0 text-[11.5px] tracking-[0.06em] uppercase text-muted">
+              <p className="m-0 text-[12.5px] tracking-[0.06em] uppercase text-muted">
                 {COLOUR_NOTE}
               </p>
             </div>
@@ -297,14 +297,14 @@ export function ProductPanel({
           {tab === "Size Guide" && (
             <div className="flex flex-col gap-4">
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-[13px]">
+                <table className="w-full border-collapse text-[14px]">
                   <thead>
                     <tr>
                       {sizeGuide.columns.map((column) => (
                         <th
                           key={column}
                           scope="col"
-                          className="border-b border-line py-2 pr-4 text-left font-normal text-[11px] tracking-[0.14em] uppercase text-muted"
+                          className="border-b border-line py-2 pr-4 text-left font-normal text-[12px] tracking-[0.14em] uppercase text-muted"
                         >
                           {column}
                         </th>
@@ -335,7 +335,7 @@ export function ProductPanel({
                   </tbody>
                 </table>
               </div>
-              <p className="m-0 text-[11.5px] text-muted">
+              <p className="m-0 text-[12.5px] text-muted">
                 All measurements in inches.
               </p>
               <ul className="m-0 pl-4 flex flex-col gap-2">

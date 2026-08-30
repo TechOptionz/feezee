@@ -132,7 +132,7 @@ export function Header({ overHero = false }: { overHero?: boolean }) {
           >
             <HeartIcon filled={hydrated && wishCount > 0} />
             {hydrated && wishCount > 0 && (
-              <span className="absolute top-1.5 right-1 bg-wine text-white text-[11px] min-w-[18px] h-[18px] rounded-lg flex items-center justify-center px-1">
+              <span className="absolute top-1.5 right-1 bg-wine text-white text-[12px] min-w-[18px] h-[18px] rounded-lg flex items-center justify-center px-1">
                 {wishCount}
               </span>
             )}
@@ -146,7 +146,7 @@ export function Header({ overHero = false }: { overHero?: boolean }) {
           >
             <BagIcon />
             {hydrated && bagCount > 0 && (
-              <span className="absolute top-1.5 right-1 bg-wine text-white text-[11px] min-w-[18px] h-[18px] rounded-lg flex items-center justify-center px-1">
+              <span className="absolute top-1.5 right-1 bg-wine text-white text-[12px] min-w-[18px] h-[18px] rounded-lg flex items-center justify-center px-1">
                 {bagCount}
               </span>
             )}
@@ -179,10 +179,10 @@ export function Header({ overHero = false }: { overHero?: boolean }) {
                 key={side}
                 className={cn(
                   "flex items-center tracking-[0.16em] uppercase",
-                  "gap-[clamp(16px,2.4vw,44px)] text-[clamp(14px,1.2vw,17px)]",
+                  "gap-[clamp(16px,2.4vw,44px)] text-[clamp(15px,1.2vw,17px)]",
                   /* Inline with the lockup there is less line to spend, so the type
                    and the gaps tighten a step. */
-                  "wide:gap-[clamp(14px,1.5vw,30px)] wide:text-[clamp(12px,0.9vw,15px)]",
+                  "wide:gap-[clamp(14px,1.5vw,30px)] wide:text-[clamp(13px,0.9vw,15px)]",
                   side === 1 && "order-3",
                 )}
               >

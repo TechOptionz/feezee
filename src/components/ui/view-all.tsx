@@ -25,7 +25,7 @@ export function ViewAll({
       className={cn(
         /* The extra height a thumb needs is taken above the words, so the rule
            under them stays where the design puts it. */
-        "inline-block text-[13px] tracking-[0.16em] uppercase text-gold-dark hover:text-ink pt-2.5 pb-0.5 border-b border-current transition-colors duration-200",
+        "inline-block text-[14px] tracking-[0.16em] uppercase text-gold-dark hover:text-ink pt-2.5 pb-0.5 border-b border-current transition-colors duration-200",
         className,
       )}
     >

@@ -29,7 +29,7 @@ export function SilaiVoices() {
             <blockquote className="m-0 text-[clamp(15px,1.2vw,17px)] leading-[1.7] text-ink">
               {voice.quote}
             </blockquote>
-            <figcaption className="mt-auto text-[11.5px] tracking-[0.2em] uppercase text-muted">
+            <figcaption className="mt-auto text-[12.5px] tracking-[0.2em] uppercase text-muted">
               {voice.name}
               <span aria-hidden className="mx-2 text-line">
                 ·

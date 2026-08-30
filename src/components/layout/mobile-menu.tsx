@@ -63,7 +63,7 @@ export function MobileMenu() {
         <Link
           href="/wishlist"
           onClick={closeMenu}
-          className="mt-4 flex items-center gap-2.5 border-t border-line pt-4 text-[13px] tracking-[0.14em] uppercase text-ink hover:text-ink"
+          className="mt-4 flex items-center gap-2.5 border-t border-line pt-4 text-[14px] tracking-[0.14em] uppercase text-ink hover:text-ink"
         >
           <HeartIcon size={18} filled={hydrated && wishCount > 0} />
           Wishlist
@@ -72,7 +72,7 @@ export function MobileMenu() {
           )}
         </Link>
 
-        <div className="mt-auto flex flex-col gap-1.5 pt-6 text-xs text-muted tracking-[0.08em]">
+        <div className="mt-auto flex flex-col gap-1.5 pt-6 text-[13px] text-muted tracking-[0.08em]">
           <a
             href={whatsappHref()}
             target="_blank"
