@@ -23,10 +23,10 @@ export function CollectionNote({ page }: { page: ShopPage }) {
           />
         </div>
 
-        <div className="flex-[1_1_340px] p-[clamp(28px,4.4vw,60px)] flex flex-col justify-center gap-4">
+        <div className="flex-[1_1_340px] p-[clamp(24px,4.4vw,60px)] flex flex-col justify-center gap-4">
           <div
             className={cn(
-              "text-xs tracking-[0.32em] uppercase",
+              "text-[13px] tracking-[0.32em] uppercase",
               page.tone === "sale" ? "text-wine" : "text-gold",
             )}
           >
@@ -43,7 +43,7 @@ export function CollectionNote({ page }: { page: ShopPage }) {
             {page.note.points.map((point) => (
               <li
                 key={point}
-                className="flex gap-3 text-[13.5px] leading-[1.5] text-ink"
+                className="flex gap-3 text-[14.5px] leading-[1.5] text-ink"
               >
                 <span
                   aria-hidden

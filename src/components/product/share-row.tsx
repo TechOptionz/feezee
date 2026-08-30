@@ -55,7 +55,7 @@ export function ShareRow({ url, name }: { url: string; name: string }) {
 
   return (
     <div className="flex items-center gap-4">
-      <span className="text-[11px] tracking-[0.24em] uppercase text-muted">
+      <span className="text-[12px] tracking-[0.24em] uppercase text-muted">
         Share this look
       </span>
 

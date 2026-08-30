@@ -14,7 +14,7 @@ export function SilaiGallery() {
   return (
     <section className="pt-[clamp(48px,8vw,100px)]">
       <div className="max-w-[var(--fz-container)] mx-auto px-[18px]">
-        <p className="m-0 flex items-center gap-3 text-[11.5px] tracking-[0.3em] uppercase text-muted">
+        <p className="m-0 flex items-center gap-3 text-[12.5px] tracking-[0.3em] uppercase text-muted">
           <span aria-hidden className="h-px w-[clamp(22px,3vw,40px)] bg-gold/70" />
           Off our table
         </p>
@@ -48,7 +48,7 @@ export function SilaiGallery() {
                 className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.04]"
               />
             </div>
-            <figcaption className="pt-3 text-[12.5px] leading-[1.5] tracking-[0.04em] text-cocoa">
+            <figcaption className="pt-3 text-[13.5px] leading-[1.5] tracking-[0.04em] text-cocoa">
               {look.caption}
             </figcaption>
           </figure>

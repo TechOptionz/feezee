@@ -20,9 +20,9 @@ export function SilaiStart() {
       id="start"
       className="max-w-[var(--fz-container)] mx-auto px-[18px] pt-[clamp(48px,8vw,100px)] scroll-mt-24"
     >
-      <div className="bg-panel px-[clamp(26px,4.4vw,64px)] py-[clamp(32px,4.6vw,64px)] flex flex-wrap gap-x-[clamp(30px,5vw,80px)] gap-y-9">
+      <div className="bg-panel px-[clamp(22px,4.4vw,64px)] py-[clamp(32px,4.6vw,64px)] flex flex-wrap gap-x-[clamp(30px,5vw,80px)] gap-y-9">
         <div className="flex-[1_1_320px] flex flex-col gap-4">
-          <p className="m-0 text-xs tracking-[0.32em] uppercase text-gold">
+          <p className="m-0 text-[13px] tracking-[0.32em] uppercase text-gold">
             Start your order
           </p>
           <h2 className="m-0 font-display font-normal text-[clamp(26px,3.8vw,44px)] leading-[1.12] max-w-[16ch] text-pretty">
@@ -43,34 +43,34 @@ export function SilaiStart() {
               )}
               target="_blank"
               rel="noreferrer"
-              className="text-center bg-ink text-cream hover:text-cream px-[clamp(26px,3vw,38px)] py-4 text-[13px] tracking-[0.18em] uppercase transition-transform duration-300 hover:-translate-y-0.5"
+              className="text-center bg-ink text-cream hover:text-cream px-[clamp(26px,3vw,38px)] py-4 text-[14px] tracking-[0.18em] uppercase transition-transform duration-300 hover:-translate-y-0.5"
             >
               Message us on WhatsApp
             </a>
             <Link
               href="/new-in"
-              className="self-start text-[12.5px] tracking-[0.16em] uppercase text-gold-dark hover:text-ink border-b border-current pb-0.5"
+              className="self-start text-[13.5px] tracking-[0.16em] uppercase text-gold-dark hover:text-ink border-b border-current pb-0.5"
             >
               Browse designs first &rarr;
             </Link>
           </div>
 
-          <p className="m-0 mt-1 text-[12.5px] tracking-[0.06em] text-muted">
+          <p className="m-0 mt-1 text-[13.5px] tracking-[0.06em] text-muted">
             {contact.whatsapp.display} · Replies {contact.hours}
           </p>
         </div>
 
         <div className="flex-[1_1_300px]">
-          <p className="m-0 mb-4 text-[11.5px] tracking-[0.22em] uppercase text-cocoa">
+          <p className="m-0 mb-4 text-[12.5px] tracking-[0.22em] uppercase text-cocoa">
             Put this in the message
           </p>
           <ol className="m-0 p-0 list-none flex flex-col">
             {silaiChecklist.map((item, i) => (
               <li
                 key={item}
-                className="flex items-center gap-4 border-t border-ink/10 py-3.5 last:border-b text-[14.5px] leading-[1.5] text-ink"
+                className="flex items-center gap-4 border-t border-ink/10 py-3.5 last:border-b text-[15.5px] leading-[1.5] text-ink"
               >
-                <span className="font-display text-[13px] text-gold w-5 shrink-0">
+                <span className="font-display text-[14px] text-gold w-5 shrink-0">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 {item}

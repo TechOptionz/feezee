@@ -26,8 +26,8 @@ export function Silai() {
             className="object-cover object-top"
           />
         </div>
-        <div className="flex-[1_1_320px] p-[clamp(30px,5vw,64px)] flex flex-col justify-center gap-4">
-          <div className="text-xs tracking-[0.32em] uppercase text-gold">Silai Fashion</div>
+        <div className="flex-[1_1_320px] p-[clamp(24px,5vw,64px)] flex flex-col justify-center gap-4">
+          <div className="text-[13px] tracking-[0.32em] uppercase text-gold">Silai Fashion</div>
           <h2 className="font-display font-normal text-[clamp(26px,3.6vw,40px)] leading-[1.15] m-0 text-pretty">
             Stitched to your measurements, delivered to your door
           </h2>
@@ -40,13 +40,13 @@ export function Silai() {
           <div className="mt-1 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-x-6 gap-y-4">
             <Link
               href="/silai"
-              className="text-center bg-ink text-cream hover:text-cream px-[30px] py-3.5 text-[13px] tracking-[0.18em] uppercase transition-transform duration-300 hover:-translate-y-0.5"
+              className="text-center bg-ink text-cream hover:text-cream px-[30px] py-3.5 text-[14px] tracking-[0.18em] uppercase transition-transform duration-300 hover:-translate-y-0.5"
             >
               Start a Silai Order
             </Link>
             <Link
               href="/silai#how"
-              className="self-start text-[12.5px] tracking-[0.16em] uppercase text-gold-dark hover:text-ink border-b border-current pb-0.5"
+              className="self-start text-[13.5px] tracking-[0.16em] uppercase text-gold-dark hover:text-ink border-b border-current pb-0.5"
             >
               How it works →
             </Link>

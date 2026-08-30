@@ -13,7 +13,7 @@ export function SilaiFaq() {
     <section className="max-w-[var(--fz-container)] mx-auto px-[18px] pt-[clamp(48px,8vw,100px)]">
       <div className="flex flex-wrap gap-x-[clamp(30px,5vw,80px)] gap-y-8">
         <div className="flex-[1_1_260px] max-w-[34ch] self-start nav:sticky nav:top-10">
-          <p className="m-0 flex items-center gap-3 text-[11.5px] tracking-[0.3em] uppercase text-muted">
+          <p className="m-0 flex items-center gap-3 text-[12.5px] tracking-[0.3em] uppercase text-muted">
             <span aria-hidden className="h-px w-[clamp(22px,3vw,40px)] bg-gold/70" />
             Before you order
           </p>
@@ -41,7 +41,7 @@ export function SilaiFaq() {
                   +
                 </span>
               </summary>
-              <p className="m-0 max-w-[68ch] pb-[clamp(18px,2.2vw,26px)] pr-8 text-[14.5px] leading-[1.75] text-cocoa">
+              <p className="m-0 max-w-[68ch] pb-[clamp(18px,2.2vw,26px)] pr-8 text-[15.5px] leading-[1.75] text-cocoa">
                 {faq.a}
               </p>
             </details>

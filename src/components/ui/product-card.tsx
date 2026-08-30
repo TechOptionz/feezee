@@ -80,7 +80,7 @@ export function ProductCard({
         {product.badge && (
           <span
             className={cn(
-              "absolute top-3 left-3 z-20 text-cream text-[10px] tracking-[0.14em] uppercase px-[9px] py-1",
+              "absolute top-3 left-3 z-20 text-cream text-[11px] tracking-[0.14em] uppercase px-[9px] py-1",
               product.badge.tone === "wine" ? "bg-wine" : "bg-gold",
             )}
           >
@@ -112,7 +112,7 @@ export function ProductCard({
           type="button"
           onClick={() => addToBag(product.id)}
           aria-label={`Add ${product.name} to bag`}
-          className="absolute inset-x-0 bottom-0 z-20 bg-cream/95 text-ink py-3 text-[11px] tracking-[0.18em] uppercase cursor-pointer translate-y-full opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 motion-reduce:transition-none"
+          className="absolute inset-x-0 bottom-0 z-20 bg-cream/95 text-ink py-3 text-[12px] tracking-[0.18em] uppercase cursor-pointer translate-y-full opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 motion-reduce:transition-none"
         >
           Add to Bag
         </button>
@@ -125,25 +125,31 @@ export function ProductCard({
         the whole of the cell and the price is pushed to the foot of it, so
         every price in a row lands on one line whatever the names above did.
       */}
-      <div className="flex-1 pt-3.5 px-3 flex flex-col items-center gap-[5px] text-center">
+      <div className="flex-1 pt-3.5 px-2 nav:px-3 flex flex-col items-center gap-[5px] text-center">
         <Link
           href={productHref(product)}
-          className="text-[12px] tracking-[0.18em] uppercase text-ink hover:text-gold-dark"
+          className="text-[13px] tracking-[0.18em] uppercase text-ink hover:text-gold-dark"
         >
           {product.name}
         </Link>
-        <div className="text-[11.5px] text-muted tracking-[0.06em]">{product.fabric}</div>
-        <div className="mt-auto flex gap-2 items-baseline">
+        <div className="text-[12.5px] text-muted tracking-[0.06em]">{product.fabric}</div>
+        {/*
+          A reduced piece prints two figures side by side, and half a phone's
+          width is not always enough for both. Each one is kept whole and the
+          pair is allowed to wrap instead, so the worst case is the old price
+          on a second line — never "Rs" left stranded above its own number.
+        */}
+        <div className="mt-auto flex flex-wrap justify-center gap-x-2 gap-y-0.5 items-baseline">
           <span
             className={cn(
-              "text-[13.5px] font-medium",
+              "whitespace-nowrap text-[14.5px] font-medium",
               product.wasPkr && "text-wine",
             )}
           >
             {formatPrice(product.pkr, currency)}
           </span>
           {product.wasPkr && (
-            <span className="text-[12px] text-muted line-through">
+            <span className="whitespace-nowrap text-[13px] text-muted line-through">
               {formatPrice(product.wasPkr, currency)}
             </span>
           )}

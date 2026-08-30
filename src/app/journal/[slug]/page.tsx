@@ -55,7 +55,7 @@ export default async function ArticlePage({
       </div>
 
       <article className="max-w-[760px] mx-auto px-[18px] pt-[clamp(24px,3.4vw,44px)]">
-        <p className="m-0 flex items-center gap-3 text-[11.5px] tracking-[0.3em] uppercase text-muted">
+        <p className="m-0 flex items-center gap-3 text-[12.5px] tracking-[0.3em] uppercase text-muted">
           <span aria-hidden className="h-px w-[clamp(22px,3vw,40px)] bg-gold/70" />
           {article.category}
         </p>
@@ -68,7 +68,7 @@ export default async function ArticlePage({
           {article.standfirst}
         </p>
 
-        <p className="mt-5 mb-0 flex flex-wrap items-center gap-2.5 text-[11.5px] tracking-[0.16em] uppercase text-muted">
+        <p className="mt-5 mb-0 flex flex-wrap items-center gap-2.5 text-[12.5px] tracking-[0.16em] uppercase text-muted">
           {article.date}
           <span aria-hidden className="text-line">
             ·
