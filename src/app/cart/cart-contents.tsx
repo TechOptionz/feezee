@@ -13,7 +13,7 @@ import { storeConfig } from "@/lib/site";
  * saving against the original prices, and whether delivery is free yet.
  */
 export function CartContents() {
-  const { cart, currency, subtotalPkr, hydrated, clearBag } = useStore();
+  const { cart, currency, subtotalAed, hydrated, clearBag } = useStore();
 
   /*
    * `flatMap` rather than map-then-filter: dropping a line whose garment has
@@ -30,10 +30,10 @@ export function CartContents() {
 
   const saved = lines.reduce(
     (sum, { product, qty }) =>
-      sum + ((product.wasPkr ?? product.pkr) - product.pkr) * qty,
+      sum + ((product.wasAed ?? product.aed) - product.aed) * qty,
     0,
   );
-  const shortOfFreeDelivery = storeConfig.freeShippingThresholdPkr - subtotalPkr;
+  const shortOfFreeDelivery = storeConfig.freeShippingThresholdAed - subtotalAed;
 
   // Before the saved bag has been read back there is nothing honest to draw:
   // an empty state would be wrong for anyone who has a bag, and a skeleton for
@@ -91,7 +91,7 @@ export function CartContents() {
         <dl className="m-0 flex flex-col gap-3 text-[15px]">
           <div className="flex justify-between gap-4">
             <dt className="text-cocoa">Subtotal</dt>
-            <dd className="m-0">{formatPrice(subtotalPkr, currency)}</dd>
+            <dd className="m-0">{formatPrice(subtotalAed, currency)}</dd>
           </div>
           {saved > 0 && (
             <div className="flex justify-between gap-4 text-wine">
@@ -110,7 +110,7 @@ export function CartContents() {
               Total
             </dt>
             <dd className="m-0 font-medium">
-              {formatPrice(subtotalPkr, currency)}
+              {formatPrice(subtotalAed, currency)}
             </dd>
           </div>
         </dl>

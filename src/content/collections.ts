@@ -58,7 +58,7 @@ export const shopPages: ShopPage[] = [
       points: [
         "Restocked every Thursday",
         "Dispatched within 48 hours",
-        "Free delivery over Rs 5,000",
+        "Free delivery over AED 1,000",
       ],
     },
   },
@@ -155,7 +155,7 @@ export const shopPages: ShopPage[] = [
       points: [
         "Final sale — exchange only, no returns",
         "Discount already applied, no code needed",
-        "Free delivery over Rs 5,000 still applies",
+        "Free delivery over AED 1,000 still applies",
       ],
     },
   },

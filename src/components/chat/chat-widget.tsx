@@ -37,7 +37,7 @@ type Message = {
  */
 export function ChatWidget() {
   const { currency } = useStore();
-  const price = useCallback((pkr: number) => formatPrice(pkr, currency), [currency]);
+  const price = useCallback((aed: number) => formatPrice(aed, currency), [currency]);
 
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -230,7 +230,7 @@ export function ChatWidget() {
   );
 }
 
-function Bubble({ message, price }: { message: Message; price: (pkr: number) => string }) {
+function Bubble({ message, price }: { message: Message; price: (aed: number) => string }) {
   const fromBot = message.from === "bot";
   const looks = message.productIds ? productsByIds(message.productIds) : [];
 
@@ -266,9 +266,9 @@ function Bubble({ message, price }: { message: Message; price: (pkr: number) => 
                 <span className="truncate text-[14px] text-ink">{product.name}</span>
                 <span className="truncate text-[12.5px] text-muted">{product.fabric}</span>
                 <span className="text-[13.5px] text-ink">
-                  {price(product.pkr)}
-                  {product.wasPkr && (
-                    <span className="ml-2 text-muted line-through">{price(product.wasPkr)}</span>
+                  {price(product.aed)}
+                  {product.wasAed && (
+                    <span className="ml-2 text-muted line-through">{price(product.wasAed)}</span>
                   )}
                 </span>
               </div>

@@ -21,7 +21,7 @@ export function CartDrawer() {
     cartOpen,
     closeCart,
     bagCount,
-    subtotalPkr,
+    subtotalAed,
     currency,
     clearBag,
   } = useStore();
@@ -32,7 +32,7 @@ export function CartDrawer() {
   if (!cartOpen) return null;
 
   const shortOfFreeDelivery =
-    storeConfig.freeShippingThresholdPkr - subtotalPkr;
+    storeConfig.freeShippingThresholdAed - subtotalAed;
 
   return (
     <>
@@ -115,7 +115,7 @@ export function CartDrawer() {
                   Subtotal
                 </span>
                 <span className="text-[17px] font-medium">
-                  {formatPrice(subtotalPkr, currency)}
+                  {formatPrice(subtotalAed, currency)}
                 </span>
               </div>
 

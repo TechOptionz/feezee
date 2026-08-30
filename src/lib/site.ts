@@ -57,5 +57,5 @@ export const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encod
  */
 export const storeConfig = {
   showAnnouncement: true,
-  freeShippingThresholdPkr: 5000,
+  freeShippingThresholdAed: 1000,
 } as const;
