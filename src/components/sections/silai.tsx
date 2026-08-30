@@ -1,6 +1,15 @@
 import Image from "next/image";
+import Link from "next/link";
 import { img } from "@/lib/assets";
 
+/**
+ * The Silai panel on the home page.
+ *
+ * It is the trailer for `/silai` rather than the service itself: the prices,
+ * the measurements and the answers all live on the page now, and this says
+ * only enough to make someone want them. The `id` stays so that older links
+ * to `/#silai` still land somewhere sensible.
+ */
 export function Silai() {
   return (
     <section
@@ -26,12 +35,22 @@ export function Silai() {
             Choose any design, share your measurements on WhatsApp, and our tailors cut and finish
             each piece by hand. Free alterations on every order.
           </p>
-          <a
-            href="#footer"
-            className="self-start bg-ink text-cream hover:text-cream px-[30px] py-3.5 text-[13px] tracking-[0.18em] uppercase"
-          >
-            Start a Silai Order
-          </a>
+          {/* Stacked on a phone, so the panel's one button spans the panel
+              rather than stopping wherever its words do. */}
+          <div className="mt-1 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-x-6 gap-y-4">
+            <Link
+              href="/silai"
+              className="text-center bg-ink text-cream hover:text-cream px-[30px] py-3.5 text-[13px] tracking-[0.18em] uppercase transition-transform duration-300 hover:-translate-y-0.5"
+            >
+              Start a Silai Order
+            </Link>
+            <Link
+              href="/silai#how"
+              className="self-start text-[12.5px] tracking-[0.16em] uppercase text-gold-dark hover:text-ink border-b border-current pb-0.5"
+            >
+              How it works →
+            </Link>
+          </div>
         </div>
       </div>
     </section>

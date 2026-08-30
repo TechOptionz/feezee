@@ -19,13 +19,19 @@ src/
     layout.tsx           Fonts (Marcellus + Jost), metadata, StoreProvider
     globals.css          Tailwind entry; maps design tokens to Tailwind namespaces
     page.tsx             Composes the page from sections, in design order
+    product/[slug]/      One garment's own page — gallery, buying panel, rail
+    journal/[slug]/      One article
   components/
     layout/              announcement-bar · header · mobile-menu · footer
+    product/             product-gallery · product-panel · share-row
     sections/            hero · categories · new-arrivals · silai · values · lookbook
+                         · featured-articles
     store/               store-provider — bag, wishlist and drawer state
     ui/                  product-card · wordmark · icons
   content/
-    products.ts          Catalogue, categories and lookbook
+    products.ts          Catalogue, categories, lookbook, slugs and galleries
+    product-detail.ts    Sizes and stock, per-garment copy, the house size chart
+    journal.ts           The three journal articles
     navigation.ts        Primary and footer navigation
     values.ts            The four value propositions
   lib/
@@ -36,7 +42,7 @@ src/
   styles/
     tokens.css           Every design colour and layout constant
 public/
-  img/                   Design images, original filenames (p01–p33)
+  img/                   Design images, original filenames (p01–p31)
 design-source/           The original Claude Design export, kept for reference
 ```
 
@@ -52,10 +58,50 @@ Base element styles in `globals.css` sit inside `@layer base` — unlayered CSS
 beats every Tailwind utility regardless of specificity, which would silently
 override colours set on components.
 
+## Product pages
+
+`/product/<slug>` is a garment on a page of its own. Every one of them is
+prerendered at build time from `content/products.ts` — the slug, the SKU and the
+list of photographs are all derived from the catalogue entry, so adding a
+garment adds its page, its share links and its structured data with it.
+
+```
+/product/bahaar-lace-suit
+  ├─ gallery      every frame of the piece: a grid on a desktop, a swipe rail on a phone
+  ├─ panel        price · SKU · sizes · add to bag · wishlist · details/description/size guide
+  ├─ rail         "You May Also Like" — same line first, then the nearest cut
+  └─ journal      "Featured Articles" — the three pieces in content/journal.ts
+```
+
+Three things are worth knowing before editing it:
+
+1. **The worn shot leads; the hanger follows.** `Product.img` is always the
+   garment on a model — every card, bag row and rail reads off that one field,
+   so the shop is a shop of people wearing clothes. The hanger frames sit in
+   `HANGER_FRAMES` and only ever appear behind the worn shot on the garment's
+   own page, where they answer what actually arrives in the parcel. The single
+   exception is the boutique rail on the home page, which leads on hangers on
+   purpose. No photograph is used by two garments; a repeat is a bug.
+2. **A size is part of a bag line, not a note on one.** `CartLine` carries an
+   optional `size`, and every bag operation takes it — the same suit in L and in
+   XL is two rows. A card in a grid still adds without one, and that row says so
+   rather than inventing a size.
+3. **Stock lives in `content/product-detail.ts`.** `STOCK` marks the sizes that
+   are gone or nearly gone; a garment with no entry runs the full XS–XXL. The
+   page opens on the first size still on the rail, which is what keeps "Add to
+   Bag" live on arrival, and falls back to a "Sold out" button with a Silai
+   offer when nothing is left.
+
+Copy for a garment — the colour, the pieces in the box, the description — is
+keyed by catalogue id in the same file, with a derived fallback, so a garment
+added to the catalogue without copy still has a page that answers the basics.
+
 ## Assets
 
-Images live in `public/img/` under the filenames used by the source design.
-Reference them through the helper rather than hardcoding paths:
+Images live in `public/img/`. Shoot frames carry a descriptive name
+(`suit-sage-tissue.jpg`, `kurta-rani-zari.jpg`); the `p01`–`p31` files are the
+original hanger and rack frames from the source design, kept under their own
+names. Reference either through the helper rather than hardcoding paths:
 
 ```tsx
 import Image from "next/image";
