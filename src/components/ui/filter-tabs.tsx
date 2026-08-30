@@ -45,7 +45,9 @@ export function FilterTabs({
               // -mb-px so the active segment covers the shared hairline
               // instead of stacking a second line on top of it.
               "relative -mb-px shrink-0 cursor-pointer whitespace-nowrap",
-              "pb-[clamp(11px,1.1vw,15px)] pt-1",
+              /* The names are the control, so on a phone each one carries a
+                 thumb's worth of height above and below its own word. */
+              "pt-2.5 pb-3.5 nav:pt-1 nav:pb-[clamp(11px,1.1vw,15px)]",
               "text-[clamp(14px,1.15vw,18px)] tracking-[0.2em] uppercase",
               "transition-colors duration-200",
               "after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-[2px]",

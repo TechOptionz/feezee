@@ -1,61 +1,21 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import Link from "next/link";
+import { useRef } from "react";
 import { Logo } from "@/components/ui/logo";
 import { useStore } from "@/components/store/store-provider";
+import { HeartIcon } from "@/components/ui/icons";
 import { primaryNav } from "@/content/navigation";
+import { contact, whatsappHref } from "@/lib/site";
+import { useOverlay } from "@/lib/use-overlay";
 import { cn } from "@/lib/utils";
 
-const FOCUSABLE = 'a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])';
-
 export function MobileMenu() {
-  const { menuOpen, closeMenu } = useStore();
+  const { menuOpen, closeMenu, wishCount, hydrated } = useStore();
   const panelRef = useRef<HTMLDivElement>(null);
 
-  /*
-   * A drawer that covers the page has to behave like a dialog: Escape closes
-   * it, Tab stays inside it, and the page behind it does not scroll. Without
-   * the scroll lock the body scrolls under the overlay on touch devices.
-   */
-  useEffect(() => {
-    if (!menuOpen) return;
-
-    const panel = panelRef.current;
-    panel?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
-
-    const { overflow } = document.body.style;
-    document.body.style.overflow = "hidden";
-
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        closeMenu();
-        return;
-      }
-      if (e.key !== "Tab" || !panel) return;
-
-      const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
-      if (items.length === 0) return;
-
-      const first = items[0];
-      const last = items[items.length - 1];
-      const active = document.activeElement;
-
-      // Wrap focus at either end so Tab never escapes to the page behind.
-      if (e.shiftKey && (active === first || !panel.contains(active))) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && active === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = overflow;
-    };
-  }, [menuOpen, closeMenu]);
+  // A drawer that covers the page has to behave like a dialog — see useOverlay.
+  useOverlay(menuOpen, panelRef, closeMenu);
 
   if (!menuOpen) return null;
 
@@ -69,7 +29,7 @@ export function MobileMenu() {
         role="dialog"
         aria-modal="true"
         aria-label="Menu"
-        className="fixed top-0 left-0 bottom-0 w-[78%] max-w-[320px] bg-cream z-100 px-[26px] py-7 flex flex-col gap-1 shadow-[8px_0_40px_rgba(43,33,24,0.25)]"
+        className="fixed top-0 left-0 bottom-0 w-[78%] max-w-[320px] bg-cream z-100 px-[26px] py-7 flex flex-col gap-1 shadow-[8px_0_40px_rgba(43,33,24,0.25)] overflow-y-auto"
       >
         <div className="flex items-start justify-between mb-[18px]">
           <Logo className="h-[34px]" />
@@ -84,7 +44,7 @@ export function MobileMenu() {
         </div>
 
         {primaryNav.map((link, i) => (
-          <a
+          <Link
             key={link.label}
             href={link.href}
             onClick={closeMenu}
@@ -95,11 +55,33 @@ export function MobileMenu() {
             )}
           >
             {link.label}
-          </a>
+          </Link>
         ))}
 
-        <div className="mt-auto text-xs text-muted tracking-[0.08em]">
-          WhatsApp orders · Cash on delivery
+        {/* Search is hidden at this width, so the wishlist gets a line of its
+            own here rather than disappearing with it. */}
+        <Link
+          href="/wishlist"
+          onClick={closeMenu}
+          className="mt-4 flex items-center gap-2.5 border-t border-line pt-4 text-[13px] tracking-[0.14em] uppercase text-ink hover:text-ink"
+        >
+          <HeartIcon size={18} filled={hydrated && wishCount > 0} />
+          Wishlist
+          {hydrated && wishCount > 0 && (
+            <span className="text-wine">({wishCount})</span>
+          )}
+        </Link>
+
+        <div className="mt-auto flex flex-col gap-1.5 pt-6 text-xs text-muted tracking-[0.08em]">
+          <a
+            href={whatsappHref()}
+            target="_blank"
+            rel="noreferrer"
+            className="text-ink hover:text-ink"
+          >
+            WhatsApp {contact.whatsapp.display}
+          </a>
+          <span>WhatsApp orders · Cash on delivery</span>
         </div>
       </div>
     </>

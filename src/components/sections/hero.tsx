@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { img } from "@/lib/assets";
 import { heroSlides, HERO_SLIDE_MS } from "@/content/hero";
 import { cn } from "@/lib/utils";
@@ -57,12 +58,18 @@ export function Hero() {
       aria-roledescription="carousel"
       aria-label="Featured looks"
       /*
-       * The section carries the photographs' own 1672:941 ratio, so `cover`
-       * has nothing to crop: on any normal window the full frame is visible,
-       * heads included. Only an unusually short window trims it, and the
-       * per-slide `focus` keeps that trim off the faces.
+       * From `nav` up the section carries the photographs' own 1672:941 ratio,
+       * so `cover` has nothing to crop: the full frame is visible, heads
+       * included. Only an unusually short window trims it, and the per-slide
+       * `focus` keeps that trim off the faces.
+       *
+       * A phone is the other way round. That ratio would draw a 210px letterbox
+       * there, so the floor took over — and 520px of it left the copy starting
+       * under the header with the figure cropped at the waist. On a portrait
+       * screen the frame is portrait too: most of the window, which gives the
+       * photograph a body to show and the copy a foot of its own to sit in.
        */
-      className="relative w-full aspect-[1672/941] max-h-[100svh] min-h-[520px] overflow-hidden bg-ink"
+      className="relative w-full overflow-hidden bg-ink min-h-[max(560px,82svh)] nav:min-h-[520px] nav:aspect-[1672/941] nav:max-h-[100svh]"
     >
       {heroSlides.map((s, i) => {
         const active = i === index;
@@ -106,9 +113,12 @@ export function Hero() {
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(43,33,24,0.18)_0%,rgba(43,33,24,0)_30%,rgba(43,33,24,0.30)_66%,rgba(43,33,24,0.82)_100%)]" />
 
       <div className="absolute left-0 right-0 bottom-0 px-[clamp(16px,2.2vw,34px)] pb-[clamp(46px,7vh,84px)] text-cream">
+        {/* The rule between the two halves is what tips this line over on a
+            phone, and it is the one part of it carrying no words — so below
+            `sm` the two sit on the same line without it. */}
         <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-[12px] sm:text-[14px] tracking-[0.28em] sm:tracking-[0.34em] uppercase text-champagne mb-3">
           <span>Festive &apos;26 Collection</span>
-          <span className="h-px w-8 bg-champagne/45" aria-hidden />
+          <span className="hidden sm:block h-px w-8 bg-champagne/45" aria-hidden />
           <span key={slide.caption} className="fz-rise text-cream/85">
             {slide.caption}
           </span>
@@ -116,19 +126,31 @@ export function Hero() {
         <h1 className="font-display font-normal text-[clamp(40px,7vw,86px)] leading-[1.04] m-0 mb-[22px] max-w-[15ch] text-pretty">
           Elegance, stitched the Pakistani way
         </h1>
-        <div className="flex gap-3 flex-wrap">
+        {/*
+          Side by side the pair is wider than a phone, so they used to wrap to
+          two lines of unequal width — a stack that read as an accident. Below
+          `sm` it is an explicit column of two full-width buttons instead: one
+          rhythm, one edge, and a target the width of the thumb.
+        */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:flex-wrap">
           <a
             href="#new"
-            className="inline-block bg-cream text-ink hover:text-ink px-[clamp(30px,3vw,42px)] py-4 text-[15px] tracking-[0.18em] uppercase transition-transform duration-300 hover:-translate-y-0.5"
+            className="block sm:inline-block text-center bg-cream text-ink hover:text-ink px-[clamp(30px,3vw,42px)] py-4 text-[15px] tracking-[0.18em] uppercase transition-transform duration-300 hover:-translate-y-0.5"
           >
             Shop New In
           </a>
-          <a
-            href="#silai"
-            className="inline-block border border-cream/70 text-cream hover:text-cream px-[clamp(30px,3vw,42px)] py-4 text-[15px] tracking-[0.18em] uppercase transition-colors duration-300 hover:bg-cream/10"
+          {/*
+            Silai is a route now rather than an anchor on this page, so it goes
+            through the router — which is what keeps the bag and the wishlist,
+            held in client state above the page, from being thrown away on the
+            way there.
+          */}
+          <Link
+            href="/silai"
+            className="block sm:inline-block text-center border border-cream/70 text-cream hover:text-cream px-[clamp(30px,3vw,42px)] py-4 text-[15px] tracking-[0.18em] uppercase transition-colors duration-300 hover:bg-cream/10"
           >
             Made to Order
-          </a>
+          </Link>
         </div>
 
         {/* Progress rails double as the slide picker. */}
@@ -139,7 +161,7 @@ export function Hero() {
          * the picker is the moment a visitor actually wants it to wait.
          */}
         <div
-          className="mt-9 flex gap-2.5"
+          className="mt-4 flex gap-2.5"
           role="group"
           aria-label="Choose a look"
           onMouseEnter={() => setPaused(true)}
@@ -154,7 +176,13 @@ export function Hero() {
               aria-label={s.caption}
               aria-current={i === index}
               onClick={() => go(i)}
-              className="group h-4 w-9 sm:w-12 cursor-pointer bg-transparent p-0 border-0"
+              /*
+               * The rail is two pixels of it; the rest is the thumb. The
+               * button is a full touch target with the rail centred inside,
+               * so what a finger has to find is 44px tall while what the eye
+               * sees is unchanged.
+               */
+              className="group flex h-11 w-9 sm:w-12 items-center cursor-pointer bg-transparent p-0 border-0"
             >
               <span className="relative block h-[2px] w-full bg-cream/30 overflow-hidden transition-colors group-hover:bg-cream/55">
                 <span

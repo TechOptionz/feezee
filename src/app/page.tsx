@@ -1,6 +1,5 @@
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { Header } from "@/components/layout/header";
-import { MobileMenu } from "@/components/layout/mobile-menu";
 import { Footer } from "@/components/layout/footer";
 import { Hero } from "@/components/sections/hero";
 import { Categories } from "@/components/sections/categories";
@@ -12,8 +11,7 @@ import { Lookbook } from "@/components/sections/lookbook";
 export default function HomePage() {
   return (
     <div className="bg-cream min-h-screen">
-      <Header />
-      <MobileMenu />
+      <Header overHero />
       <main>
         <Hero />
         <Categories />

@@ -189,6 +189,15 @@
   width: 100%;
 }
 
+/*
+ * The page you are on keeps its rule drawn. It is the same rule hover draws, so
+ * the bar gains a "you are here" without gaining a second highlight colour —
+ * and on the home page, where no nav link matches, nothing is drawn at all.
+ */
+.fz-navlink--here::after {
+  width: 100%;
+}
+
 .fz-navlink:hover,
 .fz-navlink:focus-visible {
   text-shadow:

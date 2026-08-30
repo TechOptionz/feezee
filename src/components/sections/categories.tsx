@@ -31,19 +31,25 @@ export function Categories() {
       </div>
       {/*
         Keyed on the tab so each switch replays the rise-in rather than snapping.
-        The photos stay edge to edge — only the rows are spaced, so the two-column
-        phone layout does not run a caption into the picture beneath it.
+
+        From `nav` up the photographs run edge to edge and only the rows are
+        spaced — four across, the way the design draws it. Two across on a
+        phone that seam does not work: the two cards meet with nothing between
+        them, so the left card's heart sits a few pixels from the right card's
+        badge and the captions of the pair very nearly touch. Below `nav` the
+        block takes the page margin and a column gutter, which puts each card
+        in a frame of its own and keeps every control clear of the screen edge.
       */}
       <div
         key={tab.name}
-        className="fz-rise grid grid-cols-2 nav:grid-cols-4 gap-x-0 gap-y-9"
+        className="fz-rise grid grid-cols-2 nav:grid-cols-4 px-[18px] gap-x-[14px] gap-y-10 nav:px-0 nav:gap-x-0 nav:gap-y-9"
       >
         {looks.map((product) => (
           <ProductCard
             key={product.id}
             product={product}
             ratio="2/3"
-            sizes="(max-width: 860px) 50vw, 25vw"
+            sizes="(max-width: 860px) 47vw, 25vw"
           />
         ))}
       </div>

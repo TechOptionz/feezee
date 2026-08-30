@@ -1,16 +1,25 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { Logo } from "@/components/ui/logo";
-import { BagIcon, SearchIcon } from "@/components/ui/icons";
+import { BagIcon, HeartIcon, SearchIcon } from "@/components/ui/icons";
 import { useStore } from "@/components/store/store-provider";
 import { primaryNav } from "@/content/navigation";
 import { cn } from "@/lib/utils";
 
-export function Header() {
-  const { bagCount, menuOpen, toggleMenu } = useStore();
-  const [solid, setSolid] = useState(false);
+/**
+ * `overHero` is the home page, where the header floats on the photograph. Every
+ * other page has no hero to float over, so the header takes its place in the
+ * flow: cream, solid, and scrolling away with the rest of the page.
+ */
+export function Header({ overHero = false }: { overHero?: boolean }) {
+  const { bagCount, wishCount, hydrated, menuOpen, toggleMenu, openCart } =
+    useStore();
+  const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
 
   /*
    * The header floats over the full-bleed hero, so it has two skins: light
@@ -18,21 +27,26 @@ export function Header() {
    * page moves — which is also when a cream panel stops covering the picture.
    */
   useEffect(() => {
-    const sync = () => setSolid(window.scrollY > 24);
+    if (!overHero) return;
+    const sync = () => setScrolled(window.scrollY > 24);
     sync();
     window.addEventListener("scroll", sync, { passive: true });
     return () => window.removeEventListener("scroll", sync);
-  }, []);
+  }, [overHero]);
 
-  const overlay = !solid;
+  const overlay = overHero && !scrolled;
 
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-colors duration-500",
-        solid
-          ? "bg-cream/96 backdrop-blur-[8px] border-b border-line"
-          : "bg-[linear-gradient(180deg,rgba(43,33,24,0.52)_0%,rgba(43,33,24,0.18)_62%,rgba(43,33,24,0)_100%)]",
+        "z-50 transition-colors duration-500",
+        overHero
+          ? "fixed inset-x-0 top-0"
+          : "relative bg-cream border-b border-line",
+        overHero &&
+          (scrolled
+            ? "bg-cream/96 backdrop-blur-[8px] border-b border-line"
+            : "bg-[linear-gradient(180deg,rgba(43,33,24,0.52)_0%,rgba(43,33,24,0.18)_62%,rgba(43,33,24,0)_100%)]"),
       )}
     >
       <AnnouncementBar overlay={overlay} />
@@ -41,8 +55,14 @@ export function Header() {
        * One wrapping row. Wide enough, and the nav sits inline with the lockup
        * on a single line; below `wide` it is ordered last and made full-width,
        * so it wraps onto a row of its own exactly as it used to.
+       *
+       * Under `nav` there is no nav row underneath to supply the lower half of
+       * the lockup's space, so the padding is equal top and bottom there. The
+       * gaps close a notch too: on a 320px window the lockup, the menu and the
+       * two counted icons came to a few pixels more than the line, and the
+       * icons dropped to a second row of their own beneath it.
        */}
-      <div className="flex flex-wrap items-center gap-x-3 px-[clamp(16px,2.2vw,34px)] pt-3.5 pb-2 wide:pb-3.5">
+      <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 px-[clamp(16px,2.2vw,34px)] pt-3.5 pb-3.5 nav:pb-2 wide:pb-3.5">
         <button
           type="button"
           onClick={toggleMenu}
@@ -71,25 +91,21 @@ export function Header() {
           />
         </button>
 
-        <a
-          href="#top"
-          aria-label="FEEZEE Fashion — home"
-          className="block py-1"
-        >
+        <Link href="/" aria-label="FEEZEE Fashion — home" className="block py-1">
           <Logo
             tone={overlay ? "light" : "gold"}
             priority
             className="h-[clamp(42px,5.6vw,72px)]"
           />
-        </a>
+        </Link>
 
         {/*
-         * Ordered after the nav so search and bag close the single line at the
-         * right gutter instead of sitting in against the lockup. That hands
-         * their width back to the nav on the left, which carries the two link
-         * groups — and the channel between them — clear of the model's face.
-         * On the wrapped layout the nav is `order-last` on a row of its own,
-         * so this only ever moves these two past the nav, never past the
+         * Ordered after the nav so search, wishlist and bag close the single
+         * line at the right gutter instead of sitting in against the lockup.
+         * That hands their width back to the nav on the left, which carries the
+         * two link groups — and the channel between them — clear of the model's
+         * face. On the wrapped layout the nav is `order-last` on a row of its
+         * own, so this only ever moves these past the nav, never past the
          * lockup, and `ml-auto` still holds them at the right.
          */}
         <div
@@ -105,13 +121,31 @@ export function Header() {
           >
             <SearchIcon />
           </button>
+
+          {/* Beside search, and counted the same way as the bag. */}
+          <Link
+            href="/wishlist"
+            aria-label={
+              wishCount > 0 ? `Wishlist, ${wishCount} saved` : "Wishlist"
+            }
+            className="bg-transparent border-none cursor-pointer p-2.5 nav:p-3 relative min-w-11 min-h-11 text-inherit hover:text-inherit flex items-center justify-center"
+          >
+            <HeartIcon filled={hydrated && wishCount > 0} />
+            {hydrated && wishCount > 0 && (
+              <span className="absolute top-1.5 right-1 bg-wine text-white text-[11px] min-w-[18px] h-[18px] rounded-lg flex items-center justify-center px-1">
+                {wishCount}
+              </span>
+            )}
+          </Link>
+
           <button
             type="button"
-            aria-label="Bag"
-            className="bg-transparent border-none cursor-pointer p-3 relative min-w-12 min-h-12 text-inherit flex items-center justify-center"
+            onClick={openCart}
+            aria-label={bagCount > 0 ? `Bag, ${bagCount} items` : "Bag"}
+            className="bg-transparent border-none cursor-pointer p-2.5 nav:p-3 relative min-w-11 min-h-11 text-inherit flex items-center justify-center"
           >
             <BagIcon />
-            {bagCount > 0 && (
+            {hydrated && bagCount > 0 && (
               <span className="absolute top-1.5 right-1 bg-wine text-white text-[11px] min-w-[18px] h-[18px] rounded-lg flex items-center justify-center px-1">
                 {bagCount}
               </span>
@@ -152,25 +186,32 @@ export function Header() {
                   side === 1 && "order-3",
                 )}
               >
-                {group.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    className={cn(
-                      "fz-navlink whitespace-nowrap",
-                      overlay && "fz-navlink--over",
-                      overlay
-                        ? link.tone === "sale"
-                          ? "text-champagne hover:text-champagne"
-                          : "text-cream/90 hover:text-cream"
-                        : link.tone === "sale"
-                          ? "text-wine hover:text-wine"
-                          : "text-ink hover:text-ink",
-                    )}
-                  >
-                    {link.label}
-                  </a>
-                ))}
+                {group.map((link) => {
+                  // The page you are on keeps its rule drawn, so the bar says
+                  // where you are without a second highlight colour.
+                  const here = pathname === link.href;
+                  return (
+                    <Link
+                      key={link.label}
+                      href={link.href}
+                      aria-current={here ? "page" : undefined}
+                      className={cn(
+                        "fz-navlink whitespace-nowrap",
+                        overlay && "fz-navlink--over",
+                        here && "fz-navlink--here",
+                        overlay
+                          ? link.tone === "sale"
+                            ? "text-champagne hover:text-champagne"
+                            : "text-cream/90 hover:text-cream"
+                          : link.tone === "sale"
+                            ? "text-wine hover:text-wine"
+                            : "text-ink hover:text-ink",
+                      )}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
               </div>
             ),
           )}

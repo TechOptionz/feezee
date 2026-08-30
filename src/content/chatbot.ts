@@ -1,5 +1,11 @@
-import { categoryTabs, newArrivalGroups, products, productsByIds } from "@/content/products";
-import { storeConfig } from "@/lib/site";
+import {
+  categoryTabs,
+  newArrivalGroups,
+  products,
+  productsByIds,
+  productsInCollection,
+} from "@/content/products";
+import { contact, storeConfig } from "@/lib/site";
 
 /**
  * The assistant's script.
@@ -38,7 +44,11 @@ function range(ids: readonly number[], price: PriceFormatter) {
 const saleIds = products.filter((p) => p.wasPkr).map((p) => p.id);
 const bestSellerIds = products.filter((p) => p.badge?.label === "Best Seller").map((p) => p.id);
 const newIds = products.filter((p) => p.badge?.label === "New").map((p) => p.id);
-const totalPieces = newArrivalGroups.reduce((n, g) => n + g.count, 0);
+/** How many pieces a line actually holds — the grid and the reply agree. */
+const lineSize = (name: (typeof newArrivalGroups)[number]["name"]) =>
+  productsInCollection(name).length;
+
+const totalPieces = newArrivalGroups.reduce((n, g) => n + lineSize(g.name), 0);
 
 /*
  * What each tab of "Shop by Category" actually holds. The tab names and the
@@ -70,7 +80,7 @@ const lineTopics: ChatTopic[] = newArrivalGroups.map((group) => ({
   keywords: [group.name.toLowerCase(), slug(group.name)],
   lines: (price) => [
     group.blurb,
-    `${group.count} pieces in the line, ${range(group.productIds, price)}. Four of them:`,
+    `${lineSize(group.name)} pieces in the line, ${range(group.productIds, price)}. Four of them:`,
   ],
   productIds: group.productIds,
   followUps: ["new-in", "article-pieces", "sizes", "shipping"],
@@ -93,7 +103,7 @@ const staticTopics: ChatTopic[] = [
     keywords: ["new", "arrival", "arrivals", "latest", "drop", "recent"],
     lines: () => [
       `${totalPieces} pieces across three lines: ${newArrivalGroups
-        .map((g) => `${g.name} (${g.count})`)
+        .map((g) => `${g.name} (${lineSize(g.name)})`)
         .join(", ")}.`,
       "Pick a line and I'll show you what's in it.",
     ],
@@ -182,7 +192,7 @@ const staticTopics: ChatTopic[] = [
     lines: () => [
       "Choose any design on the site, send your measurements on WhatsApp, and our in-house tailors cut and finish the piece by hand.",
       "Free alterations on every silai order — we keep altering until it fits.",
-      "Allow 7–10 working days for stitching, plus delivery.",
+      "A kurta takes 7–10 days, a three-piece 10–14, bridal 4–6 weeks. The Silai page carries the full table of charges and turnarounds.",
     ],
     followUps: ["silai-measurements", "alterations", "sizes", "contact"],
   },
@@ -191,7 +201,7 @@ const staticTopics: ChatTopic[] = [
     question: "Which measurements do you need?",
     keywords: ["measurement", "measurements", "measure", "bust", "waist", "sleeve", "shoulder"],
     lines: () => [
-      "Nine numbers, in inches: shirt length, shoulder, bust, waist, hip, sleeve length, sleeve opening, neck depth and trouser length.",
+      "Ten numbers, in inches: shirt length, shoulder, chest, waist, hip, neck depth, sleeve length, armhole, sleeve opening and trouser length.",
       "Easier still — measure a shirt you already like wearing and send us those. That is what most customers do.",
     ],
     followUps: ["silai", "alterations", "contact"],
@@ -263,10 +273,24 @@ const staticTopics: ChatTopic[] = [
   {
     id: "contact",
     question: "Talk to a person",
-    keywords: ["contact", "whatsapp", "human", "call", "phone", "email", "talk", "agent"],
+    keywords: [
+      "contact",
+      "whatsapp",
+      "human",
+      "call",
+      "phone",
+      "email",
+      "talk",
+      "agent",
+      "address",
+      "shop",
+      "store",
+      "location",
+      "dubai",
+    ],
     lines: () => [
-      "Our team answers on WhatsApp from 10am to 8pm, Monday to Saturday.",
-      "“Start a Silai Order” in the Silai panel and “WhatsApp Us” in the footer both open a chat with us directly.",
+      `WhatsApp us on ${contact.whatsapp.display} — our team answers ${contact.hours}.`,
+      `You can also write to ${contact.email}, or come and see us at ${contact.address.oneLine}.`,
     ],
     followUps: ["silai", "track-order", "categories"],
   },
@@ -298,7 +322,7 @@ export const welcomeLines = [
 
 export const fallbackLines = [
   "That one is not in my notes yet — I only answer from what the team has written down.",
-  "Try a question below, or message them on WhatsApp: they reply 10am to 8pm.",
+  `Try a question below, or message them on WhatsApp at ${contact.whatsapp.display}: they reply ${contact.hours}.`,
 ];
 
 /** Drops a plural "s", so "kurta" and "kurtas" are the same word to us. */

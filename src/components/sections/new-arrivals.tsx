@@ -4,12 +4,16 @@ import { useState } from "react";
 import { FilterTabs } from "@/components/ui/filter-tabs";
 import { ProductCard } from "@/components/ui/product-card";
 import { ViewAll } from "@/components/ui/view-all";
-import { newArrivalGroups, productsByIds } from "@/content/products";
+import {
+  newArrivalGroups,
+  productsByIds,
+  productsInCollection,
+} from "@/content/products";
 
 const groupNames = newArrivalGroups.map((g) => g.name);
 
 export function NewArrivals() {
-  const [active, setActive] = useState(newArrivalGroups[0].name);
+  const [active, setActive] = useState<string>(newArrivalGroups[0].name);
   const index = Math.max(
     0,
     newArrivalGroups.findIndex((g) => g.name === active),
@@ -26,7 +30,7 @@ export function NewArrivals() {
             className="h-px w-[clamp(22px,3vw,40px)] bg-gold/70"
             aria-hidden
           />
-          {group.count}+ items
+          {productsInCollection(group.name).length} pieces
         </p>
 
         {/*
@@ -58,21 +62,21 @@ export function NewArrivals() {
       </div>
 
       {/*
-        The same tile block as "Shop by Category" above: full-bleed, two up on
-        a phone and four across from the nav breakpoint, photos edge to edge
-        with only the rows spaced so a caption never runs into the picture
-        below it. Keyed on the group so each switch replays the rise-in.
+        The same tile block as "Shop by Category" above: full-bleed and four
+        across from the nav breakpoint, and two in a gutter on a phone so the
+        pair never share a seam. Keyed on the group so each switch replays the
+        rise-in.
       */}
       <div
         key={group.name}
-        className="fz-rise mt-[clamp(28px,3.6vw,48px)] grid grid-cols-2 nav:grid-cols-4 gap-x-0 gap-y-9"
+        className="fz-rise mt-[clamp(28px,3.6vw,48px)] grid grid-cols-2 nav:grid-cols-4 px-[18px] gap-x-[14px] gap-y-10 nav:px-0 nav:gap-x-0 nav:gap-y-9"
       >
         {looks.map((product) => (
           <ProductCard
             key={product.id}
             product={product}
             ratio="2/3"
-            sizes="(max-width: 860px) 50vw, 25vw"
+            sizes="(max-width: 860px) 47vw, 25vw"
           />
         ))}
       </div>

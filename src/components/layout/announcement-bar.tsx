@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 export function AnnouncementBar({ overlay = false }: { overlay?: boolean }) {
   if (!storeConfig.showAnnouncement) return null;
 
+  const threshold = formatPrice(storeConfig.freeShippingThresholdPkr);
+
   return (
     <div
       className={cn(
@@ -16,8 +18,17 @@ export function AnnouncementBar({ overlay = false }: { overlay?: boolean }) {
         overlay ? "bg-transparent text-cream/90" : "bg-ink text-champagne",
       )}
     >
-      Free nationwide delivery on orders over{" "}
-      {formatPrice(storeConfig.freeShippingThresholdPkr)}
+      {/*
+        The bar sits inside a header that is fixed over the hero, so a second
+        line here costs the same forty pixels on every screen of the page. The
+        full sentence does not hold one line on a phone at this size, and the
+        answer is to say it shorter rather than to set it smaller — the offer
+        is the same either way.
+      */}
+      <span className="sm:hidden">Free delivery over {threshold}</span>
+      <span className="hidden sm:inline">
+        Free nationwide delivery on orders over {threshold}
+      </span>
     </div>
   );
 }
