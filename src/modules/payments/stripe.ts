@@ -1,6 +1,6 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { PaymentMethod } from "@prisma/client";
+import { PaymentMethod } from "@/generated/prisma/enums";
 import { toFils } from "@/modules/shared/money";
 import type {
   PaymentContext,
@@ -47,14 +47,37 @@ async function stripeFetch(
   path: string,
   body: string,
   key: string,
+  /**
+   * Stripe replays the first answer for 24 hours against the same key. Only
+   * the refund uses one, and it is the one call on this site where a retry
+   * after a timeout would otherwise send a second lot of money back.
+   */
+  idempotencyKey?: string,
 ): Promise<Record<string, unknown>> {
   const response = await fetch(`${API}${path}`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
     },
     body,
+  });
+
+  const json = (await response.json()) as Record<string, unknown>;
+  if (!response.ok) {
+    const error = json.error as { message?: string } | undefined;
+    throw new Error(error?.message ?? `Stripe returned ${response.status}.`);
+  }
+  return json;
+}
+
+async function stripeGet(
+  path: string,
+  key: string,
+): Promise<Record<string, unknown>> {
+  const response = await fetch(`${API}${path}`, {
+    headers: { Authorization: `Bearer ${key}` },
   });
 
   const json = (await response.json()) as Record<string, unknown>;
@@ -116,6 +139,94 @@ export const stripeProvider: PaymentProvider = {
     };
   },
 };
+
+// ---------------------------------------------------------------------------
+// Refunds
+// ---------------------------------------------------------------------------
+
+export type StripeRefund = {
+  /** `re_…` — what goes on the PaymentTransaction row as evidence. */
+  id: string;
+  /** Stripe's own word: `succeeded`, `pending`, `failed`, `canceled`. */
+  status: string;
+  amountAed: number;
+  paymentIntentId: string;
+};
+
+/**
+ * The payment intent behind an id we happen to be holding.
+ *
+ * A Checkout Session (`cs_…`) is what `createIntent` gets back and what older
+ * webhook rows recorded, but a refund is issued against the payment intent
+ * (`pi_…`) underneath it. Rather than make the caller know which kind of id it
+ * has, this resolves one to the other — a single extra GET, only in the case
+ * where it is actually needed.
+ */
+export async function resolveStripePaymentIntent(
+  id: string,
+): Promise<string | null> {
+  const key = secretKey();
+  if (!key) throw new Error("Stripe is not configured.");
+
+  const value = id.trim();
+  if (value.startsWith("pi_")) return value;
+  if (!value.startsWith("cs_")) return null;
+
+  const session = await stripeGet(
+    `/checkout/sessions/${encodeURIComponent(value)}`,
+    key,
+  );
+  const intent = session.payment_intent;
+  return typeof intent === "string" ? intent : null;
+}
+
+/**
+ * Send money back.
+ *
+ * Called when an administrator marks a return refunded on a card order, so the
+ * customer is not waiting on somebody remembering to press a button in the
+ * Stripe dashboard. Partial refunds are the normal case — one piece out of
+ * three coming back — so the amount is always sent explicitly rather than
+ * letting Stripe assume the whole charge.
+ *
+ * `idempotencyKey` should be something stable about *this* refund, such as the
+ * return number: a resolve form saved twice, or a retry after a timeout, then
+ * gets the first refund back rather than making a second one.
+ */
+export async function createStripeRefund(
+  paymentIntentId: string,
+  amountAed: number,
+  idempotencyKey?: string,
+): Promise<StripeRefund> {
+  const key = secretKey();
+  if (!key) throw new Error("Stripe is not configured.");
+
+  const intent = await resolveStripePaymentIntent(paymentIntentId);
+  if (!intent) {
+    throw new Error(
+      `${paymentIntentId} is not a Stripe payment we can refund against.`,
+    );
+  }
+
+  const fils = toFils(amountAed);
+  if (!Number.isFinite(fils) || fils <= 0) {
+    throw new Error("A refund has to be for more than nothing.");
+  }
+
+  const refund = await stripeFetch(
+    "/refunds",
+    form({ payment_intent: intent, amount: fils }),
+    key,
+    idempotencyKey,
+  );
+
+  return {
+    id: (refund.id as string) ?? "",
+    status: (refund.status as string) ?? "unknown",
+    amountAed: Number(refund.amount ?? fils) / 100,
+    paymentIntentId: intent,
+  };
+}
 
 /**
  * Verify a webhook and say what it means.
@@ -184,11 +295,29 @@ export function verifyStripeWebhook(
           ? "REFUNDED"
           : "IGNORED";
 
+  /*
+   * The id on a `checkout.session.completed` is the session, not the charge —
+   * and a refund has to be issued against the payment intent. Both are kept:
+   * the session id is what the customer's receipt refers to, the intent is
+   * what `createStripeRefund` needs months later.
+   */
+  const objectId = typeof object.id === "string" ? object.id : null;
+  const paymentIntentId =
+    typeof object.payment_intent === "string"
+      ? object.payment_intent
+      : objectId?.startsWith("pi_")
+        ? objectId
+        : null;
+
   return {
     orderNumber,
     outcome,
-    transactionId: (object.id as string) ?? null,
+    transactionId: objectId,
+    paymentIntentId,
     amountAed,
-    raw: { type: event.type },
+    raw: {
+      type: event.type,
+      ...(paymentIntentId ? { paymentIntentId } : {}),
+    },
   };
 }

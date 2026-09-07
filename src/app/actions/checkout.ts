@@ -1,6 +1,6 @@
 "use server";
 
-import { PaymentMethod } from "@prisma/client";
+import { PaymentMethod } from "@/generated/prisma/enums";
 import { checkoutSchema } from "@/modules/checkout";
 import { OutOfStockError } from "@/modules/inventory";
 import { CheckoutError, placeOrder, recordPayment, type BasketLine } from "@/modules/orders";

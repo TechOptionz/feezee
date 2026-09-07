@@ -1,5 +1,5 @@
 import "server-only";
-import { Prisma, ReturnStatus, PaymentStatus, StockReason } from "@prisma/client";
+import { Prisma, ReturnStatus, PaymentStatus, StockReason } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { toAed, toDecimal } from "@/modules/shared/money";
 import { getSettings } from "@/modules/shared/settings";
@@ -148,7 +148,15 @@ export async function requestReturn(
 }
 
 const returnInclude = {
-  order: { select: { orderNumber: true, customerName: true, customerEmail: true, totalAed: true } },
+  order: {
+    select: {
+      orderNumber: true,
+      customerName: true,
+      customerEmail: true,
+      totalAed: true,
+      paymentMethod: true,
+    },
+  },
   items: { include: { orderItem: true } },
 } as const;
 
@@ -165,6 +173,8 @@ function toReturnView(
     customerName: row.order.customerName,
     customerEmail: row.order.customerEmail,
     orderTotalAed: toAed(row.order.totalAed),
+    /** Whether approving a refund can call Stripe, or needs a payout by hand. */
+    paymentMethod: row.order.paymentMethod,
     status: row.status,
     reason: row.reason,
     customerNotes: row.customerNotes,
@@ -176,6 +186,8 @@ function toReturnView(
     items: row.items.map((item) => ({
       id: item.id,
       orderItemId: item.orderItemId,
+      /** Null once a garment has left the catalogue — see OrderItem.variantId. */
+      variantId: item.orderItem.variantId,
       productName: item.orderItem.productName,
       size: item.orderItem.variantSize,
       image: item.orderItem.image,

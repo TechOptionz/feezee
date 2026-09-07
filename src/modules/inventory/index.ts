@@ -1,5 +1,5 @@
 import "server-only";
-import { Prisma, StockReason, type PrismaClient } from "@prisma/client";
+import { Prisma, StockReason, type PrismaClient } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 /**

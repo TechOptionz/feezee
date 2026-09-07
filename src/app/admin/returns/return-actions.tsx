@@ -25,12 +25,15 @@ const NEXT_STATUS: Record<string, string[]> = {
 export function ReturnActions({
   returnId,
   status,
+  paymentMethod,
   suggestedRefundAed,
   isRestocked,
   adminNotes,
 }: {
   returnId: string;
   status: string;
+  /** STRIPE refunds itself; COD and BANK_TRANSFER are paid out by hand. */
+  paymentMethod: string;
   suggestedRefundAed: number;
   isRestocked: boolean;
   adminNotes: string | null;
@@ -100,6 +103,17 @@ export function ReturnActions({
           </label>
         )}
       </div>
+
+      {/* Said before the click, not after: whether saving this moves money. */}
+      {next === "REFUNDED" && (
+        <p className="m-0 text-[12.5px] leading-[1.6] text-taupe">
+          {paymentMethod === "STRIPE"
+            ? "Saving this refunds the card through Stripe straight away."
+            : paymentMethod === "BANK_TRANSFER"
+              ? "Paid by bank transfer — send the payout from the shop account yourself."
+              : "Cash on delivery — hand the refund back or transfer it yourself."}
+        </p>
+      )}
 
       <label className="flex flex-col gap-2">
         <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">

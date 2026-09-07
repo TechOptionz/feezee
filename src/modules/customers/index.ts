@@ -1,6 +1,6 @@
 import "server-only";
 import { randomBytes, createHash } from "node:crypto";
-import { Prisma, Role } from "@prisma/client";
+import { Prisma, Role } from "@/generated/prisma/client";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";

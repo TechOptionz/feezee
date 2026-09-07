@@ -1,4 +1,4 @@
-import { PaymentStatus } from "@prisma/client";
+import { PaymentStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { verifyStripeWebhook } from "@/modules/payments";
 import { recordPayment } from "@/modules/orders";

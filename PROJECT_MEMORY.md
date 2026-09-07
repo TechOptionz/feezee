@@ -222,6 +222,27 @@ costing the whole shop its static rendering for the sake of one icon. The
 account icon therefore always links to `/account`, which redirects a guest to
 sign-in itself. Product and collection pages stay ISR (`revalidate = 60`).
 
+The browser store does need to know *which account* it is holding a bag for, and
+the rule above is what makes that awkward — see 4.14 for how it is answered
+without any server-side cookie read. `/wishlist` is still statically rendered
+after that change; the build output is the check.
+
+### 4.10b Stock changes are pushed to the shop, not waited for
+
+Product pages are ISR on a 60-second window, which is right for copy and price
+but wrong for stock: a size restocked on the shop floor should be buyable now,
+and a size that has just gone should stop being offered now.
+
+So all three admin paths that move stock — a recount, a cancellation, and a
+return that restocks — call `revalidateStorefrontFor()` with the variants they
+touched, which resolves them to product slugs and rebuilds those pages. The
+return case is guarded on `isRestocked` having *just* flipped, so re-saving a
+settled return does not rebuild anything.
+
+Customer orders deliberately do **not** push. Every checkout invalidating a
+product page would rebuild the whole catalogue on a busy morning, and the
+60-second window is the right trade there.
+
 ### 4.11 A grid tile cannot add to the bag
 
 A size is now a SKU with its own stock. The old "Add to Bag" on a card would
@@ -248,6 +269,40 @@ Not decoration. A glance at a laptop on the shop counter should say instantly
 which of the two you are looking at, so that nobody edits a live price thinking
 they are browsing.
 
+### 4.14 A wishlist belongs to the account; a bag belongs to the browser
+
+Both used to live in `localStorage` under one fixed key each, which meant one
+browser had one wishlist no matter who was signed into it. A customer and an
+administrator sharing the shop laptop saw each other's saved pieces, and the
+same customer on a phone saw none of them.
+
+They are split by what they are. **Saved pieces are a statement about taste**,
+they should follow the person, and they now live in `WishlistItem` — read and
+written through `src/modules/wishlist/`, never touched by the browser directly.
+**A bag is about a purchase in progress**, it is fine for it to be local, and it
+stays in `localStorage` — but under a key of its own per account, so two people
+on one machine no longer share it.
+
+Both need the page to know who is signed in, and 4.10 forbids the cookie read
+that would answer it. So `createSession` sets a *second* cookie,
+`feezee_scope`, deliberately not httpOnly: an HMAC of the user id under
+`SESSION_SECRET`, which is stable per user, reveals no id and is worthless as a
+credential. **Nothing trusts it.** Every wishlist action re-reads the real
+session, in the same spirit as 4.8; forging it renames a `localStorage` key in
+your own browser and grants nothing. It is cleared with the session on sign-out,
+so a guest never inherits the previous customer's bag.
+
+Signing in merges rather than replaces, in both directions. A guest's hearts are
+folded into the account on the first sync and only then dropped from the
+browser; a guest's bag moves to the account's key — and *only* on the
+guest-to-account transition, never account-to-account, or an administrator
+signing in after a customer would inherit their bag.
+
+The consequence for the UI is `wishReady`, which is not the same as `hydrated`:
+a signed-in wishlist is a round trip away, and `hydrated` alone would say
+"ready" while the answer was still an empty guest list — long enough to print
+"Nothing saved yet." over a wishlist that is not empty.
+
 ---
 
 ## 5. Data model notes
@@ -261,6 +316,10 @@ they are browsing.
   information that the step has not happened.
 - **`StockAdjustment.balanceAfter`** lets the ledger be replayed and reconciled
   against the variant.
+- **`WishlistItem` is unique on `(userId, productId)`.** That uniqueness is what
+  makes a toggle idempotent: a double-tap, or the same merge arriving from two
+  tabs, cannot save the same garment twice. Both foreign keys cascade, so a
+  closed account leaves nothing behind.
 - **`StoreSetting`** holds VAT rate, free-shipping threshold, courier fee and
   return window. The defaults in `store-policy.ts` are the contract; the table
   is an override, and a failed read falls back rather than failing a checkout.

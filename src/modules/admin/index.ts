@@ -1,7 +1,7 @@
 import "server-only";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { Prisma, Role } from "@prisma/client";
+import { Prisma, Role } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession, type SessionClaims } from "@/modules/customers/session";
 

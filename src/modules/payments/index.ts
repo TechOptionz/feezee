@@ -1,5 +1,5 @@
 import "server-only";
-import { PaymentMethod } from "@prisma/client";
+import { PaymentMethod } from "@/generated/prisma/enums";
 import { contact, whatsappHref } from "@/lib/site";
 import { formatPrice } from "@/lib/currency";
 import { stripeProvider } from "@/modules/payments/stripe";
@@ -10,7 +10,12 @@ import type {
 } from "@/modules/payments/types";
 
 export * from "@/modules/payments/types";
-export { verifyStripeWebhook } from "@/modules/payments/stripe";
+export {
+  createStripeRefund,
+  resolveStripePaymentIntent,
+  verifyStripeWebhook,
+  type StripeRefund,
+} from "@/modules/payments/stripe";
 
 /**
  * Cash on delivery.

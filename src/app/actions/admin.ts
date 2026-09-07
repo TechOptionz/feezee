@@ -7,11 +7,16 @@ import {
   PaymentStatus,
   ReturnStatus,
   StockReason,
-} from "@prisma/client";
+} from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { audit, requireStaffAction, ForbiddenError } from "@/modules/admin";
 import { setStock } from "@/modules/inventory";
-import { CheckoutError, updateFulfillment, orderById } from "@/modules/orders";
+import {
+  CheckoutError,
+  updateFulfillment,
+  orderById,
+  refundStripePayment,
+} from "@/modules/orders";
 import { resolveReturn, ReturnError, returnById } from "@/modules/returns";
 import { AuthError, login, logout } from "@/modules/customers";
 import { loginSchema } from "@/modules/customers";
@@ -22,6 +27,7 @@ import {
   sendEmailInBackground,
 } from "@/modules/notifications";
 import { trackingUrlFor } from "@/modules/shipping";
+import { formatPrice } from "@/lib/currency";
 
 /**
  * Everything the shop's own staff can do.
@@ -52,6 +58,33 @@ function fail(error: unknown): AdminFormState {
   }
   console.error("[admin]", error);
   return { status: "error", message: "Something went wrong. Please try again." };
+}
+
+/**
+ * Push a stock change out to the shop.
+ *
+ * Product pages are ISR with a 60-second window, which is right for a price
+ * that drifts but wrong for stock: a size restocked on the shop floor should be
+ * buyable now, and a size that has just gone should stop being offered now.
+ * Everything that moves stock calls this with the variants it touched, and the
+ * garment's own page is rebuilt on the next request.
+ *
+ * Takes variant ids rather than slugs because that is what the callers have —
+ * an order line knows its variant, not its URL. Ids that no longer resolve
+ * (a garment deleted from the catalogue) simply match nothing.
+ */
+async function revalidateStorefrontFor(variantIds: (string | null)[]) {
+  const ids = [...new Set(variantIds.filter((id): id is string => Boolean(id)))];
+  if (ids.length === 0) return;
+
+  const variants = await prisma.productVariant.findMany({
+    where: { id: { in: ids } },
+    select: { product: { select: { slug: true } } },
+  });
+
+  for (const slug of new Set(variants.map((v) => v.product.slug))) {
+    revalidatePath(`/product/${slug}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -129,6 +162,7 @@ export async function adjustStockAction(
       newState: { stock: result.current, delta: result.delta, reason, note },
     });
 
+    await revalidateStorefrontFor([variantId]);
     revalidatePath("/admin/inventory");
     revalidatePath("/admin");
     return {
@@ -195,6 +229,11 @@ export async function updateOrderStatusAction(
           trackingUrl: trackingUrlFor(courierName, trackingNumber),
         }),
       });
+    }
+
+    // Cancelling restocks every line, so those garments are buyable again.
+    if (status === "CANCELLED") {
+      await revalidateStorefrontFor(order.items.map((item) => item.variantId));
     }
 
     revalidatePath(`/admin/orders/${orderId}`);
@@ -297,12 +336,55 @@ export async function resolveReturnAction(
 
   try {
     const before = await returnById(returnId);
+    if (!before) {
+      return { status: "error", message: "That return no longer exists." };
+    }
+
+    /*
+     * The money moves before the record says it has.
+     *
+     * Stripe is called first and the return is only marked refunded once it
+     * has answered. The other order would leave a return closed as REFUNDED —
+     * and REFUNDED has no next status, so the form could not be saved again —
+     * with the customer still waiting for money that was never sent. If Stripe
+     * refuses, nothing here changes and the admin sees why.
+     */
+    const amountToRefund =
+      refundAmountAed ?? before.refundAmountAed ?? before.suggestedRefundAed;
+
+    let refund: Awaited<ReturnType<typeof refundStripePayment>> | null = null;
+    if (
+      status === ReturnStatus.REFUNDED &&
+      before.status !== ReturnStatus.REFUNDED
+    ) {
+      try {
+        refund = await refundStripePayment(
+          before.orderId,
+          amountToRefund,
+          before.returnNumber,
+        );
+      } catch (error) {
+        // Stripe's own words, not a generic apology: "amount exceeds the
+        // charge" or "this payment has already been refunded" is exactly what
+        // the admin needs in order to decide what to do next.
+        console.error("[admin] stripe refund", error);
+        return {
+          status: "error",
+          message: `Stripe refused the refund, so nothing has changed: ${
+            error instanceof Error ? error.message : "unknown error"
+          }`,
+        };
+      }
+    }
+
     const updated = await resolveReturn(
       returnId,
       {
         status,
         adminNotes: String(formData.get("adminNotes") ?? "").trim() || undefined,
-        refundAmountAed,
+        // Whatever Stripe actually sent back is what the return records.
+        refundAmountAed:
+          refund?.kind === "refunded" ? refund.amountAed : refundAmountAed,
         restock,
       },
       actor.id,
@@ -314,13 +396,21 @@ export async function resolveReturnAction(
       entityType: "ReturnRequest",
       entityId: updated.returnNumber,
       previousState: {
-        status: before?.status,
-        isRestocked: before?.isRestocked,
+        status: before.status,
+        isRestocked: before.isRestocked,
       },
       newState: {
         status: updated.status,
         isRestocked: updated.isRestocked,
         refundAmountAed: updated.refundAmountAed,
+        ...(refund?.kind === "refunded"
+          ? {
+              stripeRefundId: refund.refundId,
+              stripePaymentIntentId: refund.paymentIntentId,
+              stripeRefundStatus: refund.stripeStatus,
+            }
+          : {}),
+        ...(refund?.kind === "manual" ? { payoutByHand: refund.reason } : {}),
       },
     });
 
@@ -336,9 +426,30 @@ export async function resolveReturnAction(
       }),
     });
 
+    // Only when this save is what actually put them back on the rail.
+    if (updated.isRestocked && !before.isRestocked) {
+      await revalidateStorefrontFor(updated.items.map((item) => item.variantId));
+    }
+
+    revalidatePath(`/admin/orders/${before.orderId}`);
     revalidatePath("/admin/returns");
     revalidatePath("/admin");
-    return { status: "ok", message: `Return marked ${status.toLowerCase()}.` };
+
+    // The refund is the half of this the admin cannot see from the list, so it
+    // is said out loud — including when it is still theirs to do by hand.
+    const note =
+      refund?.kind === "refunded"
+        ? ` ${formatPrice(refund.amountAed)} sent back through Stripe (${refund.refundId}).`
+        : refund?.kind === "already"
+          ? " That refund had already been sent — nothing was charged back twice."
+          : refund?.kind === "manual"
+            ? ` ${refund.reason}`
+            : "";
+
+    return {
+      status: "ok",
+      message: `Return marked ${status.toLowerCase()}.${note}`,
+    };
   } catch (error) {
     return fail(error);
   }

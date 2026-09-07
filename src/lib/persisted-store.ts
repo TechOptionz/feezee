@@ -7,6 +7,11 @@
  * an external store rather than seeding `useState` from an effect is what makes
  * the server render and the first client render agree, and what lets a bag
  * emptied in one tab empty in the other.
+ *
+ * The key is not fixed for the life of the page. A bag belongs to whoever is
+ * signed in, and that changes without a reload — so the store can be pointed at
+ * a different key when the account changes, carrying the old value across if
+ * the caller says it should be carried. See `retarget`.
  */
 export type PersistedStore<T> = {
   subscribe: (listener: () => void) => () => void;
@@ -16,17 +21,46 @@ export type PersistedStore<T> = {
   getServerSnapshot: () => T;
   /** Replace the value from the current one, and write it back. */
   update: (updater: (previous: T) => T) => void;
+  /**
+   * Point the store at a different key — a different account signing in, or
+   * signing out.
+   *
+   * Supplying `migrate` means *move*: the value under the old key is folded
+   * into the value under the new one and the old key is then deleted. That is
+   * right for a guest signing in, whose bag should follow them and should not
+   * be left behind for the next guest on the machine. Omitting `migrate` means
+   * *switch*: each key keeps whatever it held, which is right for signing out.
+   */
+  retarget: (key: string, migrate?: (from: T, into: T) => T) => void;
 };
 
 export function createPersistedStore<T>(
-  key: string,
+  initialKey: string,
   empty: T,
   /** Drops anything the saved JSON holds that is no longer valid. */
   revive: (saved: unknown) => T,
 ): PersistedStore<T> {
+  let key = initialKey;
   let snapshot = empty;
   let loaded = false;
   const listeners = new Set<() => void>();
+
+  function read(from: string): T {
+    try {
+      const raw = window.localStorage.getItem(from);
+      return raw ? revive(JSON.parse(raw)) : empty;
+    } catch {
+      return empty;
+    }
+  }
+
+  function write(): void {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(snapshot));
+    } catch {
+      /* Private browsing, or the quota is full. It still works this session. */
+    }
+  }
 
   /*
    * Read on demand rather than at module load: this file is imported on the
@@ -37,14 +71,13 @@ export function createPersistedStore<T>(
   function current(): T {
     if (!loaded) {
       loaded = true;
-      try {
-        const raw = window.localStorage.getItem(key);
-        snapshot = raw ? revive(JSON.parse(raw)) : empty;
-      } catch {
-        snapshot = empty;
-      }
+      snapshot = read(key);
     }
     return snapshot;
+  }
+
+  function announce(): void {
+    listeners.forEach((l) => l());
   }
 
   return {
@@ -57,7 +90,7 @@ export function createPersistedStore<T>(
         if (event.key !== null && event.key !== key) return;
         loaded = false;
         current();
-        listeners.forEach((l) => l());
+        announce();
       };
       window.addEventListener("storage", onStorage);
 
@@ -73,12 +106,34 @@ export function createPersistedStore<T>(
 
     update(updater) {
       snapshot = updater(current());
-      try {
-        window.localStorage.setItem(key, JSON.stringify(snapshot));
-      } catch {
-        /* Private browsing, or the quota is full. It still works this session. */
+      write();
+      announce();
+    },
+
+    retarget(nextKey, migrate) {
+      if (nextKey === key) return;
+
+      const leaving = key;
+      const carried = migrate ? current() : null;
+
+      key = nextKey;
+      loaded = false;
+      current();
+
+      if (migrate && carried !== null) {
+        snapshot = migrate(carried, snapshot);
+        write();
+        // The move is only finished once the old key is gone. Leaving it would
+        // hand the next guest on this machine the bag of the person who just
+        // signed in with it.
+        try {
+          window.localStorage.removeItem(leaving);
+        } catch {
+          /* Nothing to do about it, and the value is safely under the new key. */
+        }
       }
-      listeners.forEach((l) => l());
+
+      announce();
     },
   };
 }

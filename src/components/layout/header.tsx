@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
  * flow: cream, solid, and scrolling away with the rest of the page.
  */
 export function Header({ overHero = false }: { overHero?: boolean }) {
-  const { bagCount, wishCount, hydrated, menuOpen, toggleMenu, openCart } =
+  const { bagCount, wishCount, hydrated, wishReady, menuOpen, toggleMenu, openCart } =
     useStore();
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
@@ -145,8 +145,8 @@ export function Header({ overHero = false }: { overHero?: boolean }) {
             }
             className="bg-transparent border-none cursor-pointer p-2.5 nav:p-3 relative min-w-11 min-h-11 text-inherit hover:text-inherit flex items-center justify-center"
           >
-            <HeartIcon filled={hydrated && wishCount > 0} />
-            {hydrated && wishCount > 0 && (
+            <HeartIcon filled={wishReady && wishCount > 0} />
+            {wishReady && wishCount > 0 && (
               <span className="absolute top-1.5 right-1 bg-wine text-white text-[12px] min-w-[18px] h-[18px] rounded-lg flex items-center justify-center px-1">
                 {wishCount}
               </span>

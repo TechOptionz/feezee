@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ReturnStatus } from "@prisma/client";
+import { ReturnStatus } from "@/generated/prisma/enums";
 import { AdminHeading, AdminPill, Panel, adminDate } from "@/app/admin/admin-ui";
 import { ReturnActions } from "@/app/admin/returns/return-actions";
 import { requireStaff } from "@/modules/admin";
@@ -117,6 +117,7 @@ export default async function AdminReturnsPage({
                   <ReturnActions
                     returnId={request.id}
                     status={request.status}
+                    paymentMethod={request.paymentMethod}
                     suggestedRefundAed={request.suggestedRefundAed}
                     isRestocked={request.isRestocked}
                     adminNotes={request.adminNotes}

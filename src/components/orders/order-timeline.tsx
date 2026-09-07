@@ -1,4 +1,4 @@
-import { orderTimeline, type OrderView } from "@/modules/orders";
+import { orderTimeline, type TimelineOrder } from "@/modules/orders/timeline";
 import { cn } from "@/lib/utils";
 
 /**
@@ -7,8 +7,13 @@ import { cn } from "@/lib/utils";
  * A cancelled order is not drawn as a broken progress bar — it is a different
  * thing that happened, so it gets a sentence instead of a track with four
  * greyed-out steps on it.
+ *
+ * Typed against `TimelineOrder` rather than `OrderView` so the guest tracking
+ * page can draw the same track from the trimmed projection it is allowed to
+ * see. It imports nothing server-only, which is what lets it render inside a
+ * client component as well as on the server.
  */
-export function OrderTimeline({ order }: { order: OrderView }) {
+export function OrderTimeline({ order }: { order: TimelineOrder }) {
   if (order.fulfillmentStatus === "CANCELLED") {
     return (
       <div className="border border-line bg-panel px-5 py-4 text-[14.5px] leading-[1.7] text-cocoa">

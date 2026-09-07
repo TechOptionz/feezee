@@ -7,24 +7,29 @@ import { formatPrice } from "@/lib/currency";
 import type { ProductView } from "@/modules/catalogue";
 
 /**
- * Everything hearted, from any page, kept in the browser. The tiles are the
- * same ones the shop grids use, so un-hearting a piece here removes it from the
- * page under your finger — which is the behaviour a wishlist should have.
+ * Everything hearted, from any page. The tiles are the same ones the shop grids
+ * use, so un-hearting a piece here removes it from the page under your finger —
+ * which is the behaviour a wishlist should have.
  *
- * The catalogue arrives as a prop: the saved ids live in `localStorage`, but
- * what they are worth and whether they are still on the rail is the database's
- * to say, and a client component cannot ask it directly.
+ * Where the saved ids come from depends on who is asking: the database for a
+ * signed-in customer, `localStorage` for a guest. The store settles that, and
+ * `wishReady` is how it says it has finished settling it.
+ *
+ * The catalogue arrives as a prop either way: what a saved piece is worth and
+ * whether it is still on the rail is the database's to say, and a client
+ * component cannot ask it directly.
  */
 export function WishlistContents({ catalogue }: { catalogue: ProductView[] }) {
-  const { wishedIds, currency, hydrated, addToBag } = useStore();
+  const { wishedIds, currency, wishReady, addToBag } = useStore();
 
   const saved = wishedIds.flatMap((id) => {
     const found = catalogue.find((p) => p.id === id);
     return found ? [found] : [];
   });
 
-  // Nothing honest to draw until the saved list has been read back.
-  if (!hydrated) return <div className="min-h-[40vh]" />;
+  // Nothing honest to draw until the saved list has been read back — from the
+  // browser for a guest, and from the database for anyone signed in.
+  if (!wishReady) return <div className="min-h-[40vh]" />;
 
   if (saved.length === 0) {
     return (
@@ -33,8 +38,8 @@ export function WishlistContents({ catalogue }: { catalogue: ProductView[] }) {
           Nothing saved yet.
         </p>
         <p className="mt-3 mb-7 text-[15px] text-cocoa max-w-[46ch] mx-auto">
-          Tap the heart on any piece and it will wait for you here — on this
-          device, for as long as you like.
+          Tap the heart on any piece and it will wait for you here — on your
+          account if you are signed in, on this device if you are not.
         </p>
         <Link
           href="/new-in"

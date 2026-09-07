@@ -80,6 +80,17 @@ export function trackingUrlFor(
   return found?.track ? found.track(trackingNumber.trim()) : null;
 }
 
+/**
+ * How long that courier usually takes, printed beside the tracking link on the
+ * guest tracking page. Looked up by name for the same reason as the URL above.
+ */
+export function transitFor(
+  courierName: string | null | undefined,
+): string | null {
+  if (!courierName) return null;
+  return byName.get(courierName.trim().toLowerCase())?.transit ?? null;
+}
+
 /** Every courier name, for the admin's dispatch dropdown. */
 export function courierNames(): string[] {
   return COURIERS.map((c) => c.name);

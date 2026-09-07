@@ -1,4 +1,4 @@
-import type { PaymentMethod } from "@prisma/client";
+import type { PaymentMethod } from "@/generated/prisma/enums";
 
 /**
  * One interface, three very different ways of being paid.
@@ -56,6 +56,13 @@ export type WebhookResult = {
   orderNumber: string;
   outcome: "PAID" | "FAILED" | "REFUNDED" | "IGNORED";
   transactionId: string | null;
+  /**
+   * The provider's id for the charge itself, when it differs from
+   * `transactionId` — a Stripe Checkout Session is not the thing a refund is
+   * issued against, the payment intent under it is. Kept so a refund months
+   * later does not have to go looking for it.
+   */
+  paymentIntentId?: string | null;
   amountAed: number | null;
   /**
    * Kept as strings so it drops straight into the `metadata` Json column

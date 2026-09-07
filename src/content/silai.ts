@@ -1,3 +1,6 @@
+import { formatPrice } from "@/lib/currency";
+import { contact, storeConfig } from "@/lib/site";
+
 /**
  * Everything the Silai page says.
  *
@@ -23,14 +26,14 @@ export const silaiOrderHref = "#start";
 export const silaiMeta = {
   title: "Silai — Made to Order",
   description:
-    "FEEZEE Silai — kurtas, suits, anarkalis and bridal wear cut to your own measurements by our in-house tailors. Free alterations, nationwide delivery.",
+    "FEEZEE Silai — kurtas, suits, anarkalis and bridal wear cut to your own measurements by our in-house tailors at Madina Mall, Dubai. Free alterations, and fast delivery across Dubai and all 7 Emirates.",
 } as const;
 
 export const silaiBanner = {
   eyebrow: "Silai — Made to Order",
   title: "Cut to your measurements, finished by hand",
   intro:
-    "Every piece on this site can be stitched to you instead of to a size chart. Send ten numbers on WhatsApp — or a shirt that already fits — and the tailor who cuts your cloth is the one who finishes it.",
+    "Every piece on this site can be stitched to you instead of to a size chart. Send ten numbers on WhatsApp — or bring a shirt that already fits into the boutique at Madina Mall, Al Muhaisnah 4 — and the tailor who cuts your cloth is the one who finishes it.",
   image: "hero/look-04.jpg",
   /** The three numbers under the standfirst. */
   stats: [
@@ -51,7 +54,7 @@ export const silaiSteps: SilaiStep[] = [
   {
     n: "02",
     title: "Send your measurements",
-    body: "Ten numbers on WhatsApp. If you have never measured yourself, post us a shirt that fits you well and we will copy it seam for seam.",
+    body: "Ten numbers on WhatsApp. If you have never measured yourself, bring a shirt that fits you well into Madina Mall, Al Muhaisnah 4, or send it to us, and we will copy it seam for seam.",
   },
   {
     n: "03",
@@ -61,7 +64,7 @@ export const silaiSteps: SilaiStep[] = [
   {
     n: "04",
     title: "Try it on at home",
-    body: "It arrives pressed and packed. Wear it, and if a seam wants moving, send it back — alterations are free for as long as you own the piece.",
+    body: "It arrives pressed and packed anywhere in Dubai and all 7 Emirates. Wear it, and if a seam wants moving, send it back or bring it in — alterations are free for as long as you own the piece.",
   },
 ];
 
@@ -135,7 +138,7 @@ export const silaiMeasurements = {
       items: ["Trouser length", "Trouser bottom (paincha)", "Waist and hip"],
     },
   ],
-  note: "Measure over a fitted shirt, not over loose clothes, and keep the tape flat. If any of this sounds like guesswork, skip it — send us a garment that fits and we will take every number off it ourselves.",
+  note: "Measure over a fitted shirt, not over loose clothes, and keep the tape flat. If any of this sounds like guesswork, skip it — send us a garment that fits, or walk it into the boutique at Madina Mall, and we will take every number off it ourselves.",
 } as const;
 
 export type FinishGroup = { title: string; options: string[] };
@@ -231,9 +234,12 @@ export const silaiPricing: PriceRow[] = [
 
 /** The three lines that sit under the table. */
 export const silaiPricingNotes: string[] = [
-  "Charges are for stitching. Cloth is billed separately, or bring your own.",
+  "Every charge above is in AED and is for stitching only. Cloth is billed separately, or bring your own.",
   "Rush orders are cut in three to five days at a 40% surcharge, subject to the table.",
-  "Alterations are free for life. Return postage on the first alteration is on us.",
+  "Alterations are free for life. Return postage on the first alteration is on us, anywhere in the UAE.",
+  `Delivery is fast across Dubai and all 7 Emirates, and free on orders over ${formatPrice(
+    storeConfig.freeShippingThresholdAed,
+  )}.`,
 ];
 
 export type SilaiLook = { img: string; caption: string };
@@ -261,21 +267,21 @@ export type Voice = { quote: string; name: string; city: string };
 export const silaiVoices: Voice[] = [
   {
     quote:
-      "I sent a kurta I had worn to death and asked for three more like it. They came back closer to the original than the original.",
+      "I took a kurta I had worn to death into the shop at Madina Mall and asked for three more like it. They came back closer to the original than the original.",
     name: "Ayesha R.",
-    city: "Lahore",
+    city: "Al Muhaisnah, Dubai",
   },
   {
     quote:
-      "Ordered an anarkali for my sister's mehndi from Dubai. Measurements over WhatsApp, stitched in eleven days, and the hem was dead level.",
+      "Ordered an anarkali for my sister's mehndi. Measurements over WhatsApp, stitched in eleven days, delivered to Al Barsha, and the hem was dead level.",
     name: "Mahnoor S.",
     city: "Dubai",
   },
   {
     quote:
-      "The sleeve was a touch tight. They collected it, moved the armhole and had it back in four days without charging a dirham.",
+      "The sleeve was a touch tight. They collected it from Sharjah, moved the armhole and had it back in four days without charging a dirham.",
     name: "Hira K.",
-    city: "Karachi",
+    city: "Sharjah",
   },
 ];
 
@@ -284,11 +290,11 @@ export type Faq = { q: string; a: string };
 export const silaiFaqs: Faq[] = [
   {
     q: "What if I do not know how to measure myself?",
-    a: "Post us a shirt and a trouser that already fit you well. We take every measurement off the garment on our own table, note it against your name, and send the pieces back with your order. After the first time we have your numbers on file, so the next order needs nothing but a design.",
+    a: "Bring a shirt and a trouser that already fit you well into the boutique at Madina Mall, Al Muhaisnah 4, or post them to us. We take every measurement off the garment on our own table, note it against your name, and send the pieces back with your order. After the first time we have your numbers on file, so the next order needs nothing but a design.",
   },
   {
     q: "Can you stitch cloth I already own?",
-    a: "Yes. Send the unstitched suit to our workshop and we will cut it to the design you choose. Stitching is charged at the rates in the table above; there is nothing extra for using your own cloth.",
+    a: "Yes. Bring or send the unstitched suit to our workshop at Madina Mall and we will cut it to the design you choose. Stitching is charged at the AED rates in the table above; there is nothing extra for using your own cloth.",
   },
   {
     q: "How exact is the fit the first time?",
@@ -299,8 +305,10 @@ export const silaiFaqs: Faq[] = [
     a: "You send it back and we alter it. Alterations are free for as long as you own the piece, and we cover return postage on the first one. Nothing about a made-to-order piece is final at delivery.",
   },
   {
-    q: "Do you deliver outside Pakistan?",
-    a: "We ship to the UAE, the UK, Saudi Arabia, the US and most of Europe, usually in five to seven days once the piece leaves the workshop. Overseas orders are prepaid; inside Pakistan you can pay cash at the door.",
+    q: "Where do you deliver, and what does it cost?",
+    a: `Fast delivery across Dubai and all 7 Emirates — usually one to three working days once the piece leaves the workshop, and free on orders over ${formatPrice(
+      storeConfig.freeShippingThresholdAed,
+    )}. You can pay cash at the door anywhere in the UAE, or collect from the boutique at ${contact.address.oneLine}. We also ship to Saudi Arabia, the UK, the US and most of Europe; overseas orders are prepaid.`,
   },
   {
     q: "Can I copy a design I have seen somewhere else?",
@@ -318,5 +326,5 @@ export const silaiChecklist: string[] = [
   "Your measurements, or a garment that fits",
   "Neckline, sleeve and trouser you want",
   "The date you need it by",
-  "Your city, for delivery",
+  "Your emirate and area, for delivery",
 ];

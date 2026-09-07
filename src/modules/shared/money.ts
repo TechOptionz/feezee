@@ -1,4 +1,15 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/browser";
+
+/**
+ * `Prisma.Decimal` as a type.
+ *
+ * The browser entry point exports `Decimal` as a value only — it is the one
+ * name where the browser namespace shadows the server one, which also exports
+ * it as a type. Deriving the instance type here keeps this module importable
+ * from the client bundle (it is, via `@/modules/checkout`) without dragging in
+ * the Node-only runtime.
+ */
+type Decimal = InstanceType<typeof Prisma.Decimal>;
 
 /**
  * Money, in one place.
@@ -16,21 +27,21 @@ import { Prisma } from "@prisma/client";
  */
 
 /** A Decimal (or anything Decimal-like) as a plain number of dirhams. */
-export function toAed(value: Prisma.Decimal | number | null | undefined): number {
+export function toAed(value: Decimal | number | null | undefined): number {
   if (value === null || value === undefined) return 0;
   return typeof value === "number" ? value : value.toNumber();
 }
 
 /** Same, but preserving null — for optional columns like `wasAed`. */
 export function toAedOrNull(
-  value: Prisma.Decimal | number | null | undefined,
+  value: Decimal | number | null | undefined,
 ): number | null {
   if (value === null || value === undefined) return null;
   return typeof value === "number" ? value : value.toNumber();
 }
 
 /** A number of dirhams as the Decimal the database column wants. */
-export function toDecimal(aed: number): Prisma.Decimal {
+export function toDecimal(aed: number): Decimal {
   return new Prisma.Decimal(round2(aed).toFixed(2));
 }
 

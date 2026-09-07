@@ -5,14 +5,15 @@ import {
   PaymentStatus,
   Prisma,
   StockReason,
-} from "@prisma/client";
+} from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { toAed, toDecimal } from "@/modules/shared/money";
 import { getSettings } from "@/modules/shared/settings";
 import { calculateTotals, formatAddressLine } from "@/modules/checkout";
 import type { CheckoutDetails } from "@/modules/checkout";
 import { deductMany, restock } from "@/modules/inventory";
-import { trackingUrlFor } from "@/modules/shipping";
+import { createStripeRefund } from "@/modules/payments/stripe";
+import { trackingUrlFor, transitFor } from "@/modules/shipping";
 import type { OrderTotals } from "@/modules/checkout";
 
 /**
@@ -370,6 +371,113 @@ export async function orderById(id: string) {
   return row ? toOrderView(row) : null;
 }
 
+// ---------------------------------------------------------------------------
+// Guest order tracking
+// ---------------------------------------------------------------------------
+
+/**
+ * What a stranger holding an order number is shown.
+ *
+ * A deliberately smaller thing than `OrderView`: no `userId`, no payment
+ * transactions, no street address, no phone. Order numbers run in a sequence
+ * and are therefore guessable, so the email is the whole of the gate — and
+ * what is behind the gate should still be only what the confirmation email
+ * already told them.
+ */
+export type TrackedOrder = {
+  orderNumber: string;
+  customerName: string;
+  placedAt: string;
+  paidAt: string | null;
+  dispatchedAt: string | null;
+  deliveredAt: string | null;
+  cancelledAt: string | null;
+  paymentMethod: string;
+  paymentStatus: string;
+  fulfillmentStatus: string;
+  courierName: string | null;
+  courierTransit: string | null;
+  trackingNumber: string | null;
+  trackingUrl: string | null;
+  shippingCity: string;
+  shippingEmirate: string;
+  subtotalAed: number;
+  shippingFeeAed: number;
+  vatAed: number;
+  totalAed: number;
+  items: {
+    id: string;
+    productName: string;
+    variantSize: string;
+    sku: string;
+    quantity: number;
+    unitPriceAed: number;
+    totalAed: number;
+    image: string;
+  }[];
+};
+
+/**
+ * Find an order for the public tracking page, or nothing.
+ *
+ * Both failures — no such order, and an email that does not match — return
+ * null rather than different answers. A page that said "that order exists but
+ * the email is wrong" would turn a guessable order number into a way of
+ * confirming that someone shopped here.
+ *
+ * The order number is matched case-insensitively and without its spaces, since
+ * `FZ-26-1001` is read off an email and typed by hand.
+ */
+export async function trackOrder(
+  orderNumber: string,
+  email: string,
+): Promise<TrackedOrder | null> {
+  const number = orderNumber.trim().replace(/\s+/g, "").toUpperCase();
+  const address = email.trim().toLowerCase();
+  if (!number || !address) return null;
+
+  const row = await prisma.order.findUnique({
+    where: { orderNumber: number },
+    include: { items: true },
+  });
+
+  if (!row || row.customerEmail.toLowerCase() !== address) return null;
+
+  return {
+    orderNumber: row.orderNumber,
+    customerName: row.customerName,
+    placedAt: row.placedAt.toISOString(),
+    paidAt: row.paidAt?.toISOString() ?? null,
+    dispatchedAt: row.dispatchedAt?.toISOString() ?? null,
+    deliveredAt: row.deliveredAt?.toISOString() ?? null,
+    cancelledAt: row.cancelledAt?.toISOString() ?? null,
+    paymentMethod: row.paymentMethod,
+    paymentStatus: row.paymentStatus,
+    fulfillmentStatus: row.fulfillmentStatus,
+    courierName: row.courierName,
+    courierTransit: transitFor(row.courierName),
+    trackingNumber: row.trackingNumber,
+    trackingUrl:
+      row.trackingUrl ?? trackingUrlFor(row.courierName, row.trackingNumber),
+    shippingCity: row.shippingCity,
+    shippingEmirate: row.shippingEmirate,
+    subtotalAed: toAed(row.subtotalAed),
+    shippingFeeAed: toAed(row.shippingFeeAed),
+    vatAed: toAed(row.vatAed),
+    totalAed: toAed(row.totalAed),
+    items: row.items.map((item) => ({
+      id: item.id,
+      productName: item.productName,
+      variantSize: item.variantSize,
+      sku: item.sku,
+      quantity: item.quantity,
+      unitPriceAed: toAed(item.unitPriceAed),
+      totalAed: toAed(item.totalAed),
+      image: item.image,
+    })),
+  };
+}
+
 /** A customer's own orders, newest first. */
 export async function ordersForUser(userId: string) {
   const rows = await prisma.order.findMany({
@@ -590,31 +698,127 @@ export async function recordPayment(
   });
 }
 
-/** The customer-facing timeline on an order page. */
-export function orderTimeline(order: OrderView) {
-  return [
-    { label: "Order placed", at: order.placedAt, done: true },
-    {
-      label: order.paymentMethod === "COD" ? "Payment on delivery" : "Payment received",
-      at: order.paidAt,
-      done: order.paymentStatus === "PAID",
+// ---------------------------------------------------------------------------
+// Refunds
+// ---------------------------------------------------------------------------
+
+/** The provider written on a refund row, so it never reads as a payment. */
+export const STRIPE_REFUND_PROVIDER = "STRIPE_REFUND";
+
+export type RefundOutcome =
+  /** Money is on its way back, and the transaction row says so. */
+  | {
+      kind: "refunded";
+      refundId: string;
+      paymentIntentId: string;
+      amountAed: number;
+      stripeStatus: string;
+    }
+  /** The same refund had already been made — Stripe replayed it. */
+  | { kind: "already"; refundId: string | null }
+  /** Nothing to call: cash, a transfer, or a card charge we cannot find. */
+  | { kind: "manual"; reason: string };
+
+/**
+ * Send a card payment back, and write down that it happened.
+ *
+ * Deliberately outside `resolveReturn`'s transaction. A refund is an HTTP call
+ * to another company; holding a row lock across one is how a slow Stripe
+ * response becomes a locked order table, and a transaction that rolls back
+ * after Stripe has said yes does not un-send the money.
+ *
+ * The `reference` is the return number, and it is doing two jobs: it is the
+ * Stripe idempotency key, so a form saved twice refunds once, and it is what
+ * ties the transaction row back to the return that caused it.
+ */
+export async function refundStripePayment(
+  orderId: string,
+  amountAed: number,
+  reference: string,
+): Promise<RefundOutcome> {
+  const order = await prisma.order.findUniqueOrThrow({
+    where: { id: orderId },
+    select: {
+      orderNumber: true,
+      paymentMethod: true,
+      transactions: { orderBy: { createdAt: "desc" } },
     },
-    {
-      label: "Being prepared",
-      at: null,
-      done: ["PROCESSING", "DISPATCHED", "DELIVERED"].includes(
-        order.fulfillmentStatus,
-      ),
+  });
+
+  if (order.paymentMethod === PaymentMethod.COD) {
+    return {
+      kind: "manual",
+      reason: "Cash on delivery — hand the refund back or transfer it yourself.",
+    };
+  }
+  if (order.paymentMethod === PaymentMethod.BANK_TRANSFER) {
+    return {
+      kind: "manual",
+      reason: "Paid by bank transfer — send the payout from the shop account.",
+    };
+  }
+
+  // A refund already recorded against this same return is not made again, even
+  // if Stripe would have replayed it for us.
+  const existing = order.transactions.find(
+    (t) =>
+      t.provider === STRIPE_REFUND_PROVIDER &&
+      (t.metadata as { reference?: string } | null)?.reference === reference,
+  );
+  if (existing) return { kind: "already", refundId: existing.transactionId };
+
+  /*
+   * The charge to refund against. Newer rows carry the payment intent in their
+   * metadata; older ones only have the Checkout Session id in `transactionId`,
+   * which `createStripeRefund` resolves for us.
+   */
+  const charge = order.transactions.find(
+    (t) => t.provider === "STRIPE" && t.status === PaymentStatus.PAID,
+  );
+  const chargeId =
+    (charge?.metadata as { paymentIntentId?: string } | null)?.paymentIntentId ??
+    charge?.transactionId ??
+    null;
+
+  if (!chargeId) {
+    return {
+      kind: "manual",
+      reason: `No Stripe charge is recorded against ${order.orderNumber}. Refund it from the Stripe dashboard.`,
+    };
+  }
+
+  const refund = await createStripeRefund(chargeId, amountAed, reference);
+
+  await prisma.paymentTransaction.create({
+    data: {
+      orderId,
+      provider: STRIPE_REFUND_PROVIDER,
+      transactionId: refund.id,
+      amountAed: toDecimal(refund.amountAed),
+      status: PaymentStatus.REFUNDED,
+      metadata: {
+        reference,
+        paymentIntentId: refund.paymentIntentId,
+        stripeStatus: refund.status,
+      },
     },
-    {
-      label: "Dispatched",
-      at: order.dispatchedAt,
-      done: ["DISPATCHED", "DELIVERED"].includes(order.fulfillmentStatus),
-    },
-    {
-      label: "Delivered",
-      at: order.deliveredAt,
-      done: order.fulfillmentStatus === "DELIVERED",
-    },
-  ];
+  });
+
+  return {
+    kind: "refunded",
+    refundId: refund.id,
+    paymentIntentId: refund.paymentIntentId,
+    amountAed: refund.amountAed,
+    stripeStatus: refund.status,
+  };
 }
+
+/**
+ * The customer-facing timeline on an order page.
+ *
+ * The five steps themselves live in `./timeline`, which carries no
+ * `server-only` — the guest tracking page draws the same track from a client
+ * component. Re-exported here so every server caller keeps one import.
+ */
+export { orderTimeline } from "@/modules/orders/timeline";
+export type { TimelineOrder, TimelineStep } from "@/modules/orders/timeline";

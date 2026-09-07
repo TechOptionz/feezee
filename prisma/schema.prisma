@@ -9,7 +9,8 @@
 // purpose: the null is the information that the step has not happened yet.
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -42,6 +43,7 @@ model User {
   orders      Order[]
   auditLogs   AuditLog[]
   adjustments StockAdjustment[]
+  wishlist    WishlistItem[]
 
   @@index([role])
 }
@@ -95,6 +97,7 @@ model Product {
 
   images   ProductImage[]
   variants ProductVariant[]
+  wishlist WishlistItem[]
 
   @@index([collection, isArchived])
   @@index([isArchived])
@@ -361,4 +364,27 @@ model StoreSetting {
   value       Json
   description String?
   updatedAt   DateTime @updatedAt
+}
+
+/// A garment a signed-in customer has saved.
+///
+/// The row is the whole record: there is nothing to say about a saved piece
+/// beyond who saved it, which piece, and when. `@@unique([userId, productId])`
+/// is what makes a toggle idempotent — a double-tap, or the same merge running
+/// twice from two tabs, cannot save the same garment twice.
+///
+/// Both sides cascade. A closed account leaves no saved rows behind, and a
+/// product genuinely deleted (rather than archived, which is the usual route)
+/// does not leave rows pointing at nothing.
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId Int
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId, createdAt])
 }

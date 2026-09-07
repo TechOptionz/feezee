@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FulfillmentStatus, PaymentStatus } from "@prisma/client";
+import { FulfillmentStatus, PaymentStatus } from "@/generated/prisma/enums";
 import {
   AdminHeading,
   AdminPill,

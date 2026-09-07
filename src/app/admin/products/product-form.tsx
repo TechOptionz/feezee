@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { saveProductAction, type AdminFormState } from "@/app/actions/admin";
+import { ImageUploader } from "@/app/admin/products/image-uploader";
 import { cn } from "@/lib/utils";
 
 const IDLE: AdminFormState = { status: "idle" };
@@ -183,13 +184,7 @@ export function ProductForm({ values }: { values: ProductFormValues }) {
       </Section>
 
       <Section title="Photographs">
-        <Area
-          label="Filenames in public/img, one per line — the first is the card image"
-          name="images"
-          rows={5}
-          defaultValue={values.images.join("\n")}
-          placeholder={"suit-sage-tissue.jpg\np15.jpg"}
-        />
+        <ImageUploader defaultImages={values.images} />
       </Section>
 
       {!isNew && (

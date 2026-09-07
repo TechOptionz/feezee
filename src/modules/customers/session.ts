@@ -1,7 +1,9 @@
 import "server-only";
+import { createHmac } from "node:crypto";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
-import { Role } from "@prisma/client";
+import { Role } from "@/generated/prisma/enums";
+import { ACCOUNT_SCOPE_COOKIE } from "@/lib/account-scope";
 
 /**
  * Sessions: a signed JWT in an httpOnly cookie.
@@ -18,6 +20,31 @@ import { Role } from "@prisma/client";
 
 const COOKIE = "feezee_session";
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
+
+/**
+ * A second cookie, deliberately *not* httpOnly.
+ *
+ * The session itself must stay unreadable to scripts, but the browser store
+ * still has to know one thing: whose bag and whose wishlist it is holding.
+ * Without that, one browser has one wishlist shared by every account that signs
+ * into it. Reading the session on the server to answer it is not open to us —
+ * §4.10, a cookie read in the header costs the whole shop its static rendering.
+ *
+ * So this carries an opaque scope id instead: an HMAC of the user id under the
+ * session secret, which is stable for a given user, reveals no user id, and is
+ * useless as a credential. Nothing trusts it. Every wishlist action re-reads
+ * the real session, exactly as `requireAdmin` re-reads the user (§4.8); forging
+ * this cookie renames a `localStorage` key in your own browser and grants
+ * nothing.
+ *
+ * The name itself lives in `@/lib/account-scope`, which the browser can import
+ * and this server-only file cannot be imported from.
+ */
+
+/** Opaque, stable per user, and not reversible back to the id. */
+function accountScope(userId: string): string {
+  return createHmac("sha256", secret()).update(userId).digest("hex").slice(0, 32);
+}
 
 export type SessionClaims = {
   userId: string;
@@ -52,11 +79,22 @@ export async function createSession(claims: SessionClaims): Promise<void> {
     path: "/",
     maxAge: MAX_AGE_SECONDS,
   });
+
+  // Same lifetime as the session, so the two can never disagree about who is
+  // signed in. Readable by the page on purpose — see the note above.
+  jar.set(ACCOUNT_SCOPE_COOKIE, accountScope(claims.userId), {
+    httpOnly: false,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: MAX_AGE_SECONDS,
+  });
 }
 
 export async function destroySession(): Promise<void> {
   const jar = await cookies();
   jar.delete(COOKIE);
+  jar.delete(ACCOUNT_SCOPE_COOKIE);
 }
 
 /** The current session, or null. Never throws — a bad cookie is just no one. */
