@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
+import { StaffBar } from "@/components/layout/staff-bar";
 import { Logo } from "@/components/ui/logo";
 import { AccountIcon, BagIcon, HeartIcon, SearchIcon } from "@/components/ui/icons";
 import { useStore } from "@/components/store/store-provider";
@@ -49,6 +50,10 @@ export function Header({ overHero = false }: { overHero?: boolean }) {
             : "bg-[linear-gradient(180deg,rgba(43,33,24,0.52)_0%,rgba(43,33,24,0.18)_62%,rgba(43,33,24,0)_100%)]"),
       )}
     >
+      {/* Staff only, and above everything: the way back to the back office,
+          answering the admin sidebar's own "View the shop" link. */}
+      <StaffBar />
+
       <AnnouncementBar overlay={overlay} />
 
       {/*

@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import { Role } from "@/generated/prisma/enums";
 import { ACCOUNT_SCOPE_COOKIE } from "@/lib/account-scope";
+import { STAFF_HINT_COOKIE, STAFF_HINT_VALUE } from "@/lib/staff-hint";
 
 /**
  * Sessions: a signed JWT in an httpOnly cookie.
@@ -89,12 +90,35 @@ export async function createSession(claims: SessionClaims): Promise<void> {
     path: "/",
     maxAge: MAX_AGE_SECONDS,
   });
+
+  /*
+   * And a third, for the same §4.10 reason: the shop's header cannot ask the
+   * server who is signed in, but a member of staff standing in the storefront
+   * should be one click from the back office rather than typing `/admin`.
+   *
+   * Set, or actively cleared, on every sign-in — otherwise a customer signing
+   * in on the shop laptop after the manager would inherit a dashboard link.
+   * It is a hint and not a permission: `requireStaff` re-reads the user from
+   * the database, so a forged cookie draws a link to a login page.
+   */
+  if (isStaff(claims)) {
+    jar.set(STAFF_HINT_COOKIE, STAFF_HINT_VALUE, {
+      httpOnly: false,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: MAX_AGE_SECONDS,
+    });
+  } else {
+    jar.delete(STAFF_HINT_COOKIE);
+  }
 }
 
 export async function destroySession(): Promise<void> {
   const jar = await cookies();
   jar.delete(COOKIE);
   jar.delete(ACCOUNT_SCOPE_COOKIE);
+  jar.delete(STAFF_HINT_COOKIE);
 }
 
 /** The current session, or null. Never throws — a bad cookie is just no one. */

@@ -303,6 +303,88 @@ a signed-in wishlist is a round trip away, and `hydrated` alone would say
 "ready" while the answer was still an empty guest list — long enough to print
 "Nothing saved yet." over a wishlist that is not empty.
 
+### 4.15 Staff get a door back to the back office, from a cookie
+
+The admin sidebar has always carried "View the shop ↗"; the shop had no way
+back, so staff typed `/admin`. The header cannot answer "is this person staff?"
+without a server-side cookie read, and 4.10 forbids that — it would make every
+page that draws the header dynamic.
+
+So sign-in sets a *third* readable cookie, `feezee_staff`, on the same pattern
+as 4.14 and with the same disclaimer: it carries no identity, only the fact
+that a dashboard link is worth drawing, and **nothing trusts it.** `/admin` is
+guarded by `requireStaff`, which re-reads the user from the database (4.8), so
+forging the cookie earns a link to the admin sign-in page. It is set or
+actively cleared on every sign-in, so a customer signing in after the manager
+on the shop laptop does not inherit the strip, and it is deleted with the
+session on sign-out.
+
+`StaffBar` draws it above the announcement bar, through `useSyncExternalStore`
+rather than a `setState` in an effect — the same two-snapshot shape as
+`hydratedStore`. The cost is one small downward shift on a staff member's own
+screen after hydration, and nothing at all on a customer's. The build output is
+the check that the shop is still static: `/`, `/silai`, `/cart`, `/wishlist`
+and `/track-order` all stay ○.
+
+### 4.16 A guest can find a parcel without an account
+
+`/track-order` takes an order number and the email it was placed with, and shows
+the timeline, the courier, the tracking link and the parcel contents. Most
+FEEZEE orders are placed without an account, and "sign in to see your order" is
+not an answer to "where is my order".
+
+Three things it is careful about. It **POSTs to a server action** rather than
+reading `?order=&email=` from the URL, because an email address in a URL ends up
+in browser history, in a referrer header and in an access log. It returns a
+**trimmed projection** — no `userId`, no payment transactions, no street address
+or phone — rather than the `OrderView` the account pages use. And it gives **one
+message for both failures**: order numbers run in a Postgres sequence (4.6) and
+are therefore guessable, so a distinct "wrong email" reply would turn a guessed
+number into a way of confirming that someone shopped here.
+
+Drawing the same timeline from a client component meant moving `orderTimeline`
+out of the `server-only` orders module into `src/modules/orders/timeline.ts`,
+and typing `OrderTimeline` against a structural `TimelineOrder` instead of
+`OrderView`. Every existing server caller is unchanged.
+
+### 4.17 Refunds are executed, not just recorded
+
+Marking a return REFUNDED on a card order now calls Stripe. Two details carry
+the weight.
+
+**Stripe is called before the record says it happened.** REFUNDED has no next
+status, so the form cannot be saved again — marking the return first and then
+failing would leave it closed with the customer still waiting for money that was
+never sent. A refusal is surfaced verbatim ("amount exceeds the charge") and
+nothing changes. The call is also deliberately outside `resolveReturn`'s
+transaction, for the same reason as 4.4.
+
+**The return number is the idempotency key.** A form saved twice, or a retry
+after a timeout, gets the first refund back rather than sending a second one,
+and a `STRIPE_REFUND` transaction row is written as the evidence.
+
+The id a refund is issued against is the payment *intent*, but
+`checkout.session.completed` gives a session id (`cs_…`). The webhook now
+records the intent alongside it, and `resolveStripePaymentIntent` resolves older
+rows that only have the session. Cash on delivery and bank transfer keep the
+manual payout reminder — shown on the form before the click, not only after.
+
+### 4.18 Product photographs are uploaded, not copied in by hand
+
+`/api/admin/upload` takes a JPEG, PNG or WebP under 10 MB from the product
+editor and writes it into `public/img/uploads/`, returning the relative path the
+`ProductImage.url` column holds. It is staff-guarded, answers 401 rather than
+redirecting (it is fetched, not navigated to), and does not trust the browser
+twice over: the **magic bytes are checked against the declared MIME type**, so a
+`.jpg` that is really a script never reaches the disk, and the filename is taken
+through `basename` and reduced to `[a-z0-9-]` plus a timestamp — needed because
+`next.config.ts` caches `/img/*` immutably for a year, so a reused name would
+leave the old picture on screen.
+
+This is a local filesystem write. It is right for a shop running its own server
+and wrong for an ephemeral one (Vercel and the like), where it wants a blob
+store behind the same route.
+
 ---
 
 ## 5. Data model notes
@@ -404,17 +486,24 @@ were exercised against a live database:
 - **No automated test suite.** The verification above was a script run against a
   live database, not something CI can repeat. A Vitest suite over
   `src/modules/` is the obvious next step.
-- **No image upload.** The product editor takes filenames already in
-  `public/img/`. Real uploads need a blob store.
-- **Refunds are recorded, not executed.** Marking a return refunded updates the
-  order and the ledger; moving the money back through Stripe is still manual.
+- **Uploads are a local filesystem write.** `/api/admin/upload` (4.18) writes
+  into `public/img/uploads/`, which is right for a shop running its own server
+  and wrong for an ephemeral one. A hosted deployment wants a blob store behind
+  the same route.
 - **`npm audit` reports 4 highs**, all inside the `prisma` CLI devDependency
   (`@prisma/config` → `deepmerge-ts`, and `mysql2`, which this project does not
   use). Nothing ships to the runtime bundle. `npm audit fix --force` would
   install the Prisma 8 release candidate, which is worse.
-- **Guest orders have no lookup page.** A guest can reach their confirmation by
-  order number from the email, but cannot list past orders without an account.
-- **Copy still says Pakistan in places.** The business is UAE-registered and the
-  currency is AED, but `values.ts`, the Silai testimonials and FAQ, and parts of
-  the assistant script still describe Pakistani delivery and cash-on-delivery
-  terms. Heritage positioning is fine; the operational claims are not.
+- **A guest still cannot list past orders.** `/track-order` (4.16) finds one
+  order from its number and email, which is the common case; there is no
+  "everything this address has ever bought" without an account, and deliberately
+  so — that is a list an email address alone should not unlock.
+- **Delivery copy is UAE; heritage copy is not, on purpose.** `values.ts`, the
+  Silai page and the assistant now quote Dubai and the 7 Emirates, AED pricing
+  and the Madina Mall boutique. The hero still reads "stitched the Pakistani
+  way", which is a statement about the cut and the craft rather than an
+  operational claim, and stays.
+- **Existing staff sessions predate the `feezee_staff` cookie** (4.15). A
+  cookie can only be set from a server action or a route handler, not from a
+  layout render, so anyone already signed in sees the dashboard strip after
+  their next sign-in.
