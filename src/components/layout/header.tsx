@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { Logo } from "@/components/ui/logo";
-import { BagIcon, HeartIcon, SearchIcon } from "@/components/ui/icons";
+import { AccountIcon, BagIcon, HeartIcon, SearchIcon } from "@/components/ui/icons";
 import { useStore } from "@/components/store/store-provider";
 import { primaryNav } from "@/content/navigation";
 import { cn } from "@/lib/utils";
@@ -121,6 +121,21 @@ export function Header({ overHero = false }: { overHero?: boolean }) {
           >
             <SearchIcon />
           </button>
+
+          {/*
+            Always `/account`, never a link that depends on who is signed in.
+            Reading the session here would mean reading a cookie in the header,
+            and a cookie read makes every page that renders the header dynamic —
+            which would cost the whole shop its static rendering for the sake of
+            one icon. `/account` sends a guest to the sign-in page itself.
+          */}
+          <Link
+            href="/account"
+            aria-label="Your account"
+            className="bg-transparent border-none cursor-pointer p-2.5 nav:p-3 relative min-w-11 min-h-11 text-inherit hover:text-inherit flex items-center justify-center"
+          >
+            <AccountIcon />
+          </Link>
 
           {/* Beside search, and counted the same way as the bag. */}
           <Link

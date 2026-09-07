@@ -4,13 +4,16 @@ import { PageFrame } from "@/components/layout/page-frame";
 import { Breadcrumb } from "@/components/shop/breadcrumb";
 import { ShopSubnav } from "@/components/shop/shop-subnav";
 import { MadeToOrderBand } from "@/components/shop/made-to-order-band";
+import { catalogueForClient } from "@/modules/catalogue/collections";
 
 export const metadata: Metadata = {
   title: "Wishlist",
   description: "The FEEZEE pieces you have saved.",
 };
 
-export default function WishlistPage() {
+export default async function WishlistPage() {
+  const catalogue = await catalogueForClient();
+
   return (
     <PageFrame>
       <div className="max-w-[var(--fz-container)] mx-auto px-[18px] pt-[clamp(20px,3vw,40px)]">
@@ -27,7 +30,7 @@ export default function WishlistPage() {
           <ShopSubnav />
         </div>
 
-        <WishlistContents />
+        <WishlistContents catalogue={catalogue} />
       </div>
       <MadeToOrderBand line="Saved something that is out of your size?" />
     </PageFrame>

@@ -49,7 +49,7 @@ export function ProductCard({
   /** Rendered width of the tile, for the responsive image srcset. */
   sizes?: string;
 }) {
-  const { currency, wished, toggleWish, addToBag } = useStore();
+  const { currency, wished, toggleWish } = useStore();
   const isWished = Boolean(wished[product.id]);
   const off = discountPct(product);
 
@@ -108,14 +108,19 @@ export function ProductCard({
           bar rides in over the bottom edge. `group-focus-within` keeps it
           reachable by keyboard, and on touch it simply stays put.
         */}
-        <button
-          type="button"
-          onClick={() => addToBag(product.id)}
-          aria-label={`Add ${product.name} to bag`}
-          className="absolute inset-x-0 bottom-0 z-20 bg-cream/95 text-ink py-3 text-[12px] tracking-[0.18em] uppercase cursor-pointer translate-y-full opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 motion-reduce:transition-none"
+        {/*
+          A size is a SKU with its own stock now, so a tile cannot add to the
+          bag: picking one on the customer's behalf would quietly ship whichever
+          size happened to be first on the rail. The bar goes to the garment's
+          own page, where the sizes and what is left of each are on screen.
+        */}
+        <Link
+          href={productHref(product)}
+          aria-label={`Choose a size for ${product.name}`}
+          className="absolute inset-x-0 bottom-0 z-20 bg-cream/95 text-ink hover:text-ink text-center py-3 text-[12px] tracking-[0.18em] uppercase translate-y-full opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 motion-reduce:transition-none"
         >
-          Add to Bag
-        </button>
+          Select Size
+        </Link>
       </div>
 
       {/*

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { linePages, productsForPage } from "@/content/collections";
+import { linePages } from "@/content/collections";
+import { productsForShopPage } from "@/modules/catalogue/collections";
 import { img } from "@/lib/assets";
 
 /**
@@ -8,13 +9,19 @@ import { img } from "@/lib/assets";
  * grid to answer the question that grid raises — everything is here, so what
  * are the parts? — and on the sale page as the way back to full price.
  */
-export function LineStrip({
+export async function LineStrip({
   heading = "Shop the lines",
   standfirst,
 }: {
   heading?: string;
   standfirst?: string;
 }) {
+  // Counted here rather than inside the map: the JSX below is not async, and
+  // three small queries in parallel beat three awaited in a row.
+  const counts = await Promise.all(
+    linePages.map(async (page) => (await productsForShopPage(page)).length),
+  );
+
   return (
     <section className="max-w-[var(--fz-container)] mx-auto px-[18px] pt-[clamp(44px,7vw,90px)]">
       <h2 className="font-display font-normal text-[clamp(26px,3.6vw,40px)] leading-[1.1] m-0">
@@ -27,7 +34,7 @@ export function LineStrip({
       )}
 
       <div className="mt-[clamp(22px,3vw,36px)] grid grid-cols-1 nav:grid-cols-3 gap-x-5 gap-y-8">
-        {linePages.map((page) => (
+        {linePages.map((page, i) => (
           <Link key={page.slug} href={page.slug} className="group block">
             <div className="relative aspect-[4/5] overflow-hidden bg-sand">
               <Image
@@ -43,7 +50,7 @@ export function LineStrip({
                 {page.nav}
               </div>
               <div className="text-[13px] text-muted tracking-[0.06em]">
-                {productsForPage(page).length} pieces · {page.eyebrow}
+                {counts[i]} pieces · {page.eyebrow}
               </div>
               <span className="mt-1 self-start text-[13px] tracking-[0.14em] uppercase text-gold-dark border-b border-current pb-0.5 group-hover:text-ink">
                 Shop the line →

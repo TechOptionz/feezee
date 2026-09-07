@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useStore } from "@/components/store/store-provider";
 import { ChatIcon, CloseIcon, SendIcon } from "@/components/ui/icons";
 import {
@@ -12,7 +12,7 @@ import {
   welcomeLines,
   type ChatTopic,
 } from "@/content/chatbot";
-import { productsByIds } from "@/content/products";
+import type { ProductView } from "@/modules/catalogue";
 import { img } from "@/lib/assets";
 import { formatPrice } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -35,8 +35,9 @@ type Message = {
  * Chips carry the conversation; the input is there for visitors who would
  * rather type, and is routed to the same topics by keyword.
  */
-export function ChatWidget() {
+export function ChatWidget({ products }: { products: ProductView[] }) {
   const { currency } = useStore();
+  const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
   const price = useCallback((aed: number) => formatPrice(aed, currency), [currency]);
 
   const [open, setOpen] = useState(false);
@@ -175,7 +176,15 @@ export function ChatWidget() {
             className="no-scrollbar flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4"
           >
             {messages.map((message) => (
-              <Bubble key={message.id} message={message} price={price} />
+              <Bubble
+                key={message.id}
+                message={message}
+                price={price}
+                looks={(message.productIds ?? []).flatMap((id) => {
+                  const found = byId.get(id);
+                  return found ? [found] : [];
+                })}
+              />
             ))}
             {thinking && <Thinking />}
           </div>
@@ -230,9 +239,16 @@ export function ChatWidget() {
   );
 }
 
-function Bubble({ message, price }: { message: Message; price: (aed: number) => string }) {
+function Bubble({
+  message,
+  price,
+  looks,
+}: {
+  message: Message;
+  price: (aed: number) => string;
+  looks: ProductView[];
+}) {
   const fromBot = message.from === "bot";
-  const looks = message.productIds ? productsByIds(message.productIds) : [];
 
   return (
     <div className={cn("flex flex-col gap-2", fromBot ? "items-start" : "items-end")}>

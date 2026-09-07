@@ -7,66 +7,64 @@ import { FeaturedArticles } from "@/components/sections/featured-articles";
 import { Breadcrumb } from "@/components/shop/breadcrumb";
 import { ProductRail } from "@/components/shop/product-rail";
 import { collectionHref } from "@/content/collections";
-import { productDetail, sizeOptions } from "@/content/product-detail";
+import { productHref } from "@/content/products";
 import {
   allProductSlugs,
+  isInStock,
   productBySlug,
-  productHref,
-  productImages,
-  productSku,
   relatedProducts,
-} from "@/content/products";
+} from "@/modules/catalogue";
 import { img } from "@/lib/assets";
 import { site } from "@/lib/site";
 
 /**
  * One garment, on a page of its own.
  *
- * The whole catalogue is known at build time, so every one of these pages is
- * static: the photographs, the copy and the size chart are all in the repo, and
- * the only thing that has to happen in the browser is choosing a size and
- * adding to the bag.
+ * Prerendered for every slug the database holds at build time, and rendered on
+ * demand for anything added since — `dynamicParams` is on, so a garment created
+ * in the admin has a page the moment it is saved rather than at the next
+ * deploy. `revalidate` keeps the price and the stock on a prerendered page from
+ * going stale.
  */
-export function generateStaticParams() {
-  return allProductSlugs().map((slug) => ({ slug }));
+export const dynamicParams = true;
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  const slugs = await allProductSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
   params,
 }: PageProps<"/product/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const product = productBySlug(slug);
+  const product = await productBySlug(slug);
   if (!product) return {};
 
-  const detail = productDetail(product);
-  const [cover] = productImages(product);
+  const [cover] = product.images;
 
   return {
     title: product.name,
-    description: `${product.name} — ${product.fabric}, ${detail.colour}. ${detail.cut}, stitched by FEEZEE or cut to your measurements through Silai.`,
+    description: `${product.name} — ${product.fabric}, ${product.colour}. ${product.cut}, stitched by FEEZEE or cut to your measurements through Silai.`,
     alternates: { canonical: productHref(product) },
     openGraph: {
       title: `${product.name} | FEEZEE`,
-      description: detail.description,
+      description: product.description,
       url: `${site.url}${productHref(product)}`,
       type: "website",
-      images: [{ url: img(cover), alt: product.name }],
+      images: cover ? [{ url: img(cover), alt: product.name }] : [],
     },
   };
 }
 
-export default async function ProductPage({
-  params,
-}: PageProps<"/product/[slug]">) {
+export default async function ProductPage({ params }: PageProps<"/product/[slug]">) {
   const { slug } = await params;
-  const product = productBySlug(slug);
+  const product = await productBySlug(slug);
   if (!product) notFound();
 
-  const detail = productDetail(product);
-  const images = productImages(product);
-  const related = relatedProducts(product, 4);
+  const related = await relatedProducts(product, 4);
   const url = `${site.url}${productHref(product)}`;
-  const inStock = sizeOptions(product).some((option) => option.state !== "out");
+  const inStock = isInStock(product);
 
   return (
     <PageFrame>
@@ -82,17 +80,19 @@ export default async function ProductPage({
             "@context": "https://schema.org",
             "@type": "Product",
             name: product.name,
-            description: detail.description,
-            sku: productSku(product),
-            color: detail.colour,
-            material: detail.components[0]?.fabric ?? product.fabricFamily,
+            description: product.description,
+            sku: product.variants[0]?.sku.replace(/-[A-Z]+$/, "") ?? product.slug,
+            color: product.colour,
+            material: product.fabricFamily,
             brand: { "@type": "Brand", name: site.name },
-            image: images.map((file) => `${site.url}${img(file)}`),
+            image: product.images.map((file) => `${site.url}${img(file)}`),
             offers: {
-              "@type": "Offer",
+              "@type": "AggregateOffer",
               url,
               priceCurrency: "AED",
-              price: product.aed,
+              lowPrice: Math.min(...product.variants.map((v) => v.priceAed)),
+              highPrice: Math.max(...product.variants.map((v) => v.priceAed)),
+              offerCount: product.variants.filter((v) => v.stock > 0).length,
               availability: inStock
                 ? "https://schema.org/InStock"
                 : "https://schema.org/OutOfStock",
@@ -120,7 +120,7 @@ export default async function ProductPage({
       */}
       <div className="max-w-[var(--fz-container)] mx-auto px-[18px] mt-[clamp(14px,2vw,26px)] grid items-start gap-x-[clamp(24px,3.4vw,60px)] gap-y-[clamp(28px,3.5vw,44px)] nav:grid-cols-[minmax(0,1fr)_minmax(330px,30%)]">
         <div className="-mx-[18px] nav:mx-0">
-          <ProductGallery images={images} alt={product.name} />
+          <ProductGallery images={product.images} alt={product.name} />
         </div>
 
         <div className="nav:sticky nav:top-6">

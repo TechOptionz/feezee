@@ -1,20 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ShareRow } from "@/components/product/share-row";
 import { useStore } from "@/components/store/store-provider";
-import { HeartIcon } from "@/components/ui/icons";
+import { HeartIcon, PlusMinusIcon } from "@/components/ui/icons";
 import { collectionHref } from "@/content/collections";
-import {
-  COLOUR_NOTE,
-  defaultSize,
-  productDetail,
-  sizeGuide,
-  sizeOptions,
-  type Size,
-} from "@/content/product-detail";
-import { discountPct, productSku, type Product } from "@/content/products";
+import { COLOUR_NOTE, sizeGuide } from "@/content/product-detail";
+import { discountPct } from "@/content/products";
+import type { ProductView, VariantView } from "@/modules/catalogue";
 import { formatPrice } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
@@ -28,29 +22,40 @@ type Tab = (typeof TABS)[number];
  * Everything above the tabs is the decision; everything below it is the
  * evidence. That order is why the panel opens on a size already chosen — the
  * first one still on the rail — so the button is live the moment the page is.
+ *
+ * The sizes are now real variants with real counts behind them, which changes
+ * two things: the panel can say how many are left rather than only that some
+ * are, and the quantity stepper stops at what the shop can actually ship.
  */
 export function ProductPanel({
   product,
   /** Absolute URL of this page, for the share links. */
   url,
 }: {
-  product: Product;
+  product: ProductView;
   url: string;
 }) {
   const { currency, addToBag, toggleWish, wished } = useStore();
 
-  const detail = productDetail(product);
-  const options = sizeOptions(product);
+  const options = product.variants;
   const soldOut = options.every((option) => option.state === "out");
   const off = discountPct(product);
 
-  const [size, setSize] = useState<Size | null>(() => defaultSize(product));
+  const [variantId, setVariantId] = useState<string | null>(
+    () => options.find((o) => o.state !== "out")?.id ?? null,
+  );
+  const [qty, setQty] = useState(1);
   const [missingSize, setMissingSize] = useState(false);
   const [tab, setTab] = useState<Tab>("Details");
   const tabsRef = useRef<HTMLDivElement>(null);
 
-  const chosen = options.find((option) => option.size === size);
+  const chosen: VariantView | undefined = useMemo(
+    () => options.find((option) => option.id === variantId),
+    [options, variantId],
+  );
+
   const isWished = Boolean(wished[product.id]);
+  const maxQty = Math.max(1, Math.min(chosen?.stock ?? 1, 10));
 
   /* "Size chart" is the same panel as the third tab rather than a dialog of
      its own: one copy of the table, and it stays open while sizes are tried. */
@@ -59,13 +64,35 @@ export function ProductPanel({
     tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
 
+  const choose = (option: VariantView) => {
+    setVariantId(option.id);
+    setMissingSize(false);
+    // A size with two left must not inherit a quantity of five from the size
+    // that had plenty.
+    setQty((current) => Math.min(current, Math.max(1, option.stock)));
+  };
+
   const add = () => {
     if (soldOut) return;
-    if (!size) {
+    if (!chosen) {
       setMissingSize(true);
       return;
     }
-    addToBag(product.id, 1, size);
+    addToBag(
+      {
+        variantId: chosen.id,
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        fabric: product.fabric,
+        image: product.img,
+        size: chosen.size,
+        sku: chosen.sku,
+        unitPriceAed: chosen.priceAed,
+        ...(product.wasAed ? { wasAed: product.wasAed } : {}),
+      },
+      qty,
+    );
   };
 
   return (
@@ -92,12 +119,9 @@ export function ProductPanel({
 
       <div className="mt-[clamp(12px,1.6vw,18px)] flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span
-          className={cn(
-            "text-[21px] font-medium",
-            product.wasAed && "text-wine",
-          )}
+          className={cn("text-[21px] font-medium", product.wasAed && "text-wine")}
         >
-          {formatPrice(product.aed, currency)}
+          {formatPrice(chosen?.priceAed ?? product.aed, currency)}
         </span>
         {product.wasAed && (
           <>
@@ -114,22 +138,20 @@ export function ProductPanel({
       </div>
 
       <p className="mt-2.5 mb-0 text-[12px] tracking-[0.16em] uppercase text-muted">
-        SKU: {productSku(product)}
-        {size ? `-${size}` : ""}
+        SKU: {chosen?.sku ?? product.variants[0]?.sku ?? "—"}
       </p>
 
       <p className="mt-4 mb-0 text-[15.5px] leading-[1.7] text-cocoa">
-        {detail.cut}. {product.fabric}.
+        {product.cut}. {product.fabric}.
       </p>
 
       {/* ---- Size ---------------------------------------------------------- */}
       <div className="mt-[clamp(22px,2.6vw,32px)] border-t border-line pt-[clamp(20px,2.4vw,28px)]">
         <div className="flex items-center justify-between gap-4">
           <p className="m-0 text-[12.5px] tracking-[0.2em] uppercase">
-            Size:{" "}
-            <span className="text-cocoa">{size ?? "Select a size"}</span>
+            Size: <span className="text-cocoa">{chosen?.size ?? "Select a size"}</span>
             {chosen?.state === "low" && (
-              <span className="ml-3 text-wine">Last few items</span>
+              <span className="ml-3 text-wine">Only {chosen.stock} left</span>
             )}
           </p>
 
@@ -143,23 +165,22 @@ export function ProductPanel({
         </div>
 
         <div className="mt-3.5 flex flex-wrap gap-2">
-          {options.map(({ size: value, state }) => {
-            const out = state === "out";
-            const selected = value === size;
+          {options.map((option) => {
+            const out = option.state === "out";
+            const selected = option.id === variantId;
 
             return (
               <button
-                key={value}
+                key={option.id}
                 type="button"
                 disabled={out}
                 aria-pressed={selected}
                 aria-label={
-                  out ? `${value} — sold out` : `Choose size ${value}`
+                  out
+                    ? `${option.size} — sold out`
+                    : `Choose size ${option.size}, ${option.stock} in stock`
                 }
-                onClick={() => {
-                  setSize(value);
-                  setMissingSize(false);
-                }}
+                onClick={() => choose(option)}
                 className={cn(
                   "relative min-w-[52px] px-3 py-2.5 text-[13px] tracking-[0.14em] uppercase border transition-colors duration-200",
                   out
@@ -170,10 +191,10 @@ export function ProductPanel({
                     : !out && "border-line text-cocoa hover:border-ink hover:text-ink",
                 )}
               >
-                {value}
+                {option.size}
                 {/* The last few of a size gets a dot rather than a word: the
                     word belongs to the size actually chosen, above. */}
-                {state === "low" && (
+                {option.state === "low" && (
                   <span
                     aria-hidden
                     className="absolute top-1 right-1 w-[5px] h-[5px] rounded-full bg-wine"
@@ -191,8 +212,51 @@ export function ProductPanel({
         )}
       </div>
 
+      {/* ---- Quantity ------------------------------------------------------ */}
+      {!soldOut && (
+        <div className="mt-[clamp(18px,2.2vw,24px)] flex items-center justify-between gap-4">
+          <span className="text-[12.5px] tracking-[0.2em] uppercase">Quantity</span>
+          <div className="flex items-center border border-line">
+            <button
+              type="button"
+              onClick={() => setQty((n) => Math.max(1, n - 1))}
+              disabled={qty <= 1}
+              aria-label="Reduce quantity"
+              className={cn(
+                "w-10 h-10 flex items-center justify-center",
+                qty <= 1
+                  ? "text-muted/50 cursor-not-allowed"
+                  : "text-ink cursor-pointer hover:bg-panel",
+              )}
+            >
+              <PlusMinusIcon open />
+            </button>
+            <span
+              aria-live="polite"
+              className="min-w-10 text-center text-[14px] tabular-nums"
+            >
+              {qty}
+            </span>
+            <button
+              type="button"
+              onClick={() => setQty((n) => Math.min(maxQty, n + 1))}
+              disabled={qty >= maxQty}
+              aria-label="Increase quantity"
+              className={cn(
+                "w-10 h-10 flex items-center justify-center",
+                qty >= maxQty
+                  ? "text-muted/50 cursor-not-allowed"
+                  : "text-ink cursor-pointer hover:bg-panel",
+              )}
+            >
+              <PlusMinusIcon />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ---- The button ---------------------------------------------------- */}
-      <div className="mt-[clamp(20px,2.4vw,28px)] flex flex-col gap-3">
+      <div className="mt-[clamp(16px,2vw,22px)] flex flex-col gap-3">
         <button
           type="button"
           onClick={add}
@@ -247,7 +311,9 @@ export function ProductPanel({
               key={name}
               role="tab"
               type="button"
+              id={`tab-${name.replace(/\s+/g, "-").toLowerCase()}`}
               aria-selected={tab === name}
+              aria-controls={`panel-${name.replace(/\s+/g, "-").toLowerCase()}`}
               onClick={() => setTab(name)}
               className={cn(
                 "-mb-px bg-transparent border-0 border-b-2 px-0 pb-2.5 pt-1 text-[12.5px] tracking-[0.18em] uppercase cursor-pointer transition-colors duration-200",
@@ -261,22 +327,32 @@ export function ProductPanel({
           ))}
         </div>
 
-        <div className="pt-5 text-[15px] leading-[1.75] text-cocoa">
+        <div
+          role="tabpanel"
+          id={`panel-${tab.replace(/\s+/g, "-").toLowerCase()}`}
+          aria-labelledby={`tab-${tab.replace(/\s+/g, "-").toLowerCase()}`}
+          className="pt-5 text-[15px] leading-[1.75] text-cocoa"
+        >
           {tab === "Details" && (
             <div className="flex flex-col gap-4">
-              {detail.components.map((component) => (
-                <div key={component.name}>
-                  <div className="text-ink">{component.name}</div>
-                  <div>Colour: {component.colour}</div>
-                  <div>Fabric: {component.fabric}</div>
-                </div>
-              ))}
+              <div>
+                <div className="text-ink">Colour</div>
+                <div>{product.colour}</div>
+              </div>
+              <div>
+                <div className="text-ink">Cut</div>
+                <div>{product.cut}</div>
+              </div>
+              <div>
+                <div className="text-ink">Fabric</div>
+                <div>{product.fabric}</div>
+              </div>
               <div>
                 <div>
                   {product.pieces} piece{product.pieces > 1 ? "s" : ""}
                   {product.withDupatta ? ", dupatta included" : ""}
                 </div>
-                <div>{detail.care}</div>
+                <div>{product.care}</div>
               </div>
               <p className="m-0 text-[12.5px] tracking-[0.06em] uppercase text-muted">
                 {COLOUR_NOTE}
@@ -286,10 +362,10 @@ export function ProductPanel({
 
           {tab === "Description" && (
             <div className="flex flex-col gap-4">
-              <p className="m-0">{detail.description}</p>
+              <p className="m-0">{product.description}</p>
               <p className="m-0">
-                Cut and finished in our own studio in Karachi, and dispatched
-                within 48 hours. Free delivery over AED 1,000.
+                Cut and finished by our in-house tailors and dispatched from
+                Dubai within 48 hours. Free UAE delivery over AED 1,000.
               </p>
             </div>
           )}
@@ -315,9 +391,7 @@ export function ProductPanel({
                     {sizeGuide.rows.map((row) => (
                       <tr
                         key={row[0]}
-                        className={cn(
-                          row[0] === size && "bg-panel text-ink",
-                        )}
+                        className={cn(row[0] === chosen?.size && "bg-panel text-ink")}
                       >
                         {row.map((cell, i) => (
                           <td

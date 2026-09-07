@@ -3,17 +3,25 @@
 import Link from "next/link";
 import { useStore } from "@/components/store/store-provider";
 import { ProductCard } from "@/components/ui/product-card";
-import { productsByIds } from "@/content/products";
 import { formatPrice } from "@/lib/currency";
+import type { ProductView } from "@/modules/catalogue";
 
 /**
  * Everything hearted, from any page, kept in the browser. The tiles are the
- * same ones the shop grids use, so un-hearting a piece here removes it from
- * the page under your finger — which is the behaviour a wishlist should have.
+ * same ones the shop grids use, so un-hearting a piece here removes it from the
+ * page under your finger — which is the behaviour a wishlist should have.
+ *
+ * The catalogue arrives as a prop: the saved ids live in `localStorage`, but
+ * what they are worth and whether they are still on the rail is the database's
+ * to say, and a client component cannot ask it directly.
  */
-export function WishlistContents() {
+export function WishlistContents({ catalogue }: { catalogue: ProductView[] }) {
   const { wishedIds, currency, hydrated, addToBag } = useStore();
-  const saved = productsByIds(wishedIds);
+
+  const saved = wishedIds.flatMap((id) => {
+    const found = catalogue.find((p) => p.id === id);
+    return found ? [found] : [];
+  });
 
   // Nothing honest to draw until the saved list has been read back.
   if (!hydrated) return <div className="min-h-[40vh]" />;
@@ -39,6 +47,31 @@ export function WishlistContents() {
   }
 
   const total = saved.reduce((sum, product) => sum + product.aed, 0);
+  const inStock = saved.filter((p) => p.variants.some((v) => v.stock > 0));
+
+  /*
+   * Bulk add takes the first size still on the rail for each piece, and the bag
+   * row prints which one it took. That is a real choice made on someone's
+   * behalf, so it is labelled as what it is rather than as a plain "add all".
+   */
+  const addAll = () => {
+    for (const product of inStock) {
+      const variant = product.variants.find((v) => v.stock > 0);
+      if (!variant) continue;
+      addToBag({
+        variantId: variant.id,
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        fabric: product.fabric,
+        image: product.img,
+        size: variant.size,
+        sku: variant.sku,
+        unitPriceAed: variant.priceAed,
+        ...(product.wasAed ? { wasAed: product.wasAed } : {}),
+      });
+    }
+  };
 
   return (
     <>
@@ -47,14 +80,15 @@ export function WishlistContents() {
           {saved.length} {saved.length === 1 ? "piece" : "pieces"} saved ·{" "}
           {formatPrice(total, currency)}
         </span>
-        {/* Wrapped, this has a line to itself, so it takes the width of it
-            rather than stopping short of the right edge. */}
         <button
           type="button"
-          onClick={() => saved.forEach((product) => addToBag(product.id))}
-          className="w-full sm:w-auto bg-ink text-cream border-none cursor-pointer px-6 py-3.5 sm:py-3 text-[12.5px] tracking-[0.16em] uppercase"
+          onClick={addAll}
+          disabled={inStock.length === 0}
+          className="w-full sm:w-auto bg-ink text-cream border-none cursor-pointer px-6 py-3.5 sm:py-3 text-[12.5px] tracking-[0.16em] uppercase disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Add all to bag
+          {inStock.length === 0
+            ? "All sold out"
+            : "Add first available size to bag"}
         </button>
       </div>
 

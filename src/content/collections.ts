@@ -1,10 +1,4 @@
-import {
-  NEW_IN_COLLECTIONS,
-  newInProducts,
-  productsInCollection,
-  type Collection,
-  type Product,
-} from "@/content/products";
+import { NEW_IN_COLLECTIONS, type Collection } from "@/content/products";
 
 /**
  * The five shop pages behind the nav. Everything a page needs that is not the
@@ -166,15 +160,6 @@ const bySlug = new Map(shopPages.map((page) => [page.slug, page]));
 /** The page at `slug`, or undefined. */
 export function shopPage(slug: string): ShopPage | undefined {
   return bySlug.get(slug);
-}
-
-/**
- * The garments a page shows. New In is the three lines together; every other
- * page is the single line that shares its name.
- */
-export function productsForPage(page: ShopPage): Product[] {
-  if (page.slug === "/new-in") return newInProducts();
-  return productsInCollection(page.nav as Collection);
 }
 
 /** The three line pages, for the "shop the lines" strip on New In. */

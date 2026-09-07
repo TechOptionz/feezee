@@ -8,23 +8,45 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { productById } from "@/content/products";
 import { DEFAULT_CURRENCY, type Currency } from "@/lib/currency";
 import { createPersistedStore, hydratedStore } from "@/lib/persisted-store";
 
 /**
- * One row of the bag: which garment, in which size, and how many of it.
+ * One row of the bag.
  *
- * `size` is what the garment's own page sends; a card in a grid still adds
- * without one, and that line is the "size to be confirmed" row the bag shows.
- * Two rows of the same garment in different sizes are two rows, which is why
- * every operation on the bag takes the size as well as the id.
+ * The row carries a **snapshot** of the garment — name, fabric, photograph,
+ * price — rather than an id to look up. Two reasons, and the second is the one
+ * that matters:
+ *
+ * 1. The catalogue now lives in the database, and the bag lives in
+ *    `localStorage` in the browser. A client component cannot reach Prisma, so
+ *    a row that held only an id would have nothing to draw until a round trip
+ *    came back, and the drawer would open empty for a frame on every page.
+ * 2. `variantId` is the size, not a note about it. The same suit in L and in XL
+ *    are two variants, two SKUs and two separate pieces of stock, so they are
+ *    two rows — and the row can name exactly which one.
+ *
+ * The snapshot is for *display only*. Every price is recomputed on the server
+ * when the bag is priced and again when the order is placed, so a stale or
+ * edited snapshot can change what the browser draws and never what is charged.
  */
-export type CartLine = { id: number; qty: number; size?: string };
+export type CartLine = {
+  variantId: string;
+  productId: number;
+  slug: string;
+  name: string;
+  fabric: string;
+  image: string;
+  size: string;
+  sku: string;
+  unitPriceAed: number;
+  wasAed?: number;
+  qty: number;
+};
 
-/** The identity of a row: the garment and the size together. */
-export function cartLineKey(line: { id: number; size?: string }): string {
-  return `${line.id}|${line.size ?? ""}`;
+/** The identity of a row. A variant already is the garment and the size. */
+export function cartLineKey(line: { variantId: string }): string {
+  return line.variantId;
 }
 
 type StoreState = {
@@ -33,13 +55,13 @@ type StoreState = {
   cart: CartLine[];
   /** Total garments in the bag, which is what the header badge counts. */
   bagCount: number;
-  /** Bag total in AED, before delivery. */
+  /** Bag total in AED, before VAT and delivery. Indicative — see above. */
   subtotalAed: number;
-  addToBag: (id: number, qty?: number, size?: string) => void;
-  setQty: (id: number, qty: number, size?: string) => void;
-  removeFromBag: (id: number, size?: string) => void;
+  addToBag: (line: Omit<CartLine, "qty">, qty?: number) => void;
+  setQty: (variantId: string, qty: number) => void;
+  removeFromBag: (variantId: string) => void;
   clearBag: () => void;
-
+  /** After a successful order: the bag is gone, not merely emptied. */
   cartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -62,36 +84,50 @@ type StoreState = {
 
 const StoreContext = createContext<StoreState | null>(null);
 
+/** Anything saved that is not a well-formed line is dropped rather than drawn. */
+function reviveLine(value: unknown): CartLine | null {
+  if (!value || typeof value !== "object") return null;
+  const line = value as Record<string, unknown>;
+
+  if (
+    typeof line.variantId !== "string" ||
+    typeof line.productId !== "number" ||
+    typeof line.name !== "string" ||
+    typeof line.size !== "string" ||
+    typeof line.unitPriceAed !== "number" ||
+    typeof line.qty !== "number" ||
+    line.qty <= 0
+  ) {
+    return null;
+  }
+
+  return {
+    variantId: line.variantId,
+    productId: line.productId,
+    slug: typeof line.slug === "string" ? line.slug : "",
+    name: line.name,
+    fabric: typeof line.fabric === "string" ? line.fabric : "",
+    image: typeof line.image === "string" ? line.image : "",
+    size: line.size,
+    sku: typeof line.sku === "string" ? line.sku : "",
+    unitPriceAed: line.unitPriceAed,
+    ...(typeof line.wasAed === "number" ? { wasAed: line.wasAed } : {}),
+    qty: Math.floor(line.qty),
+  };
+}
+
 /*
  * Both stores are created once, at module scope, so every component that reads
  * them reads the same one — and so a bag survives a route change, which remounts
  * the provider's children but not this module.
- *
- * `revive` is the guard against a saved bag that has outlived the catalogue: a
- * line pointing at a garment that no longer exists, or a quantity edited to
- * nonsense in devtools, is dropped rather than crashing the header on it.
  */
-const cartStore = createPersistedStore<CartLine[]>(
-  "feezee.cart.v1",
-  [],
-  (saved) =>
-    Array.isArray(saved)
-      ? saved
-          .filter(
-            (line): line is CartLine =>
-              typeof line?.id === "number" &&
-              typeof line?.qty === "number" &&
-              line.qty > 0 &&
-              Boolean(productById(line.id)),
-          )
-          .map((line) => ({
-            id: line.id,
-            qty: Math.floor(line.qty),
-            ...(typeof line.size === "string" && line.size
-              ? { size: line.size }
-              : {}),
-          }))
-      : [],
+const cartStore = createPersistedStore<CartLine[]>("feezee.cart.v2", [], (saved) =>
+  Array.isArray(saved)
+    ? saved.flatMap((line) => {
+        const revived = reviveLine(line);
+        return revived ? [revived] : [];
+      })
+    : [],
 );
 
 const wishStore = createPersistedStore<Record<number, boolean>>(
@@ -101,7 +137,8 @@ const wishStore = createPersistedStore<Record<number, boolean>>(
     if (!saved || typeof saved !== "object") return {};
     const out: Record<number, boolean> = {};
     for (const [id, on] of Object.entries(saved)) {
-      if (on === true && productById(Number(id))) out[Number(id)] = true;
+      const parsed = Number(id);
+      if (on === true && Number.isFinite(parsed)) out[parsed] = true;
     }
     return out;
   },
@@ -135,35 +172,34 @@ export function StoreProvider({
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
 
-  const addToBag = useCallback((id: number, qty = 1, size?: string) => {
-    if (!productById(id)) return;
-    const key = cartLineKey({ id, size });
+  const addToBag = useCallback((line: Omit<CartLine, "qty">, qty = 1) => {
     cartStore.update((lines) =>
-      lines.some((line) => cartLineKey(line) === key)
-        ? lines.map((line) =>
-            cartLineKey(line) === key ? { ...line, qty: line.qty + qty } : line,
+      lines.some((l) => l.variantId === line.variantId)
+        ? lines.map((l) =>
+            l.variantId === line.variantId
+              ? // The snapshot is refreshed as well as the count: the page that
+                // just added knows the current price better than the row saved
+                // three weeks ago does.
+                { ...l, ...line, qty: l.qty + qty }
+              : l,
           )
-        : [...lines, size ? { id, qty, size } : { id, qty }],
+        : [...lines, { ...line, qty }],
     );
     // Opening the drawer is the whole confirmation the action gets — no toast,
     // and the grid behind it does not move.
     setCartOpen(true);
   }, []);
 
-  const setQty = useCallback((id: number, qty: number, size?: string) => {
-    const key = cartLineKey({ id, size });
+  const setQty = useCallback((variantId: string, qty: number) => {
     cartStore.update((lines) =>
       qty <= 0
-        ? lines.filter((line) => cartLineKey(line) !== key)
-        : lines.map((line) =>
-            cartLineKey(line) === key ? { ...line, qty } : line,
-          ),
+        ? lines.filter((l) => l.variantId !== variantId)
+        : lines.map((l) => (l.variantId === variantId ? { ...l, qty } : l)),
     );
   }, []);
 
-  const removeFromBag = useCallback((id: number, size?: string) => {
-    const key = cartLineKey({ id, size });
-    cartStore.update((lines) => lines.filter((line) => cartLineKey(line) !== key));
+  const removeFromBag = useCallback((variantId: string) => {
+    cartStore.update((lines) => lines.filter((l) => l.variantId !== variantId));
   }, []);
 
   const clearBag = useCallback(() => cartStore.update(() => []), []);
@@ -189,11 +225,7 @@ export function StoreProvider({
   );
 
   const subtotalAed = useMemo(
-    () =>
-      cart.reduce(
-        (sum, line) => sum + (productById(line.id)?.aed ?? 0) * line.qty,
-        0,
-      ),
+    () => cart.reduce((sum, line) => sum + line.unitPriceAed * line.qty, 0),
     [cart],
   );
 

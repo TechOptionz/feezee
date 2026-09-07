@@ -1,0 +1,364 @@
+// FEEZEE Fashion — data model.
+//
+// Money is Decimal(10,2) in dirhams. It is never a float: 5% VAT on an odd
+// subtotal is exactly the case where binary floating point starts losing fils,
+// and an invoice that does not add up is a support ticket. The modules convert
+// to `number` at their boundary so nothing hands a Prisma Decimal to React.
+//
+// Timestamps that mark a transition (paidAt, dispatchedAt, ...) are nullable on
+// purpose: the null is the information that the step has not happened yet.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// People
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  STAFF
+  CUSTOMER
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  passwordHash     String
+  name             String
+  phone            String?
+  role             Role      @default(CUSTOMER)
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  addresses   Address[]
+  orders      Order[]
+  auditLogs   AuditLog[]
+  adjustments StockAdjustment[]
+
+  @@index([role])
+}
+
+/// A UAE delivery address. userId is nullable because a guest checkout still
+/// produces one — the order keeps its own flattened copy either way, so editing
+/// the address book can never rewrite the address a parcel actually went to.
+model Address {
+  id           String   @id @default(cuid())
+  userId       String?
+  fullName     String
+  phone        String
+  emirate      String
+  city         String
+  addressLine1 String
+  addressLine2 String?
+  landmark     String?
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Catalogue
+// ---------------------------------------------------------------------------
+
+model Product {
+  id               Int      @id @default(autoincrement())
+  slug             String   @unique
+  name             String
+  fabric           String
+  fabricFamily     String
+  type             String
+  pieces           Int
+  withDupatta      Boolean  @default(false)
+  collection       String
+  aed              Decimal  @db.Decimal(10, 2)
+  wasAed           Decimal? @db.Decimal(10, 2)
+  badgeLabel       String?
+  badgeTone        String?
+  cut              String
+  colour           String
+  description      String
+  careInstructions String
+  isArchived       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  images   ProductImage[]
+  variants ProductVariant[]
+
+  @@index([collection, isArchived])
+  @@index([isArchived])
+}
+
+model ProductImage {
+  id         String  @id @default(cuid())
+  productId  Int
+  url        String
+  alt        String
+  sortOrder  Int     @default(0)
+  isFeatured Boolean @default(false)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+}
+
+model ProductVariant {
+  id                String   @id @default(cuid())
+  productId         Int
+  size              String
+  colour            String
+  sku               String   @unique
+  barcode           String?
+  /// Overrides Product.aed for this size when set. Almost always null.
+  priceAed          Decimal? @db.Decimal(10, 2)
+  stock             Int      @default(0)
+  lowStockThreshold Int      @default(3)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  product     Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  adjustments StockAdjustment[]
+  orderItems  OrderItem[]
+
+  @@unique([productId, size])
+  @@index([productId])
+  @@index([stock])
+}
+
+enum StockReason {
+  ORDER_DEDUCTION
+  ORDER_CANCELLED
+  RESTOCK
+  RETURN_RESTOCK
+  DAMAGED
+  MANUAL_AUDIT
+}
+
+/// Every movement of stock, ever. balanceAfter is written inside the same
+/// transaction as the update it describes, so the ledger can be replayed and
+/// reconciled against the variant it belongs to.
+model StockAdjustment {
+  id            String      @id @default(cuid())
+  variantId     String
+  quantityDelta Int
+  balanceAfter  Int
+  reason        StockReason
+  note          String?
+  userId        String?
+  createdAt     DateTime    @default(now())
+
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  user    User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([variantId, createdAt])
+  @@index([reason])
+}
+
+// ---------------------------------------------------------------------------
+// Orders
+// ---------------------------------------------------------------------------
+
+enum PaymentMethod {
+  STRIPE
+  COD
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum FulfillmentStatus {
+  PENDING
+  PROCESSING
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id          String @id @default(cuid())
+  orderNumber String @unique
+
+  userId        String?
+  customerEmail String
+  customerName  String
+  customerPhone String
+
+  subtotalAed    Decimal @db.Decimal(10, 2)
+  shippingFeeAed Decimal @db.Decimal(10, 2)
+  vatAed         Decimal @db.Decimal(10, 2)
+  totalAed       Decimal @db.Decimal(10, 2)
+  currency       String  @default("AED")
+
+  paymentMethod     PaymentMethod
+  paymentStatus     PaymentStatus     @default(PENDING)
+  fulfillmentStatus FulfillmentStatus @default(PENDING)
+
+  /// Flattened, not a relation: this is where the parcel went, and it must not
+  /// change when the customer later edits their address book.
+  shippingEmirate     String
+  shippingCity        String
+  shippingAddressLine String
+  shippingLandmark    String?
+  shippingNotes       String?
+
+  courierName    String?
+  trackingNumber String?
+  trackingUrl    String?
+
+  placedAt     DateTime  @default(now())
+  paidAt       DateTime?
+  dispatchedAt DateTime?
+  deliveredAt  DateTime?
+  cancelledAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user         User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items        OrderItem[]
+  transactions PaymentTransaction[]
+  returns      ReturnRequest[]
+
+  @@index([userId])
+  @@index([fulfillmentStatus])
+  @@index([paymentStatus])
+  @@index([placedAt])
+  @@index([customerEmail])
+}
+
+/// A line as it was bought. Name, size, SKU, price and image are copied in, so
+/// an invoice reprinted next year shows what was actually sold rather than what
+/// the catalogue happens to say today.
+model OrderItem {
+  id           String  @id @default(cuid())
+  orderId      String
+  variantId    String?
+  productName  String
+  variantSize  String
+  sku          String
+  unitPriceAed Decimal @db.Decimal(10, 2)
+  quantity     Int
+  totalAed     Decimal @db.Decimal(10, 2)
+  image        String
+
+  order       Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant     ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  returnItems ReturnItem[]
+
+  @@index([orderId])
+  @@index([variantId])
+}
+
+model PaymentTransaction {
+  id            String   @id @default(cuid())
+  orderId       String
+  provider      String
+  transactionId String?
+  amountAed     Decimal  @db.Decimal(10, 2)
+  status        String
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([transactionId])
+}
+
+// ---------------------------------------------------------------------------
+// Returns
+// ---------------------------------------------------------------------------
+
+enum ReturnStatus {
+  PENDING
+  APPROVED
+  RECEIVED
+  REFUNDED
+  REJECTED
+}
+
+model ReturnRequest {
+  id              String       @id @default(cuid())
+  orderId         String
+  returnNumber    String       @unique
+  status          ReturnStatus @default(PENDING)
+  reason          String
+  customerNotes   String?
+  adminNotes      String?
+  refundAmountAed Decimal?     @db.Decimal(10, 2)
+  /// Whether the pieces went back on the rail. Separate from the refund on
+  /// purpose — a damaged return is refunded but never restocked.
+  isRestocked     Boolean      @default(false)
+  requestedAt     DateTime     @default(now())
+  resolvedAt      DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  order Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  items ReturnItem[]
+
+  @@index([orderId])
+  @@index([status])
+}
+
+model ReturnItem {
+  id              String  @id @default(cuid())
+  returnRequestId String
+  orderItemId     String
+  quantity        Int
+  reason          String?
+  condition       String?
+
+  returnRequest ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  orderItem     OrderItem     @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  @@index([returnRequestId])
+}
+
+// ---------------------------------------------------------------------------
+// Operations
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  userId        String?
+  userEmail     String
+  action        String
+  entityType    String
+  entityId      String
+  previousState Json?
+  newState      Json?
+  ipAddress     String?
+  createdAt     DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+  @@index([userEmail])
+}
+
+/// Policy the shop can change without a deploy: VAT rate, free-shipping
+/// threshold, courier fee, return window.
+model StoreSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  description String?
+  updatedAt   DateTime @updatedAt
+}

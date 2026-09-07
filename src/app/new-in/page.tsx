@@ -6,7 +6,8 @@ import { CollectionHeader } from "@/components/shop/collection-header";
 import { CollectionNote } from "@/components/shop/collection-note";
 import { LineStrip } from "@/components/shop/line-strip";
 import { MadeToOrderBand } from "@/components/shop/made-to-order-band";
-import { productsForPage, shopPage } from "@/content/collections";
+import { shopPage } from "@/content/collections";
+import { productsForShopPage } from "@/modules/catalogue/collections";
 
 const page = shopPage("/new-in")!;
 
@@ -26,7 +27,7 @@ export default async function NewInPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { category } = await searchParams;
-  const products = productsForPage(page);
+  const products = await productsForShopPage(page);
 
   return (
     <PageFrame>

@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { useRef } from "react";
 import { CartLineRow } from "@/components/cart/cart-line-row";
-import { cartLineKey, useStore } from "@/components/store/store-provider";
+import { useStore } from "@/components/store/store-provider";
 import { BagIcon, CloseIcon } from "@/components/ui/icons";
-import { productById } from "@/content/products";
 import { formatPrice } from "@/lib/currency";
-import { storeConfig } from "@/lib/site";
+import { DEFAULT_SETTINGS } from "@/modules/shared/store-policy";
 import { useOverlay } from "@/lib/use-overlay";
 
 /**
@@ -32,7 +31,7 @@ export function CartDrawer() {
   if (!cartOpen) return null;
 
   const shortOfFreeDelivery =
-    storeConfig.freeShippingThresholdAed - subtotalAed;
+    DEFAULT_SETTINGS.freeShippingThresholdAed - subtotalAed;
 
   return (
     <>
@@ -79,18 +78,9 @@ export function CartDrawer() {
         ) : (
           <>
             <div className="flex-1 overflow-y-auto px-6">
-              {cart.map((line) => {
-                const product = productById(line.id);
-                if (!product) return null;
-                return (
-                  <CartLineRow
-                    key={cartLineKey(line)}
-                    product={product}
-                    qty={line.qty}
-                    size={line.size}
-                  />
-                );
-              })}
+              {cart.map((line) => (
+                <CartLineRow key={line.variantId} line={line} />
+              ))}
 
               <button
                 type="button"
@@ -106,8 +96,8 @@ export function CartDrawer() {
                   off free delivery they are, or that they have cleared it. */}
               <p className="m-0 text-[12.5px] tracking-[0.08em] text-muted">
                 {shortOfFreeDelivery > 0
-                  ? `${formatPrice(shortOfFreeDelivery, currency)} away from free nationwide delivery`
-                  : "Free nationwide delivery unlocked"}
+                  ? `${formatPrice(shortOfFreeDelivery, currency)} away from free UAE delivery`
+                  : "Free UAE delivery unlocked"}
               </p>
 
               <div className="flex justify-between items-baseline">
@@ -120,11 +110,18 @@ export function CartDrawer() {
               </div>
 
               <Link
-                href="/cart"
+                href="/checkout"
                 onClick={closeCart}
                 className="text-center bg-ink text-cream hover:text-cream px-7 py-4 text-[13px] tracking-[0.18em] uppercase"
               >
-                View Bag & Checkout
+                Checkout
+              </Link>
+              <Link
+                href="/cart"
+                onClick={closeCart}
+                className="text-center border border-line text-ink hover:text-ink px-7 py-3 text-[12.5px] tracking-[0.16em] uppercase"
+              >
+                View Bag
               </Link>
               <button
                 type="button"
