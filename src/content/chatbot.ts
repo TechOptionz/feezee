@@ -289,7 +289,7 @@ const staticTopics: ChatTopic[] = [
     question: "Where is my order?",
     keywords: ["track", "tracking", "order status", "dispatch", "dispatched", "shipped"],
     lines: () => [
-      "Open the Track Order page in the footer and enter your order number — it looks like FZ-26-1001-K7QM, and it is the only thing we need. No account, no sign-in, no email.",
+      "Open the Track Order page and enter your order number — it is printed at the top of your confirmation email, and it is the only thing we need. No account, no sign-in, no email.",
       "A tracking number reaches you by email the moment the parcel is handed to Aramex, Emirates Post or DHL.",
       "Or send us your order number on WhatsApp and we will check it for you right away.",
     ],

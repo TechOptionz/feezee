@@ -7,6 +7,7 @@ import { NewArrivals } from "@/components/sections/new-arrivals";
 import { Silai } from "@/components/sections/silai";
 import { Values } from "@/components/sections/values";
 import { Lookbook } from "@/components/sections/lookbook";
+import { TrackOrderBand } from "@/components/sections/track-order-band";
 import {
   boutiqueLooks,
   catalogueForClient,
@@ -39,6 +40,7 @@ export default async function HomePage() {
         <Silai />
         <Values />
         <Lookbook looks={looks} />
+        <TrackOrderBand />
       </main>
       <Footer />
       <ChatWidget products={catalogue} />

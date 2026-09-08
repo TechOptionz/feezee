@@ -31,7 +31,7 @@ import { whatsappHref } from "@/lib/site";
  * The lookup itself is a POST to a server action rather than a GET whose answer
  * sits in the URL: the result carries a name and an invoice, and those do not
  * belong in a link that can be forwarded. The *question* arrives by GET, since
- * both emails link straight here — `?order=FZ-26-1001-K7QM` — and the effect below
+ * both emails link straight here — `?order=<the order number>` — and the effect below
  * runs the lookup on arrival, so a tap in the email lands on the parcel rather
  * than on a form. Nothing personal is in that URL now that the email is not
  * required for it.
@@ -93,7 +93,10 @@ export function TrackOrderForm() {
           required
           autoComplete="off"
           spellCheck={false}
-          placeholder="FZ-26-1001-K7QM"
+          /* A template rather than a specimen: a well-formed order number is
+             the whole credential for this page, so one printed on it would be
+             an invitation to try it. */
+          placeholder="FZ-00-0000-XXXX"
           defaultValue={state.values?.orderNumber ?? prefill.orderNumber}
           error={state.fieldErrors?.orderNumber}
           hint="Printed at the top of your order confirmation email. This is all we need."

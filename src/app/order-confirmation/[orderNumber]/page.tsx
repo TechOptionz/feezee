@@ -7,11 +7,13 @@ import { Breadcrumb } from "@/components/shop/breadcrumb";
 import { Values } from "@/components/sections/values";
 import { WhatsAppIcon } from "@/components/ui/icons";
 import { OrderTimeline } from "@/components/orders/order-timeline";
+import { currentUser } from "@/modules/customers";
 import { orderByNumber } from "@/modules/orders";
 import { formatUaePhone } from "@/modules/checkout";
 import { bankDetails, bankTransferWhatsAppHref } from "@/modules/payments";
 import { img } from "@/lib/assets";
 import { formatPrice } from "@/lib/currency";
+import { maskEmail, maskPhone } from "@/lib/mask";
 import { siteHost, trackOrderPath, whatsappHref } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -29,13 +31,40 @@ export const metadata: Metadata = {
  * page that shows no payment details. What it deliberately does not do is
  * accept the `?paid=1` Stripe adds on the way back as proof of anything: only
  * the signed webhook marks an order paid.
+ *
+ * The contact details are the exception, and are shown in full only to a
+ * viewer who has some claim to them: the signed-in owner, or anyone at all in
+ * the hour after checkout, which is the window this page actually exists for
+ * — the customer reading back the address they have just typed. After that
+ * the street line, the phone and the email are redacted, so a guessed order
+ * number pays out no more than `/track-order` would, and that page withholds
+ * them entirely (see `TrackedOrder`). Unlike this one it is also throttled.
  */
+/*
+ * An hour is generous for reading a receipt and short enough that a number
+ * scraped from a forwarded email months later is worth nothing. Read off the
+ * clock outside the component: the page is `force-dynamic` so there is no
+ * cached render to go stale, but a wall-clock read still does not belong in a
+ * render body.
+ */
+const FULL_DETAIL_WINDOW_MS = 60 * 60 * 1000;
+
+function placedRecently(placedAt: string): boolean {
+  return Date.now() - new Date(placedAt).getTime() < FULL_DETAIL_WINDOW_MS;
+}
+
 export default async function OrderConfirmationPage({
   params,
 }: PageProps<"/order-confirmation/[orderNumber]">) {
   const { orderNumber } = await params;
   const order = await orderByNumber(orderNumber);
   if (!order) notFound();
+
+  const viewer = await currentUser();
+  const showContactInFull =
+    (viewer !== null && viewer.id === order.userId) || placedRecently(order.placedAt);
+
+  const maskedPhone = maskPhone(order.customerPhone);
 
   const bank = bankDetails();
   const awaitingTransfer =
@@ -58,7 +87,7 @@ export default async function OrderConfirmationPage({
         <p className="mt-[clamp(14px,1.8vw,20px)] mb-0 max-w-[62ch] text-[15.5px] leading-[1.7] text-cocoa">
           {order.fulfillmentStatus === "CANCELLED"
             ? "This order has been cancelled and the pieces are back on the rail."
-            : `We have your order and a copy is on its way to ${order.customerEmail}. We confirm every order on WhatsApp before it is dispatched.`}
+            : `We have your order and a copy is on its way to ${showContactInFull ? order.customerEmail : maskEmail(order.customerEmail)}. We confirm every order on WhatsApp before it is dispatched.`}
         </p>
 
         {/*
@@ -241,12 +270,31 @@ export default async function OrderConfirmationPage({
               <address className="not-italic text-[14px] leading-[1.7] text-cocoa">
                 <span className="text-ink">{order.customerName}</span>
                 <br />
-                {order.shippingAddressLine}
-                <br />
+                {/* The street line is the detail worth protecting, so it is
+                    dropped rather than starred out — a partial address is
+                    still an address. */}
+                {showContactInFull && (
+                  <>
+                    {order.shippingAddressLine}
+                    <br />
+                  </>
+                )}
                 {order.shippingCity}, {order.shippingEmirate}
-                <br />
-                {formatUaePhone(order.customerPhone)}
+                {(showContactInFull || maskedPhone) && <br />}
+                {showContactInFull
+                  ? formatUaePhone(order.customerPhone)
+                  : maskedPhone}
               </address>
+
+              {!showContactInFull && (
+                <p className="m-0 mt-3 text-[12.5px] leading-[1.6] text-muted">
+                  Your full address and contact details are hidden.{" "}
+                  <Link href="/account/orders" className="border-b border-current">
+                    Sign in
+                  </Link>{" "}
+                  to see them.
+                </p>
+              )}
             </div>
 
             <a
