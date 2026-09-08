@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminLoginForm } from "@/app/admin/login/login-form";
 import { currentActor } from "@/modules/admin";
@@ -36,6 +37,17 @@ export default async function AdminLoginPage({
         </p>
 
         <AdminLoginForm next={typeof next === "string" ? next : "/admin"} />
+
+        {/*
+          The layout draws no sidebar until there is somebody to draw it for,
+          so this page has no navigation at all. Without this line a customer
+          who followed a link here has nothing to click but the back button.
+        */}
+        <p className="mt-8 mb-0 text-center text-[12px] tracking-[0.16em] uppercase">
+          <Link href="/" className="text-taupe hover:text-champagne">
+            Return to the shop ↗
+          </Link>
+        </p>
       </div>
     </div>
   );

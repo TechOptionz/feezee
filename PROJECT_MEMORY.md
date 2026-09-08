@@ -178,13 +178,40 @@ signature with **400** — a 5xx would have Stripe retry a forgery for days.
 The raw body is read with `request.text()`. Parsing and re-serialising the JSON
 changes the bytes and the signature will never match.
 
-### 4.6 Order numbers come from a Postgres sequence
+### 4.6 An order number is a sequence and a secret
 
-`FZ-26-1001`, from `nextval('feezee_order_number')`. `nextval` is
-non-transactional, so two checkouts in the same instant get two different
-numbers without blocking or retrying. The cost is a gap in the run when an order
-rolls back — a missing number is an accounting curiosity, a duplicate one is an
-incident.
+`FZ-26-1001-K7QM`. Two halves, doing two different jobs.
+
+The **sequence** is the shop's own count, from `nextval('feezee_order_number')`.
+`nextval` is non-transactional, so two checkouts in the same instant get two
+different numbers without blocking or retrying. The cost is a gap in the run
+when an order rolls back — a missing number is an accounting curiosity, a
+duplicate one is an incident.
+
+The **suffix** is four characters from `crypto.randomBytes`, and it is what
+makes the number safe to be a credential. Tracking asks for the order number
+and nothing else (4.16), so a purely sequential number would let anyone who has
+bought once walk up and down the run reading other people's orders. Knowing
+`FZ-26-1005-K7QM` now tells you nothing at all about `FZ-26-1006-…`.
+
+Three details in `orderSuffix()` that are not decoration:
+
+- The alphabet is `ABCDEFGHJKMNPQRSTUVWXYZ23456789` — no `I`, `L`, `O`, `0` or
+  `1`, because this number is read down a phone line and copied off a printed
+  receipt.
+- Bytes of 248 and up are discarded rather than taken modulo 31 (31 × 8 = 248),
+  or the first few letters of the alphabet would come up measurably more often.
+- The byte pool is **refilled**, not drawn once. A fixed buffer runs dry on the
+  rare draw that rejects enough bytes, and reading past its end yields
+  `undefined` — which appends the word itself to the order number. It happens
+  about twice in three hundred thousand: twice in production, and never once
+  while you are watching.
+
+Numbers issued before this — the plain `FZ-26-1004` shape — stay valid
+everywhere, and are **not** renumbered: doing so would invalidate every number
+already printed on a receipt or sitting in an inbox. They are still guessable
+from one another, so tracking asks for the email alongside them, exactly as it
+did before (4.16). The check narrows to nothing as those orders age out.
 
 ### 4.7 The refund and the restock are separate decisions
 
@@ -213,7 +240,8 @@ guessing passwords for. Both cases return the same sentence, and `login` runs
 bcrypt against a throwaway hash even when there is no such user — skipping it
 would make "no account" measurably faster to answer, which is the same leak by
 another route. The admin login additionally rejects CUSTOMER accounts *as if*
-the password were wrong.
+the password were wrong, and the shop's own form now rejects staff accounts —
+though not silently, and 4.19 is why.
 
 ### 4.10 The session is not read in the header
 
@@ -333,19 +361,99 @@ the timeline, the courier, the tracking link and the parcel contents. Most
 FEEZEE orders are placed without an account, and "sign in to see your order" is
 not an answer to "where is my order".
 
-Three things it is careful about. It **POSTs to a server action** rather than
-reading `?order=&email=` from the URL, because an email address in a URL ends up
-in browser history, in a referrer header and in an access log. It returns a
-**trimmed projection** — no `userId`, no payment transactions, no street address
-or phone — rather than the `OrderView` the account pages use. And it gives **one
-message for both failures**: order numbers run in a Postgres sequence (4.6) and
-are therefore guessable, so a distinct "wrong email" reply would turn a guessed
-number into a way of confirming that someone shopped here.
+**The order number alone is the credential.** The email field is still on the
+form and is checked when it is filled in, but nothing requires it: someone
+reading the number off a printed receipt, a WhatsApp message or a friend's
+phone should not also have to remember which address the order was placed
+with. A supplied-but-wrong email returns the same "no order found" as a bad
+number, so it never becomes an oracle for "does this address shop here".
+
+**What makes that safe is the other half of the order number.** Dropping the
+email left the number as the only credential, and a number off a bare sequence
+is not a credential at all — anyone willing to count from their own order could
+read everyone else's. So the number stopped being a bare sequence (4.6): four
+random characters now hang off it, and holding one reveals nothing about any
+other. Two things follow from that and are worth keeping in view.
+
+Old numbers are the exception, and keep the email requirement. A plain
+`FZ-26-1004` is pure sequence and therefore not a credential at all, so
+`trackOrder` refuses it on its own — enforced in the module rather than only at
+the caller, since a later caller cannot be relied on to remember why. The form
+asks for the email up front, decided from the **shape of what was typed** and
+never from whether such an order exists, so the prompt cannot be used to test
+whether a number is real. Without that, someone with a genuine old order would
+be told "no order found" and go hunting for a mistake they had not made.
+
+`TrackedOrder` is still the answer to *what one order number gets you*: status,
+courier, parcel contents, invoice totals, the customer's name and area. No
+`userId`, no payment transactions, no street address, no phone. Adding a field
+is a decision about that question, not a convenience.
+
+And `trackOrderAction` throttles to twenty lookups a minute per caller. Four
+characters is about 920,000 combinations, which ends enumeration but would not
+by itself stop a script pointed at one number all afternoon; the throttle makes
+that roughly a month per order, while sitting far above anything a real
+customer does. It is in memory, so it resets on deploy and does not span
+instances — that is the honest limit of it, and where it would move if the shop
+ever ran more than one node.
+
+Because the number is now longer and read off a phone screen,
+`orderNumberCandidates` rebuilds the canonical form when someone leaves the
+dashes out: `fz261005k7qm` and `FZ 26 1005 K7QM` both resolve. Only for the two
+shapes the shop actually issues — anything else is tried exactly as typed.
+
+**The lookup is a POST; the question arrives by GET.** The answer carries a
+name and an invoice, so it is never in a URL anyone can forward. The question
+is, because both emails link straight here — `/track-order?order=FZ-26-1005`,
+built by `trackOrderUrl` in `lib/site.ts` — and `track-form.tsx` prefills the
+field and runs the lookup itself, so a tap in the email lands on the parcel
+rather than on a form. Nothing personal is in that link: the email was dropped
+from it the moment it stopped being required, because it would then have been
+pure cost — a customer's address in their history, in a `Referer` header and in
+the access log, buying nothing. The page still sets `referrer: no-referrer`,
+which is what stops the order number travelling to the courier's site on the
+click through.
+
+The param is read through `useSearchParams`, so the form sits behind a
+`<Suspense>` boundary and `/track-order` stays ○ in the build output. It is
+captured **once**, into a `useState` initialiser, because `window.history`
+updates sync back into that hook and a later change must not reach in and
+rewrite a field the customer has since typed into. The auto-lookup calls
+`requestSubmit()` on the real form rather than the action directly, so the
+pending state, the validation and the error path are the ones a typed
+submission gets.
 
 Drawing the same timeline from a client component meant moving `orderTimeline`
 out of the `server-only` orders module into `src/modules/orders/timeline.ts`,
 and typing `OrderTimeline` against a structural `TimelineOrder` instead of
 `OrderView`. Every existing server caller is unchanged.
+
+### 4.16b An account is optional, and every surface has to say so
+
+Most FEEZEE orders are placed as a guest, so the order number and the email are
+not a fallback route to the order — for most customers they are *the* route.
+Four places now say it in the same words rather than leaving it to be inferred:
+
+- the confirmation email opens with an **Order Tracking & Reference** block —
+  the number labelled as the tracking reference, a primary button that needs
+  nothing typed, and the sentence that an account is completely optional and
+  that the number on its own is enough;
+- the dispatch email carries **both** buttons. The courier's page has the scans
+  but goes dark for a few hours after handover and sometimes 404s a number it
+  has not ingested; ours always answers and shows the timeline, the contents and
+  the invoice. Neither replaces the other, so the customer gets both rather than
+  a guess about which they wanted;
+- the receipt page leads with a **Track your delivery** card, above the payment
+  instructions and the invoice, because that number is what someone comes back
+  for a week later;
+- a guest receipt then offers account creation **once, and as an aside** —
+  worded so it is plainly about saving details next time, not about unlocking
+  anything, because it is not.
+
+`siteHost` in `lib/site.ts` is what lets the copy read "feezee.ae/track-order"
+aloud without hardcoding a domain that could drift from `site.url` — and
+without an email in production ever reading "localhost:3000", which is why a
+development origin falls back to the real domain rather than echoing itself.
 
 ### 4.17 Refunds are executed, not just recorded
 
@@ -384,6 +492,38 @@ leave the old picture on screen.
 This is a local filesystem write. It is right for a shop running its own server
 and wrong for an ephemeral one (Vercel and the like), where it wants a blob
 store behind the same route.
+
+### 4.19 Staff have one door, and it is not the shop's
+
+An administrator's password used to open both forms. Nothing was *unguarded* by
+that — `/admin` has always been behind `requireStaff` (4.8), so a customer
+session could never reach the back office — but the reverse direction meant the
+credentials that refund an order were also typed into the storefront's public
+sign-in, which is the form that gets credential-stuffed, phished and pasted into
+a shared laptop.
+
+So `login` now takes the door as an argument. The back office passes `"staff"`
+and the shop passes `"customer"`, and each refuses the other's accounts.
+
+The refusals are not symmetrical, deliberately:
+
+- **A customer at the admin door** is answered exactly like a wrong password.
+  Anything else would confirm that an address shops here.
+- **Staff at the shop's door** are told plainly that it is a staff account and
+  shown a link to `/admin/login`. That branch is only reached *after* bcrypt has
+  accepted the password, so the person reading the sentence already holds
+  credentials that open the back office and learns nothing from it — while a
+  manager who was simply on the wrong page gets a way in rather than a form that
+  says only "no". `StaffDoorError` exists to carry that one case; every other
+  failure is still the single generic sentence of 4.9.
+
+Staff still *shop*: a session minted at `/admin/login` reaches `/account`,
+`/wishlist` and the checkout like any other. It is the sign-in form that is
+separated, not the person. The round trip between the two halves is 4.15 — "View
+the shop ↗" out of the sidebar, the `feezee_staff` strip back in — and
+`/admin/login` itself now carries a "Return to the shop ↗" line, since the
+layout draws no navigation at all until there is somebody signed in to draw it
+for.
 
 ---
 
@@ -478,6 +618,11 @@ were exercised against a live database:
 - Reporting metrics, AOV consistency, and CSV export (UTF-8 BOM for Excel).
 - Route guards: `/account/*` and `/admin/*` redirect to their sign-in; the CSV
   export answers 401; the Stripe webhook answers 400 without a valid signature.
+- The two sign-in doors (4.19), exercised against the live database: admin
+  credentials at the shop's form are refused with `StaffDoorError`, the same
+  credentials with a wrong password give the generic sentence, a customer at the
+  admin form is refused as a wrong password, and a customer at the shop's form
+  signs in unchanged.
 
 ---
 
@@ -495,9 +640,12 @@ were exercised against a live database:
   use). Nothing ships to the runtime bundle. `npm audit fix --force` would
   install the Prisma 8 release candidate, which is worse.
 - **A guest still cannot list past orders.** `/track-order` (4.16) finds one
-  order from its number and email, which is the common case; there is no
-  "everything this address has ever bought" without an account, and deliberately
-  so — that is a list an email address alone should not unlock.
+  order from its number; there is no "everything this address has ever bought"
+  without an account, and deliberately so.
+- **The tracking throttle is per-process and in memory** (4.16). It resets on
+  deploy and does not span instances, so it raises the cost of guessing rather
+  than fixing it. It wants a shared store the day the shop runs more than one
+  node.
 - **Delivery copy is UAE; heritage copy is not, on purpose.** `values.ts`, the
   Silai page and the assistant now quote Dubai and the 7 Emirates, AED pricing
   and the Madina Mall boutique. The hero still reads "stitched the Pakistani

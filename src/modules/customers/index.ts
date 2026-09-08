@@ -51,6 +51,22 @@ export class AuthError extends Error {
 
 const CREDENTIALS_REJECTED = "That email and password do not match.";
 
+/**
+ * Staff credentials typed into the *shop's* sign-in form.
+ *
+ * Its own class rather than a message, so the form can draw the way to the
+ * back office beside the sentence, and so nothing mistakes it for a wrong
+ * password. See 4.19 — the two doors are separate on purpose.
+ */
+export class StaffDoorError extends AuthError {
+  constructor(
+    message = "That is a FEEZEE staff account. Please sign in through the back office.",
+  ) {
+    super(message);
+    this.name = "StaffDoorError";
+  }
+}
+
 export type CustomerView = {
   id: string;
   email: string;
@@ -114,13 +130,20 @@ export async function register(
 /**
  * Sign in.
  *
- * `expect` lets the admin login refuse a customer account without leaking that
- * the credentials were otherwise correct — a wrong door and a wrong password
- * look identical from outside.
+ * `expect` names the door. The back office passes "staff" and the shop passes
+ * "customer", and each refuses the other's accounts: an administrator has one
+ * place to sign in, and it is not the storefront form (4.19).
+ *
+ * A wrong door is answered exactly like a wrong password, so neither form ever
+ * confirms that an address has an account on the other side. The single
+ * exception is staff at the shop's door, which is raised as `StaffDoorError`
+ * — that branch is only ever reached *after* bcrypt has accepted the password,
+ * so whoever is reading it already holds credentials that open `/admin/login`
+ * and learns nothing by being told where to use them.
  */
 export async function login(
   input: z.output<typeof loginSchema>,
-  expect: "any" | "staff" = "any",
+  expect: "any" | "staff" | "customer" = "any",
 ): Promise<CustomerView> {
   const email = input.email.trim().toLowerCase();
   const user = await prisma.user.findUnique({ where: { email } });
@@ -137,6 +160,10 @@ export async function login(
 
   if (expect === "staff" && user.role === Role.CUSTOMER) {
     throw new AuthError(CREDENTIALS_REJECTED);
+  }
+
+  if (expect === "customer" && user.role !== Role.CUSTOMER) {
+    throw new StaffDoorError();
   }
 
   await createSession({

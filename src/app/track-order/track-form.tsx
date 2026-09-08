@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   IDLE_TRACK,
   trackOrderAction,
@@ -22,10 +23,23 @@ import { whatsappHref } from "@/lib/site";
 /**
  * Two fields and, once they match, the parcel.
  *
- * A client component rather than a `?order=` GET form on purpose: an email
- * address in a URL ends up in browser history, in a referrer header and in an
- * access log, and none of those is a place a customer's address belongs. The
- * lookup is a POST to a server action, and the answer never leaves the page.
+ * The order number is the whole of what is asked for. The email field stays,
+ * and is checked when it is filled in, but nothing depends on it — someone
+ * reading the number off a printed receipt or a WhatsApp message should not
+ * have to also remember which address they checked out with.
+ *
+ * The lookup itself is a POST to a server action rather than a GET whose answer
+ * sits in the URL: the result carries a name and an invoice, and those do not
+ * belong in a link that can be forwarded. The *question* arrives by GET, since
+ * both emails link straight here — `?order=FZ-26-1001-K7QM` — and the effect below
+ * runs the lookup on arrival, so a tap in the email lands on the parcel rather
+ * than on a form. Nothing personal is in that URL now that the email is not
+ * required for it.
+ *
+ * The params are read once, into state, rather than off `useSearchParams` on
+ * every render: `window.history` updates sync back into that hook, and a later
+ * change to it must not reach back and rewrite fields the customer has since
+ * typed into.
  *
  * The result renders under the form rather than replacing it, so someone
  * checking a second parcel does not have to find their way back.
@@ -36,9 +50,33 @@ export function TrackOrderForm() {
     IDLE_TRACK,
   );
 
+  const searchParams = useSearchParams();
+  const [prefill] = useState(() => ({
+    orderNumber: searchParams.get("order")?.trim() ?? "",
+    email: searchParams.get("email")?.trim() ?? "",
+  }));
+
+  const formRef = useRef<HTMLFormElement>(null);
+  const autoRan = useRef(false);
+
+  /*
+   * Arriving with an order number runs the lookup itself. Submitting the real
+   * form rather than calling the action by hand means the pending state, the
+   * validation and the error path are all the ones a typed submission gets —
+   * there is no second code path to keep in step. Guarded by a ref so React's
+   * development double-invoke does not look the order up twice.
+   */
+  useEffect(() => {
+    if (autoRan.current) return;
+    if (!prefill.orderNumber) return;
+    autoRan.current = true;
+    formRef.current?.requestSubmit();
+  }, [prefill]);
+
   return (
     <div className="flex flex-col gap-[clamp(28px,4vw,48px)]">
       <form
+        ref={formRef}
         action={action}
         className="flex flex-col gap-5 border border-line bg-panel p-[clamp(22px,3.4vw,38px)] max-w-[560px]"
       >
@@ -55,22 +93,21 @@ export function TrackOrderForm() {
           required
           autoComplete="off"
           spellCheck={false}
-          placeholder="FZ-26-1001"
-          defaultValue={state.values?.orderNumber ?? ""}
+          placeholder="FZ-26-1001-K7QM"
+          defaultValue={state.values?.orderNumber ?? prefill.orderNumber}
           error={state.fieldErrors?.orderNumber}
-          hint="Printed at the top of your order confirmation email."
+          hint="Printed at the top of your order confirmation email. This is all we need."
         />
 
         <TextField
-          label="Email address"
+          label="Email address (optional)"
           name="email"
           type="email"
-          required
           autoComplete="email"
           placeholder="you@example.com"
-          defaultValue={state.values?.email ?? ""}
+          defaultValue={state.values?.email ?? prefill.email}
           error={state.fieldErrors?.email}
-          hint="The address the confirmation was sent to."
+          hint="Needed only for older order numbers, which end in four digits rather than four letters."
         />
 
         <SubmitButton pendingLabel="Looking…" className="self-start">

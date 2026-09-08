@@ -239,7 +239,22 @@ const staticTopics: ChatTopic[] = [
   {
     id: "shipping",
     question: "Shipping & delivery",
-    keywords: ["ship", "shipping", "delivery", "deliver", "courier", "international", "worldwide", "abroad"],
+    /*
+     * The multi-word phrases are load-bearing, not padding. A keyword scores by
+     * how many words it has, and "how much" belongs to the *price* topic — so
+     * "how much is delivery" used to be answered with the price of a kurta.
+     * Naming the delivery-cost phrasings outright is what outweighs it.
+     */
+    keywords: [
+      "ship", "shipping", "delivery", "deliver", "courier",
+      "international", "worldwide", "abroad",
+      "delivery cost", "delivery charge", "delivery fee", "delivery price",
+      "shipping cost", "shipping charge", "shipping fee",
+      "cost of delivery", "charge for delivery",
+      "free delivery", "free shipping",
+      "how much is delivery", "how much for delivery",
+      "how much is shipping", "how much for shipping",
+    ],
     lines: (price) => [
       `Fast delivery across Dubai and all 7 Emirates — free on orders over ${price(storeConfig.freeShippingThresholdAed)}; below that a flat courier charge applies.`,
       "Dubai and Sharjah: same or next day. The other emirates: 1–3 working days. Saudi Arabia, the UK and the rest of the world: 5–7 days.",
@@ -274,7 +289,7 @@ const staticTopics: ChatTopic[] = [
     question: "Where is my order?",
     keywords: ["track", "tracking", "order status", "dispatch", "dispatched", "shipped"],
     lines: () => [
-      "Open the Track Order page in the footer, enter your order number (it looks like FZ-26-1001) and the email you ordered with, and it will show you where the parcel has got to.",
+      "Open the Track Order page in the footer and enter your order number — it looks like FZ-26-1001-K7QM, and it is the only thing we need. No account, no sign-in, no email.",
       "A tracking number reaches you by email the moment the parcel is handed to Aramex, Emirates Post or DHL.",
       "Or send us your order number on WhatsApp and we will check it for you right away.",
     ],

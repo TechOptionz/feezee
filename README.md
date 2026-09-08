@@ -160,8 +160,15 @@ of the two you are looking at:
 | `/admin/reports` | The same figures, downloadable as CSV |
 | `/admin/audit-logs` | Who changed what, with a before/after diff |
 
-Staff sign in at `/admin/login`. Roles are `ADMIN` and `STAFF`; a `CUSTOMER`
-account is refused there exactly as a wrong password would be.
+Staff sign in at `/admin/login`, and **only** there. Roles are `ADMIN` and
+`STAFF`; a `CUSTOMER` account is refused at that form exactly as a wrong
+password would be, and an `ADMIN` or `STAFF` account is refused at the shop's
+own `/account/login` — with a link to the back office, since that refusal only
+happens once the password has already been accepted.
+
+A staff session still shops: `/account`, the wishlist and the checkout all work
+from it. The sidebar's "View the shop ↗" goes one way and the staff strip above
+the announcement bar comes back the other.
 
 ## Assets
 

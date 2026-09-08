@@ -12,7 +12,7 @@ import { formatUaePhone } from "@/modules/checkout";
 import { bankDetails, bankTransferWhatsAppHref } from "@/modules/payments";
 import { img } from "@/lib/assets";
 import { formatPrice } from "@/lib/currency";
-import { whatsappHref } from "@/lib/site";
+import { siteHost, trackOrderPath, whatsappHref } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +60,65 @@ export default async function OrderConfirmationPage({
             ? "This order has been cancelled and the pieces are back on the rail."
             : `We have your order and a copy is on its way to ${order.customerEmail}. We confirm every order on WhatsApp before it is dispatched.`}
         </p>
+
+        {/*
+          Above the payment instructions and the invoice, because it is the one
+          thing on this page a customer comes back for a week from now — and
+          because most FEEZEE orders are placed as a guest, for whom this number
+          is the whole of their access to the order.
+        */}
+        {order.fulfillmentStatus !== "CANCELLED" && (
+          <div className="mt-[clamp(24px,3vw,36px)] border border-gold/50 bg-panel px-[clamp(20px,3vw,30px)] py-[clamp(20px,2.6vw,28px)]">
+            <h2 className="m-0 text-[12.5px] tracking-[0.22em] uppercase font-normal text-muted">
+              Track your delivery
+            </h2>
+
+            <p className="m-0 mt-3 text-[14.5px] leading-[1.7] text-cocoa">
+              Your order &amp; tracking reference
+            </p>
+            <p className="m-0 mt-1 font-display text-[clamp(26px,3.4vw,36px)] leading-[1.1] tracking-[0.06em] text-ink">
+              {order.orderNumber}
+            </p>
+
+            <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+              <Link
+                href={trackOrderPath(order.orderNumber)}
+                className="inline-flex items-center justify-center bg-ink text-cream hover:text-cream px-7 py-3.5 text-[12.5px] tracking-[0.16em] uppercase"
+              >
+                Track your delivery
+              </Link>
+              <span className="text-[13px] text-muted">
+                Opens with this number already filled in.
+              </span>
+            </div>
+
+            <p className="m-0 mt-5 max-w-[62ch] text-[14px] leading-[1.7] text-cocoa">
+              <strong className="text-ink">Save this number.</strong> It is all
+              you need — track your parcel any time at {siteHost}/track-order with
+              this Order Number alone. No email, no account, no login.
+            </p>
+          </div>
+        )}
+
+        {/*
+          Offered, never required. The wording has to make clear that an account
+          adds convenience next time and nothing else — a guest's order, receipt
+          and tracking already work exactly as a member's do.
+        */}
+        {!order.userId && order.fulfillmentStatus !== "CANCELLED" && (
+          <p className="mt-4 m-0 flex flex-wrap items-baseline gap-x-2 gap-y-1 border border-line px-5 py-4 text-[14px] leading-[1.7] text-cocoa">
+            <span>Want to save your details for your next order?</span>
+            <Link
+              href="/account/register"
+              className="text-gold-dark hover:text-ink border-b border-current"
+            >
+              Create an optional account
+            </Link>
+            <span className="text-muted">
+              — your order and tracking work exactly the same either way.
+            </span>
+          </p>
+        )}
 
         {awaitingTransfer && bank.iban && (
           <div className="mt-[clamp(24px,3vw,36px)] border border-gold/40 bg-panel px-[clamp(20px,3vw,30px)] py-[clamp(20px,2.6vw,28px)]">

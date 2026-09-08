@@ -62,7 +62,23 @@ export function fromFils(fils: number): number {
  * JavaScript, because 1.005 is really 1.00499999999999989. Going through a
  * fixed-point string first is what makes 1.005 round to 1.01 the way a person
  * reading the invoice expects.
+ *
+ * The magnitude is rounded and the sign put back afterwards, rather than
+ * rounding the signed value. `Math.round` breaks ties towards positive
+ * infinity, not away from zero — it sends 100.5 to 101 but −100.5 to −100 — so
+ * rounding −1.005 directly gives −1.00 and quietly contradicts the sentence
+ * above. Nothing in the shop prices in negatives today; the first credit note
+ * or downward price adjustment would have found this the hard way.
  */
 export function round2(value: number): number {
-  return Math.round(Number(`${value}e2`)) / 100;
+  if (!Number.isFinite(value)) return value;
+
+  const scaled = Number(`${Math.abs(value)}e2`);
+  // A magnitude large enough to be written in exponential form breaks the
+  // string trick; ordinary arithmetic is accurate enough at that scale.
+  const rounded = Number.isFinite(scaled)
+    ? Math.round(scaled)
+    : Math.round(Math.abs(value) * 100);
+
+  return (value < 0 ? -rounded : rounded) / 100;
 }

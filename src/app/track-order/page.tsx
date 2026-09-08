@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { PageFrame } from "@/components/layout/page-frame";
 import { Breadcrumb } from "@/components/shop/breadcrumb";
 import { Values } from "@/components/sections/values";
@@ -13,6 +14,13 @@ export const metadata: Metadata = {
   description:
     "Follow a FEEZEE parcel from the workshop to your door. Enter your order number and the email you ordered with — no account needed.",
   robots: { index: true, follow: true },
+  /*
+   * The emails link here with the customer's address in the query string, and
+   * the tracking result then offers an outbound link to the courier. Without
+   * this, that click would hand the courier the whole URL — email included —
+   * in a Referer header.
+   */
+  referrer: "no-referrer",
 };
 
 /**
@@ -38,15 +46,27 @@ export default function TrackOrderPage() {
           Track your order
         </h1>
 
-        <p className="mt-[clamp(14px,1.8vw,20px)] mb-0 max-w-[62ch] text-[15.5px] leading-[1.7] text-cocoa">
-          Enter the order number from your confirmation email and the address it
-          was sent to. No account is needed — we deliver across Dubai and all 7
-          Emirates, and every parcel is tracked from the moment it leaves the
-          workshop.
+        <p className="mt-[clamp(10px,1.4vw,16px)] mb-0 font-display text-[clamp(17px,2vw,24px)] leading-[1.3] text-gold-dark">
+          Track any order — no account or login required
+        </p>
+
+        <p className="mt-[clamp(12px,1.6vw,18px)] mb-0 max-w-[62ch] text-[15.5px] leading-[1.7] text-cocoa">
+          Enter the order number from your confirmation email — that is all we
+          need. We deliver across Dubai and all 7 Emirates, and every parcel is
+          tracked from the moment it leaves the workshop.
         </p>
 
         <div className="mt-[clamp(26px,3.4vw,44px)]">
-          <TrackOrderForm />
+          {/*
+           * The form reads `?order=` off the URL so a tap in the confirmation
+           * email lands on the parcel rather than on an empty box. That is a
+           * `useSearchParams` read, and the boundary is what keeps everything
+           * above it — and the whole page for a visitor arriving without
+           * params — prerendered as static HTML.
+           */}
+          <Suspense fallback={<FormSkeleton />}>
+            <TrackOrderForm />
+          </Suspense>
         </div>
 
         <div className="mt-[clamp(36px,5vw,68px)] flex flex-wrap items-start gap-x-[clamp(28px,4vw,64px)] gap-y-8 border-t border-line pt-[clamp(24px,3vw,36px)]">
@@ -100,5 +120,29 @@ export default function TrackOrderPage() {
 
       <Values />
     </PageFrame>
+  );
+}
+
+/**
+ * What stands in the form's place in the prerendered HTML.
+ *
+ * Drawn to the same box and the same rhythm as the real thing, so the swap at
+ * hydration is a fill rather than a jump.
+ */
+function FormSkeleton() {
+  return (
+    <div
+      aria-hidden
+      className="flex flex-col gap-5 border border-line bg-panel p-[clamp(22px,3.4vw,38px)] max-w-[560px]"
+    >
+      {[0, 1].map((i) => (
+        <div key={i} className="flex flex-col gap-2">
+          <span className="h-[13px] w-[110px] bg-line/70" />
+          <span className="h-[46px] w-full border border-line" />
+          <span className="h-[13px] w-[220px] max-w-full bg-line/45" />
+        </div>
+      ))}
+      <span className="h-[48px] w-[190px] bg-ink/15" />
+    </div>
   );
 }

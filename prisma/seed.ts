@@ -184,7 +184,7 @@ async function seedOrderSequence() {
   await prisma.$executeRawUnsafe(
     `CREATE SEQUENCE IF NOT EXISTS feezee_order_number START WITH 1001 INCREMENT BY 1`,
   );
-  console.log("  order numbers from FZ-__-1001");
+  console.log("  order numbers from FZ-__-1001-XXXX");
 }
 
 async function main() {

@@ -22,7 +22,7 @@ export class ReturnError extends Error {
   }
 }
 
-/** `RET-FZ-26-1001-1` — the order it came from, and which return it is. */
+/** `RET-FZ-26-1001-K7QM-1` — the order it came from, and which return it is. */
 async function nextReturnNumber(
   tx: Prisma.TransactionClient,
   orderNumber: string,

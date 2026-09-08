@@ -25,9 +25,19 @@ export async function POST(request: Request) {
   try {
     event = verifyStripeWebhook(payload, signature);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Invalid signature";
-    console.warn("[stripe] rejected webhook:", message);
-    return new Response(message, { status: 400 });
+    /*
+     * The reason goes to the log, never down the wire. This endpoint is public
+     * and unauthenticated by nature, and the thrown messages are specific
+     * enough to be worth something to someone probing it — "STRIPE_WEBHOOK_
+     * SECRET is not set" says the deployment is misconfigured, and the
+     * signature messages distinguish a bad HMAC from a stale timestamp. Stripe
+     * itself only needs to know it was refused.
+     */
+    console.warn(
+      "[stripe] rejected webhook:",
+      error instanceof Error ? error.message : error,
+    );
+    return new Response("Invalid signature.", { status: 400 });
   }
 
   if (event.outcome === "IGNORED" || !event.orderNumber) {

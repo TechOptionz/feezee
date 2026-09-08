@@ -16,6 +16,7 @@ import {
   resetPassword,
   saveAddress,
   setDefaultAddress,
+  StaffDoorError,
   updateProfile,
 } from "@/modules/customers";
 import { getSession } from "@/modules/customers/session";
@@ -42,6 +43,8 @@ export type FormState = {
   status: "idle" | "error" | "ok";
   message?: string;
   fieldErrors?: Record<string, string>;
+  /** Staff typed their credentials into the shop's form — offer them the back office. */
+  staffDoor?: boolean;
 };
 
 /** Zod issues, flattened to one message per field. */
@@ -85,8 +88,18 @@ export async function loginAction(
   }
 
   try {
-    await login(parsed.data);
+    /*
+     * "customer" refuses an ADMIN or STAFF account here. The back office is a
+     * separate door with a separate form, and a set of credentials that opens
+     * the till should not also be usable on the public form — see 4.19.
+     */
+    await login(parsed.data, "customer");
   } catch (error) {
+    // Only reachable once the password has been accepted, so the form can say
+    // where to go instead of only "no". The link is drawn by `LoginForm`.
+    if (error instanceof StaffDoorError) {
+      return { status: "error", message: error.message, staffDoor: true };
+    }
     return fail(error);
   }
 

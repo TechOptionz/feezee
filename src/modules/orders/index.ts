@@ -1,4 +1,5 @@
 import "server-only";
+import { randomBytes } from "node:crypto";
 import {
   FulfillmentStatus,
   PaymentMethod,
@@ -43,13 +44,57 @@ export class CheckoutError extends Error {
 const SEQUENCE = "feezee_order_number";
 
 /**
- * `FZ-26-1001`, and never the same one twice.
+ * The alphabet the random half of an order number is drawn from.
  *
- * A Postgres sequence rather than `max(orderNumber) + 1`: `nextval` is not
+ * `I`, `L`, `O`, `0` and `1` are absent, because this number is read down a
+ * phone line and copied off a printed receipt. Thirty-one characters over four
+ * places is about 920,000 combinations — the point is not that one is hard to
+ * brute-force, it is that knowing one tells you nothing about the next.
+ */
+const SUFFIX_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const SUFFIX_LENGTH = 4;
+
+/**
+ * Four unguessable characters, from the CSPRNG rather than `Math.random`.
+ *
+ * 256 is not a multiple of 31, so taking every byte modulo the alphabet would
+ * quietly favour its first few letters. Bytes in the biased tail (248 and up —
+ * 31 × 8 = 248) are discarded instead, and the pool is **refilled** rather than
+ * drawn once: a fixed buffer runs out on the rare draw that rejects enough
+ * bytes, and reading past its end yields `undefined`, which appends the word
+ * itself to the order number. That happens about twice in three hundred
+ * thousand, which is to say twice in production and never in testing.
+ */
+function orderSuffix(): string {
+  let out = "";
+  while (out.length < SUFFIX_LENGTH) {
+    for (const byte of randomBytes(SUFFIX_LENGTH * 2)) {
+      if (byte >= 248) continue;
+      out += SUFFIX_ALPHABET[byte % SUFFIX_ALPHABET.length];
+      if (out.length === SUFFIX_LENGTH) break;
+    }
+  }
+  return out;
+}
+
+/**
+ * `FZ-26-1001-K7QM`, and never the same one twice.
+ *
+ * Two halves doing two jobs. The **sequence** is the shop's own count, from a
+ * Postgres sequence rather than `max(orderNumber) + 1`: `nextval` is not
  * transactional, so two checkouts running at the same instant get two different
  * numbers without either blocking or retrying. The cost is a gap in the run
  * when an order is rolled back, which is the right trade — a missing number is
  * an accounting curiosity, a duplicate one is a support incident.
+ *
+ * The **suffix** is what makes the whole number unguessable. Tracking asks for
+ * the order number and nothing else (see `trackOrder`), so a purely sequential
+ * number would let anyone who has bought once walk up and down the run reading
+ * other people's orders. Four random characters end that: `FZ-26-1005` tells
+ * you nothing whatsoever about `FZ-26-1006`.
+ *
+ * Numbers issued before this — the plain `FZ-26-1004` shape — stay valid and
+ * keep working everywhere, including on the tracking page.
  */
 export async function nextOrderNumber(): Promise<string> {
   const year = String(new Date().getFullYear()).slice(-2);
@@ -71,7 +116,7 @@ export async function nextOrderNumber(): Promise<string> {
     value = row.nextval;
   }
 
-  return `FZ-${year}-${String(value).padStart(4, "0")}`;
+  return `FZ-${year}-${String(value).padStart(4, "0")}-${orderSuffix()}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -379,10 +424,13 @@ export async function orderById(id: string) {
  * What a stranger holding an order number is shown.
  *
  * A deliberately smaller thing than `OrderView`: no `userId`, no payment
- * transactions, no street address, no phone. Order numbers run in a sequence
- * and are therefore guessable, so the email is the whole of the gate — and
- * what is behind the gate should still be only what the confirmation email
- * already told them.
+ * transactions, no street address, no phone. The order number is the only
+ * credential (see `trackOrder`), so this shape is the answer to *what a person
+ * holding one order number gets to see*: the status, the courier, what is in
+ * the parcel, and the totals on the invoice. Anything that would embarrass a
+ * customer to have read out belongs on the signed-in order page instead, and is
+ * deliberately absent here. Adding a field is a decision about that question,
+ * not a convenience.
  */
 export type TrackedOrder = {
   orderNumber: string;
@@ -418,30 +466,98 @@ export type TrackedOrder = {
 };
 
 /**
+ * The forms of an order number worth looking up, for something typed by hand.
+ *
+ * `FZ-26-1005-K7QM` is a dozen characters read off a phone screen, and people
+ * leave the dashes out. The canonical form is rebuilt when the input is
+ * unambiguously one of the two shapes we issue; anything else is tried exactly
+ * as given. Case and spaces are never significant.
+ */
+function orderNumberCandidates(input: string): string[] {
+  const raw = input.trim().replace(/\s+/g, "").toUpperCase();
+  if (!raw) return [];
+
+  const candidates = new Set([raw]);
+
+  // FZ261005K7QM -> FZ-26-1005-K7QM, and FZ261004 -> FZ-26-1004.
+  const bare = raw.replace(/[^A-Z0-9]/g, "");
+  const shape = /^FZ(\d{2})(\d{4})([A-Z0-9]{4})?$/.exec(bare);
+  if (shape) {
+    candidates.add(
+      `FZ-${shape[1]}-${shape[2]}${shape[3] ? `-${shape[3]}` : ""}`,
+    );
+  }
+
+  return [...candidates];
+}
+
+/**
+ * Whether an order number carries the random half `nextOrderNumber` now adds.
+ *
+ * Written to answer "no" for anything it does not positively recognise. This
+ * gates whether the number is allowed to stand on its own, so an unfamiliar
+ * shape — a format change, a hand-typed variant, a number from an import —
+ * must fall on the cautious side of the question rather than the convenient
+ * one.
+ */
+const SUFFIXED = /^FZ-\d{2}-\d{4,}-[A-HJ-NP-Z2-9]{4}$/;
+
+function hasRandomSuffix(orderNumber: string): boolean {
+  return SUFFIXED.test(orderNumber);
+}
+
+/**
+ * Whether this typed order number will need an email alongside it.
+ *
+ * Answered from the **shape of the input alone**, never from whether such an
+ * order exists, so the tracking page can ask for the email up front without
+ * that question becoming a way to test whether a number is real.
+ */
+export function orderNumberNeedsEmail(orderNumber: string): boolean {
+  const candidates = orderNumberCandidates(orderNumber);
+  return candidates.length === 0 || !candidates.some(hasRandomSuffix);
+}
+
+/**
  * Find an order for the public tracking page, or nothing.
  *
- * Both failures — no such order, and an email that does not match — return
- * null rather than different answers. A page that said "that order exists but
- * the email is wrong" would turn a guessable order number into a way of
- * confirming that someone shopped here.
+ * **A current order number stands on its own.** The email is accepted and
+ * checked when given, but not required: a customer holding a printed receipt,
+ * or reading the number off WhatsApp, should not also have to remember which
+ * address they used. What makes that safe is the other half of the number —
+ * since `nextOrderNumber` began hanging four random characters off the
+ * sequence, holding one order number reveals nothing about any other.
  *
- * The order number is matched case-insensitively and without its spaces, since
- * `FZ-26-1001` is read off an email and typed by hand.
+ * **A number issued before that does not.** The plain `FZ-26-1004` shape is
+ * pure sequence: one of them can be guessed from another, so on its own it is
+ * not a credential at all, and for those the email is required exactly as it
+ * was before. That keeps every number already printed on a receipt or sitting
+ * in an inbox valid — which renumbering them would not — while leaving nothing
+ * enumerable. As those orders age out the check stops applying to anything.
+ *
+ * A supplied email that does not match returns null rather than a different
+ * message, so it never becomes an oracle for "does this address shop here".
  */
 export async function trackOrder(
   orderNumber: string,
-  email: string,
+  email?: string | null,
 ): Promise<TrackedOrder | null> {
-  const number = orderNumber.trim().replace(/\s+/g, "").toUpperCase();
-  const address = email.trim().toLowerCase();
-  if (!number || !address) return null;
+  const numbers = orderNumberCandidates(orderNumber);
+  if (numbers.length === 0) return null;
 
-  const row = await prisma.order.findUnique({
-    where: { orderNumber: number },
+  const address = email?.trim().toLowerCase() || null;
+
+  // `orderNumber` is unique, so at most one of the candidates can match.
+  const row = await prisma.order.findFirst({
+    where: { orderNumber: { in: numbers } },
     include: { items: true },
   });
 
-  if (!row || row.customerEmail.toLowerCase() !== address) return null;
+  if (!row) return null;
+  if (address && row.customerEmail.toLowerCase() !== address) return null;
+  // Enforced here and not only at the caller: the module cannot rely on every
+  // future caller remembering that a sequential number is not a credential.
+  if (!address && !hasRandomSuffix(row.orderNumber)) return null;
 
   return {
     orderNumber: row.orderNumber,

@@ -7,6 +7,7 @@ import {
   loginAction,
   registerAction,
   resetPasswordAction,
+  type FormState,
 } from "@/app/actions/account";
 import {
   FormMessage,
@@ -26,12 +27,32 @@ import {
  */
 
 export function LoginForm({ next }: { next: string }) {
-  const [state, action] = useActionState(loginAction, IDLE_FORM);
+  // Typed rather than inferred: the account action's state carries one field
+  // the shared form kit's does not.
+  const [state, action] = useActionState<FormState, FormData>(
+    loginAction,
+    IDLE_FORM,
+  );
 
   return (
     <form action={action} className="flex flex-col gap-4">
       <input type="hidden" name="next" value={next} />
       <FormMessage state={state} />
+
+      {/*
+        Staff who typed their back-office credentials here. The message is only
+        ever produced once the password has been accepted (see `login`), so
+        pointing at the other door tells the person nothing they do not already
+        hold — and it is the difference between "no" and a way in.
+      */}
+      {state.staffDoor && (
+        <Link
+          href="/admin/login"
+          className="-mt-2 text-[13px] text-gold-dark hover:text-ink"
+        >
+          Go to the back office sign-in →
+        </Link>
+      )}
 
       <TextField
         label="Email"

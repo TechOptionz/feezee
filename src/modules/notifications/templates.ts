@@ -1,5 +1,5 @@
 import { formatPrice } from "@/lib/currency";
-import { contact, site } from "@/lib/site";
+import { contact, site, siteHost, trackOrderUrl } from "@/lib/site";
 import { formatUaePhone } from "@/modules/checkout";
 
 /**
@@ -86,6 +86,41 @@ function button(href: string, label: string): string {
   </td></tr></table>`;
 }
 
+/** The same button, drawn as an outline — a second choice beside a first. */
+function secondaryButton(href: string, label: string): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:12px 0 0;"><tr><td style="border:1px solid ${INK};">
+    <a href="${esc(href)}" style="display:inline-block;padding:13px 28px;font-family:Helvetica,Arial,sans-serif;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:${INK};text-decoration:none;">${esc(label)}</a>
+  </td></tr></table>`;
+}
+
+/**
+ * Order tracking and reference — the block a customer comes back to this email
+ * for, so it sits near the top rather than under the invoice.
+ *
+ * It says the same thing three ways on purpose: the order number **is** the
+ * tracking reference, the button needs nothing typed, and the sentence
+ * underneath answers the question the button does not — no, you do not need an
+ * account, and you never did. Most FEEZEE orders are placed as a guest, and a
+ * receipt that quietly implies otherwise sends people to a sign-in page they
+ * cannot get past.
+ *
+ * Nothing but the number goes into the link, because nothing but the number is
+ * needed to follow it — see `trackOrderPath`.
+ */
+function trackingBlock(orderNumber: string): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${PANEL};border:1px solid ${LINE};margin:22px 0;"><tr><td style="padding:22px 22px 24px;">
+    <div style="font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:${MUTED};">Order tracking &amp; reference</div>
+    <div style="font-family:Georgia,'Times New Roman',serif;font-size:27px;letter-spacing:.06em;color:${INK};margin:9px 0 0;">${esc(orderNumber)}</div>
+    <div style="font-size:13.5px;color:${COCOA};margin-top:6px;">This is your tracking reference. Keep it — it is all you need.</div>
+    ${button(trackOrderUrl(orderNumber), "Track your order online")}
+    <div style="font-size:13px;line-height:1.7;color:${COCOA};margin-top:2px;">
+      <strong style="color:${INK};">An account is completely optional.</strong>
+      You can check your delivery status at any time on ${esc(siteHost)}/track-order
+      using this Order Number on its own, without signing in or creating an account.
+    </div>
+  </td></tr></table>`;
+}
+
 function itemRows(data: OrderEmailData): string {
   return data.items
     .map(
@@ -133,22 +168,29 @@ function addressBlock(data: OrderEmailData): string {
 
 export function orderConfirmationEmail(data: OrderEmailData): EmailContent {
   const url = `${site.url}/order-confirmation/${data.orderNumber}`;
+  const trackUrl = trackOrderUrl(data.orderNumber);
 
   const html = shell(
     `Order ${data.orderNumber}`,
     `${heading("Thank you — your order is in")}
      <p style="margin:0 0 6px;">Dear ${esc(data.customerName)},</p>
-     <p style="margin:0 0 4px;">We have your order <strong style="color:${INK};">${esc(data.orderNumber)}</strong> and it is being prepared in the studio.</p>
+     <p style="margin:0 0 4px;">We have your order and it is being prepared in the studio.</p>
+     ${trackingBlock(data.orderNumber)}
      ${instructionBlock(data.instructions)}
      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:22px;">${itemRows(data)}</table>
      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">${totalsRows(data)}</table>
      ${addressBlock(data)}
-     ${button(url, "View your order")}
+     ${secondaryButton(url, "View your receipt")}
      <p style="margin:18px 0 0;font-size:13.5px;color:${MUTED};">Questions? Reply to this email or message us on WhatsApp at ${esc(contact.whatsapp.display)}.</p>`,
   );
 
   const text = [
     `Thank you — order ${data.orderNumber} is in.`,
+    "",
+    "ORDER TRACKING & REFERENCE",
+    `Your tracking reference: ${data.orderNumber}`,
+    `Track your order online: ${trackUrl}`,
+    `An account is completely optional. You can check your delivery status at any time on ${siteHost}/track-order using this Order Number on its own, without signing in or creating an account.`,
     "",
     ...data.items.map(
       (i) => `${i.quantity} x ${i.productName} (${i.variantSize}) — ${formatPrice(i.totalAed)}`,
@@ -161,12 +203,23 @@ export function orderConfirmationEmail(data: OrderEmailData): EmailContent {
     "",
     ...data.instructions,
     "",
-    url,
+    `Your receipt: ${url}`,
   ].join("\n");
 
   return { subject: `FEEZEE order ${data.orderNumber} confirmed`, html, text };
 }
 
+/**
+ * The parcel has left.
+ *
+ * Two buttons, and both earn their place. The courier's own page has the scans
+ * — where the van is — but it knows nothing about the order, goes dark for a
+ * few hours after handover, and occasionally 404s a number that has not been
+ * ingested yet. Ours always answers, and shows the timeline, the contents and
+ * the invoice beside the tracking number. Neither is a substitute for the
+ * other, so the customer is given both rather than a guess about which they
+ * wanted.
+ */
 export function orderDispatchedEmail(data: {
   orderNumber: string;
   customerName: string;
@@ -174,7 +227,7 @@ export function orderDispatchedEmail(data: {
   trackingNumber: string;
   trackingUrl: string | null;
 }): EmailContent {
-  const url = `${site.url}/order-confirmation/${data.orderNumber}`;
+  const trackUrl = trackOrderUrl(data.orderNumber);
 
   const html = shell(
     `Order ${data.orderNumber} is on its way`,
@@ -184,15 +237,28 @@ export function orderDispatchedEmail(data: {
      ${instructionBlock([
        `Courier: ${data.courierName}`,
        `Tracking number: ${data.trackingNumber}`,
+       `Your FEEZEE reference: ${data.orderNumber}`,
      ])}
-     ${button(data.trackingUrl ?? url, data.trackingUrl ? "Track your parcel" : "View your order")}
-     <p style="margin:18px 0 0;font-size:13.5px;color:${MUTED};">Tracking can take a few hours to show its first scan.</p>`,
+     ${
+       data.trackingUrl
+         ? `${button(data.trackingUrl, `Track with ${data.courierName}`)}
+            ${secondaryButton(trackUrl, "Track on FEEZEE")}`
+         : button(trackUrl, "Track your order on FEEZEE")
+     }
+     <p style="margin:18px 0 0;font-size:13.5px;line-height:1.7;color:${MUTED};">
+       ${data.courierName}'s own page can take a few hours to show its first scan. Ours answers straight away, and needs no account and no sign-in — just your Order Number at ${esc(siteHost)}/track-order.
+     </p>`,
   );
 
   return {
     subject: `FEEZEE order ${data.orderNumber} has been dispatched`,
     html,
-    text: `Order ${data.orderNumber} is on its way with ${data.courierName}. Tracking: ${data.trackingNumber}. ${data.trackingUrl ?? url}`,
+    text: [
+      `Order ${data.orderNumber} is on its way with ${data.courierName}.`,
+      `Tracking number: ${data.trackingNumber}`,
+      ...(data.trackingUrl ? [`Track with ${data.courierName}: ${data.trackingUrl}`] : []),
+      `Track on FEEZEE (no account needed): ${trackUrl}`,
+    ].join("\n"),
   };
 }
 

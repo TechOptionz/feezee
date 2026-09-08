@@ -7,6 +7,52 @@ export const site = {
 } as const;
 
 /**
+ * The bare host, for copy that reads the address aloud — "check it any time at
+ * feezee.ae/track-order".
+ *
+ * Derived from `site.url` so it is never out of step with where the shop
+ * actually lives, but never "localhost:3000" in an email either: a development
+ * origin falls back to the real domain, because the sentence is about where the
+ * customer goes, not where the mail was generated.
+ */
+export const siteHost = (() => {
+  const fallback = "feezee.ae";
+  try {
+    const { hostname, host } = new URL(site.url);
+    if (hostname === "localhost" || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+      return fallback;
+    }
+    return host.replace(/^www\./, "");
+  } catch {
+    return fallback;
+  }
+})();
+
+/**
+ * Where a customer goes to watch their parcel, with the one thing the page
+ * asks for already filled in.
+ *
+ * One definition, because it is written into the confirmation email, the
+ * dispatch email and the receipt page, and a tracking link that works in two
+ * of those three is worse than none.
+ *
+ * The order number is the only parameter. Tracking does not require the email,
+ * so putting one in the link would buy nothing and cost a customer's address
+ * appearing in their browser history, in a `Referer` header and in the server's
+ * access log.
+ *
+ * `trackOrderPath` is the in-app link (a `<Link href>`); `trackOrderUrl` is the
+ * absolute one an email needs.
+ */
+export function trackOrderPath(orderNumber: string): string {
+  return `/track-order?${new URLSearchParams({ order: orderNumber })}`;
+}
+
+export function trackOrderUrl(orderNumber: string): string {
+  return `${site.url}${trackOrderPath(orderNumber)}`;
+}
+
+/**
  * The shop itself — the details printed on its invoices.
  *
  * One source for every place the site says how to reach FEEZEE: the footer,
