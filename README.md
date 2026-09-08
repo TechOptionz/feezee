@@ -121,14 +121,16 @@ in the database and is read through `src/modules/catalogue/`. So a price changed
 in the admin shows on the home page, and an archived garment leaves every grid.
 
 Each garment has **six variants** (XS–XXL), each with its own SKU and its own
-stock. A size is a thing you can run out of, not a label.
+stock. A size is a thing you can run out of, not a label. The SKU itself is the
+warehouse's handle on a variant and is never printed in the shop — it is on the
+order line, the picking list and the admin, and nowhere a customer looks.
 
 ## Shopping
 
 ```
 /product/<slug>
   ├─ gallery      every frame: a grid on a desktop, a swipe rail on a phone
-  ├─ panel        price · SKU · live stock per size · quantity · add to bag
+  ├─ panel        price · live stock per size · quantity · add to bag
   ├─ rail         "You May Also Like"
   └─ journal      "Featured Articles"
 

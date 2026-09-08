@@ -103,8 +103,53 @@ export function AccountShell({
   );
 }
 
+/** Which set of statuses a value belongs to, since the words overlap. */
+export type StatusKind = "fulfilment" | "payment" | "return";
+
+/**
+ * How each status is written for a customer.
+ *
+ * The enum is the warehouse's vocabulary — PROCESSING, PENDING, REJECTED — and
+ * none of it is what someone waiting on a parcel would say. Printing it with
+ * the underscores rubbed out was the shop speaking to itself in front of the
+ * customer, so the words are chosen here instead, and chosen to match the
+ * timeline's: an order that reads "Being prepared" on the pill says the same on
+ * the track below it.
+ *
+ * Split by kind because the same word means two things on either side of an
+ * order: a PENDING payment is money not yet taken, a PENDING return is a
+ * request not yet answered.
+ */
+const STATUS_LABELS: Record<StatusKind, Record<string, string>> = {
+  fulfilment: {
+    PENDING: "Order placed",
+    PROCESSING: "Being prepared",
+    DISPATCHED: "Dispatched",
+    DELIVERED: "Delivered",
+    CANCELLED: "Cancelled",
+  },
+  payment: {
+    PENDING: "Payment due",
+    PAID: "Paid",
+    REFUNDED: "Refunded",
+    FAILED: "Payment failed",
+  },
+  return: {
+    PENDING: "Requested",
+    APPROVED: "Approved",
+    RECEIVED: "With us",
+    REFUNDED: "Refunded",
+    REJECTED: "Declined",
+  },
+};
+
+/** The customer's wording for one status — for the pill and the return track. */
+export function statusLabel(status: string, kind: StatusKind): string {
+  return STATUS_LABELS[kind][status] ?? status.toLowerCase().replace(/_/g, " ");
+}
+
 /** The status chip used on every order and return row. */
-export function StatusPill({ status }: { status: string }) {
+export function StatusPill({ status, kind }: { status: string; kind: StatusKind }) {
   const tone =
     status === "DELIVERED" || status === "PAID" || status === "REFUNDED"
       ? "border-gold/50 text-gold-dark bg-gold/5"
@@ -119,7 +164,7 @@ export function StatusPill({ status }: { status: string }) {
         tone,
       )}
     >
-      {status.toLowerCase().replace(/_/g, " ")}
+      {statusLabel(status, kind)}
     </span>
   );
 }

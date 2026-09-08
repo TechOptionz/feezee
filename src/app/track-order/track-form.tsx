@@ -107,7 +107,7 @@ export function TrackOrderForm() {
           placeholder="you@example.com"
           defaultValue={state.values?.email ?? prefill.email}
           error={state.fieldErrors?.email}
-          hint="Needed only for older order numbers, which end in four digits rather than four letters."
+          hint="Only needed for a few older orders — we will say so if yours is one."
         />
 
         <SubmitButton pendingLabel="Looking…" className="self-start">
@@ -209,7 +209,7 @@ function Result({ order }: { order: NonNullable<TrackState["order"]> }) {
                     {item.productName}
                   </span>
                   <span className="text-[12.5px] text-muted">
-                    Size {item.variantSize} · {item.sku}
+                    Size {item.variantSize}
                   </span>
                   <span className="text-[12.5px] text-muted">
                     {item.quantity} × {formatPrice(item.unitPriceAed)}

@@ -525,6 +525,43 @@ the shop ↗" out of the sidebar, the `feezee_staff` strip back in — and
 layout draws no navigation at all until there is somebody signed in to draw it
 for.
 
+### 4.20 The shop does not talk to itself in front of the customer
+
+Two kinds of internal writing had leaked onto customer surfaces, and both were
+there because the value happened to be in hand rather than because anyone
+needed it.
+
+**The SKU.** `FZ-LP-004-M` was printed under the size on the product panel, on
+every bag row, and on the order line in the receipt, the account order and the
+guest tracking result. It is the warehouse's handle on a variant — a customer
+cannot search it, quote it or do anything with it, and every one of those
+screens already carries the number that *is* quotable, the order number. It now
+lives on the `OrderItem`, in the admin and in the product page's
+structured data, and nowhere a customer looks.
+
+**The status enum.** `StatusPill` printed `status.toLowerCase()` with the
+underscores rubbed out, so an order read "processing" and a return read
+"pending" and "rejected". Those are the database's words. The pill now
+translates through `statusLabel`, and translates by *kind*, because PENDING on a
+payment (money not yet taken) and PENDING on a return (a request not yet
+answered) are different facts wearing one enum value. The wording matches the
+timeline's on purpose — a pill that says "Being prepared" sits above a track
+whose third stop says the same thing, rather than making the customer map one
+vocabulary onto the other.
+
+The same instinct trimmed `/track-order`: the optional email field used to
+explain that older order numbers "end in four digits rather than four letters",
+which is our own numbering history told to everyone in order to spare the few
+people it applies to one question. The action already says it, precisely, at the
+moment it is true (4.16). The hint only has to say the field is usually
+skippable.
+
+And the account overview no longer opens on a **lifetime spend** tile. It was
+the one number on that screen the customer had not asked anyone to keep: the
+page exists to get back into an order and to reach the address book, and a
+running total of what someone has spent with us is the shop's figure to hold,
+not theirs to be met with. Two tiles now, on a two-column grid.
+
 ---
 
 ## 5. Data model notes

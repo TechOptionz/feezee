@@ -25,15 +25,15 @@ export default async function AccountPage() {
 
   const recent = orders.slice(0, 3);
   const primary = addresses.find((a) => a.isDefault) ?? addresses[0] ?? null;
-  const lifetime = orders
-    .filter((o) => o.fulfillmentStatus !== "CANCELLED")
-    .reduce((sum, o) => sum + o.totalAed, 0);
 
   return (
     <AccountShell current="/account" title="Overview" name={user.name}>
-      <div className="grid grid-cols-1 nav:grid-cols-3 gap-5">
+      {/* What is here is what the page is for — a way back into an order and a
+          way to the address book. A running total of what someone has spent
+          with us is the shop's figure, not theirs, and it was on the first
+          screen of their account. */}
+      <div className="grid grid-cols-1 nav:grid-cols-2 gap-5">
         <Stat label="Orders" value={String(orders.length)} />
-        <Stat label="Lifetime spend" value={formatPrice(lifetime)} />
         <Stat label="Saved addresses" value={String(addresses.length)} />
       </div>
 
@@ -77,7 +77,7 @@ export default async function AccountPage() {
                       </span>
                     </span>
                     <span className="flex items-center gap-4">
-                      <StatusPill status={order.fulfillmentStatus} />
+                      <StatusPill status={order.fulfillmentStatus} kind="fulfilment" />
                       <span className="text-[14.5px] font-medium whitespace-nowrap">
                         {formatPrice(order.totalAed)}
                       </span>

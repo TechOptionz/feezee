@@ -43,8 +43,8 @@ export default async function AccountOrderPage({
       standfirst={`Placed ${shortDate(order.placedAt)}.`}
     >
       <div className="flex flex-wrap items-center gap-3">
-        <StatusPill status={order.fulfillmentStatus} />
-        <StatusPill status={order.paymentStatus} />
+        <StatusPill status={order.fulfillmentStatus} kind="fulfilment" />
+        <StatusPill status={order.paymentStatus} kind="payment" />
         <span className="text-[13px] text-muted">
           {order.paymentMethod === "COD"
             ? "Cash on delivery"
@@ -85,7 +85,7 @@ export default async function AccountOrderPage({
                     {item.productName}
                   </span>
                   <span className="text-[12.5px] text-muted">
-                    Size {item.variantSize} · {item.sku}
+                    Size {item.variantSize}
                   </span>
                   <span className="text-[12.5px] text-muted">
                     {item.quantity} × {formatPrice(item.unitPriceAed)}
@@ -110,7 +110,7 @@ export default async function AccountOrderPage({
                     className="flex flex-wrap items-center justify-between gap-3 text-[14px]"
                   >
                     <span className="text-ink">{ret.returnNumber}</span>
-                    <StatusPill status={ret.status} />
+                    <StatusPill status={ret.status} kind="return" />
                   </li>
                 ))}
               </ul>

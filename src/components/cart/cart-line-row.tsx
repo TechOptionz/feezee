@@ -87,7 +87,6 @@ export function CartLineRow({
         </div>
         <div className="text-[12.5px] tracking-[0.14em] uppercase text-muted">
           Size {line.size}
-          {line.sku && <span className="ml-2 normal-case tracking-normal">· {line.sku}</span>}
         </div>
 
         {available !== undefined && available <= 3 && available > 0 && (

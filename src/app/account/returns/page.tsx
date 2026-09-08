@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AccountShell, StatusPill, shortDate } from "@/app/account/account-shell";
+import {
+  AccountShell,
+  StatusPill,
+  shortDate,
+  statusLabel,
+} from "@/app/account/account-shell";
 import { currentUser } from "@/modules/customers";
 import { returnsForUser } from "@/modules/returns";
 import { formatPrice } from "@/lib/currency";
@@ -63,7 +68,7 @@ export default async function AccountReturnsPage() {
                       · requested {shortDate(request.requestedAt)}
                     </div>
                   </div>
-                  <StatusPill status={request.status} />
+                  <StatusPill status={request.status} kind="return" />
                 </div>
 
                 {!rejected && (
@@ -79,7 +84,7 @@ export default async function AccountReturnsPage() {
                             i <= stageIndex ? "text-ink" : "text-muted"
                           }`}
                         >
-                          {stage.toLowerCase()}
+                          {statusLabel(stage, "return")}
                         </span>
                       </li>
                     ))}

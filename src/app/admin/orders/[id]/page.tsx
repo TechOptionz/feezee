@@ -228,7 +228,7 @@ export default async function AdminOrderPage({
               {order.trackingNumber && (
                 <div className="border-t border-ink-line pt-3">
                   <div className="mb-1.5 text-[11px] tracking-[0.16em] uppercase text-taupe">
-                    Tracking
+                    Courier tracking
                   </div>
                   <p className="m-0 text-sandstone">
                     {order.courierName} · {order.trackingNumber}

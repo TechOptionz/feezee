@@ -57,7 +57,7 @@ export default async function AccountOrdersPage() {
                 </span>
 
                 <span className="flex items-center gap-4 shrink-0">
-                  <StatusPill status={order.fulfillmentStatus} />
+                  <StatusPill status={order.fulfillmentStatus} kind="fulfilment" />
                   <span className="text-[15px] font-medium whitespace-nowrap">
                     {formatPrice(order.totalAed)}
                   </span>

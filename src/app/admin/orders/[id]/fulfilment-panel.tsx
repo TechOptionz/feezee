@@ -109,18 +109,21 @@ export function FulfilmentPanel({
 
               <label className="flex flex-col gap-2">
                 <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
-                  Tracking number
+                  Courier tracking number
                 </span>
                 <input
                   name="trackingNumber"
                   defaultValue={trackingNumber ?? ""}
+                  placeholder="e.g. 47281930456"
                   required
                   className="border border-ink-line bg-transparent px-3 py-2.5 text-[14px] text-champagne outline-none placeholder:text-taupe focus:border-gold"
                 />
               </label>
 
               <p className="m-0 text-[12.5px] leading-[1.6] text-taupe">
-                Saving this emails the customer their tracking link.
+                The courier&rsquo;s own AWB from the shipping label &mdash; not the
+                FEEZEE order number (FZ-&hellip;) the customer sees at checkout. Saving
+                this emails them their tracking link.
               </p>
             </div>
           )}

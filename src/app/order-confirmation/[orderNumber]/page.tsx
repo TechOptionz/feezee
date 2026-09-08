@@ -187,7 +187,7 @@ export default async function OrderConfirmationPage({
                       {item.productName}
                     </span>
                     <span className="text-[12.5px] text-muted">
-                      Size {item.variantSize} · {item.sku}
+                      Size {item.variantSize}
                     </span>
                     <span className="text-[12.5px] text-muted">
                       {item.quantity} × {formatPrice(item.unitPriceAed)}

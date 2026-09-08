@@ -137,10 +137,6 @@ export function ProductPanel({
         )}
       </div>
 
-      <p className="mt-2.5 mb-0 text-[12px] tracking-[0.16em] uppercase text-muted">
-        SKU: {chosen?.sku ?? product.variants[0]?.sku ?? "—"}
-      </p>
-
       <p className="mt-4 mb-0 text-[15.5px] leading-[1.7] text-cocoa">
         {product.cut}. {product.fabric}.
       </p>
