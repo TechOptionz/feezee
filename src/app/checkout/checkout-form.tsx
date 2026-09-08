@@ -144,6 +144,35 @@ export function CheckoutForm({
 
   const totals = priced?.totals;
 
+  /*
+   * The rows are the server's, not the bag's, as soon as the server has
+   * answered. `priceBasket` trims a line to what is left on the rail and drops
+   * anything archived, so drawing the saved bag beside those totals shows a
+   * quantity the customer is not being charged for — four of a piece over a
+   * subtotal for two. The snapshot is only good enough for the frame before
+   * the first price comes back.
+   */
+  const summaryLines = priced
+    ? priced.lines.map((line) => ({
+        variantId: line.variantId,
+        name: line.productName,
+        size: line.size,
+        qty: line.quantity,
+        image: line.image,
+        totalAed: line.totalAed,
+      }))
+    : cart.map((line) => ({
+        variantId: line.variantId,
+        name: line.name,
+        size: line.size,
+        qty: line.qty,
+        image: line.image,
+        totalAed: line.unitPriceAed * line.qty,
+      }));
+
+  const changed =
+    priced && (priced.removed.length > 0 || priced.adjusted.length > 0);
+
   return (
     <form
       onSubmit={onSubmit}
@@ -345,8 +374,31 @@ export function CheckoutForm({
           Your order
         </h2>
 
+        {/* Said here as well as on the cart page: a bag can go short between
+            the two, and the summary is the last place to read it before the
+            order is placed. */}
+        {changed && (
+          <div
+            role="status"
+            className="border border-wine/40 px-4 py-3 text-[13.5px] leading-[1.65] text-cocoa"
+          >
+            {priced.removed.map((label) => (
+              <div key={label}>
+                <strong className="text-wine">{label}</strong> has sold out and
+                is no longer in your order.
+              </div>
+            ))}
+            {priced.adjusted.map((item) => (
+              <div key={item.label}>
+                Only {item.available} of <strong>{item.label}</strong> left —
+                the quantity has come down.
+              </div>
+            ))}
+          </div>
+        )}
+
         <ul className="m-0 p-0 list-none flex flex-col gap-3">
-          {cart.map((line) => (
+          {summaryLines.map((line) => (
             <li key={line.variantId} className="flex items-center gap-3">
               <div className="relative h-[64px] w-[50px] shrink-0 overflow-hidden bg-sand">
                 {line.image && (
@@ -366,7 +418,7 @@ export function CheckoutForm({
                 </span>
               </div>
               <span className="text-[13.5px] text-ink whitespace-nowrap">
-                {formatPrice(line.unitPriceAed * line.qty, currency)}
+                {formatPrice(line.totalAed, currency)}
               </span>
             </li>
           ))}
@@ -402,7 +454,9 @@ export function CheckoutForm({
 
         <button
           type="submit"
-          disabled={pending || !totals}
+          // Nothing left to buy once the server has dropped every line: the
+          // totals would read zero and the order would fail on submit.
+          disabled={pending || !totals || summaryLines.length === 0}
           className="bg-ink text-cream border-none cursor-pointer px-7 py-4 text-[13px] tracking-[0.18em] uppercase disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pending ? "Placing your order…" : "Place order"}
