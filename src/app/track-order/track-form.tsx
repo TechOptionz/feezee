@@ -4,11 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
+import { trackOrderAction } from "@/app/actions/track-order";
 import {
   IDLE_TRACK,
-  trackOrderAction,
   type TrackState,
-} from "@/app/actions/track-order";
+} from "@/app/actions/track-order-state";
 import { OrderTimeline } from "@/components/orders/order-timeline";
 import {
   FormMessage,

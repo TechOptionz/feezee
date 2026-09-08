@@ -2,11 +2,8 @@
 
 import { headers } from "next/headers";
 import { z } from "zod";
-import {
-  orderNumberNeedsEmail,
-  trackOrder,
-  type TrackedOrder,
-} from "@/modules/orders";
+import { orderNumberNeedsEmail, trackOrder } from "@/modules/orders";
+import type { TrackState } from "@/app/actions/track-order-state";
 
 /**
  * Looking up a parcel without an account.
@@ -25,17 +22,6 @@ import {
  * Order numbers issued before that random half are the exception, and still
  * require the email: see `trackOrder`.
  */
-
-export type TrackState = {
-  status: "idle" | "error" | "found";
-  message?: string;
-  fieldErrors?: Record<string, string>;
-  order?: TrackedOrder;
-  /** Echoed back so the form keeps what was typed after a failed lookup. */
-  values?: { orderNumber: string; email: string };
-};
-
-export const IDLE_TRACK: TrackState = { status: "idle" };
 
 /** The one thing this action ever says when it will not show an order. */
 const NOT_FOUND =
