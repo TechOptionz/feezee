@@ -4,8 +4,10 @@ import { CollectionGrid } from "@/components/shop/collection-grid";
 import { CollectionHeader } from "@/components/shop/collection-header";
 import { CollectionNote } from "@/components/shop/collection-note";
 import { LineStrip } from "@/components/shop/line-strip";
-import { productsForPage, shopPage } from "@/content/collections";
-import { discountPct, newInProducts } from "@/content/products";
+import { shopPage } from "@/content/collections";
+import { productsForShopPage } from "@/modules/catalogue/collections";
+import { discountPct } from "@/content/products";
+import { newInProducts } from "@/modules/catalogue";
 import { formatPrice } from "@/lib/currency";
 
 const page = shopPage("/sale")!;
@@ -15,8 +17,9 @@ export const metadata: Metadata = {
   description: page.meta.description,
 };
 
-export default function SalePage() {
-  const products = productsForPage(page);
+export default async function SalePage() {
+  const products = await productsForShopPage(page);
+  const fullPriceCount = (await newInProducts()).length;
 
   /*
    * The three numbers a sale page is actually asked for. They are read off the
@@ -79,7 +82,7 @@ export default function SalePage() {
           to the lines rather than a rail of the same pieces again. */}
       <LineStrip
         heading="Back to full price"
-        standfirst={`Sale is last season. The ${newInProducts().length} pieces currently on the rail are split across these three lines.`}
+        standfirst={`Sale is last season. The ${fullPriceCount} pieces currently on the rail are split across these three lines.`}
       />
     </PageFrame>
   );

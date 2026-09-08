@@ -6,7 +6,8 @@ import { CollectionHeader } from "@/components/shop/collection-header";
 import { CollectionNote } from "@/components/shop/collection-note";
 import { MadeToOrderBand } from "@/components/shop/made-to-order-band";
 import { ProductRail } from "@/components/shop/product-rail";
-import { productsForPage, shopPage } from "@/content/collections";
+import { shopPage } from "@/content/collections";
+import { productsForShopPage } from "@/modules/catalogue/collections";
 import { productsInCollection } from "@/content/products";
 
 const page = shopPage("/ready-to-wear")!;
@@ -16,8 +17,8 @@ export const metadata: Metadata = {
   description: page.meta.description,
 };
 
-export default function ReadyToWearPage() {
-  const products = productsForPage(page);
+export default async function ReadyToWearPage() {
+  const products = await productsForShopPage(page);
 
   return (
     <PageFrame>

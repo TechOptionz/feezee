@@ -1,0 +1,84 @@
+import { Prisma } from "@/generated/prisma/browser";
+
+/**
+ * `Prisma.Decimal` as a type.
+ *
+ * The browser entry point exports `Decimal` as a value only — it is the one
+ * name where the browser namespace shadows the server one, which also exports
+ * it as a type. Deriving the instance type here keeps this module importable
+ * from the client bundle (it is, via `@/modules/checkout`) without dragging in
+ * the Node-only runtime.
+ */
+type Decimal = InstanceType<typeof Prisma.Decimal>;
+
+/**
+ * Money, in one place.
+ *
+ * Every amount that touches the database is a `Decimal(10,2)` in dirhams.
+ * Every amount that touches React is a plain `number`, because a Prisma
+ * `Decimal` is a class instance and a server component cannot serialise one
+ * into a client component — it throws at render time, not at compile time,
+ * which is the worst place to find out.
+ *
+ * Arithmetic happens in **fils** (1 AED = 100 fils) as integers. 5% VAT on
+ * AED 209.35 is exactly the shape of sum that leaves 0.000000001 behind in
+ * binary floating point, and an invoice whose lines do not add up to its total
+ * is a support ticket every time.
+ */
+
+/** A Decimal (or anything Decimal-like) as a plain number of dirhams. */
+export function toAed(value: Decimal | number | null | undefined): number {
+  if (value === null || value === undefined) return 0;
+  return typeof value === "number" ? value : value.toNumber();
+}
+
+/** Same, but preserving null — for optional columns like `wasAed`. */
+export function toAedOrNull(
+  value: Decimal | number | null | undefined,
+): number | null {
+  if (value === null || value === undefined) return null;
+  return typeof value === "number" ? value : value.toNumber();
+}
+
+/** A number of dirhams as the Decimal the database column wants. */
+export function toDecimal(aed: number): Decimal {
+  return new Prisma.Decimal(round2(aed).toFixed(2));
+}
+
+/** Dirhams to whole fils. */
+export function toFils(aed: number): number {
+  return Math.round(aed * 100);
+}
+
+/** Fils back to dirhams. */
+export function fromFils(fils: number): number {
+  return fils / 100;
+}
+
+/**
+ * Round to two decimals, away from zero on a tie.
+ *
+ * `Math.round` alone is not enough: `Math.round(1.005 * 100) / 100` is 1 in
+ * JavaScript, because 1.005 is really 1.00499999999999989. Going through a
+ * fixed-point string first is what makes 1.005 round to 1.01 the way a person
+ * reading the invoice expects.
+ *
+ * The magnitude is rounded and the sign put back afterwards, rather than
+ * rounding the signed value. `Math.round` breaks ties towards positive
+ * infinity, not away from zero — it sends 100.5 to 101 but −100.5 to −100 — so
+ * rounding −1.005 directly gives −1.00 and quietly contradicts the sentence
+ * above. Nothing in the shop prices in negatives today; the first credit note
+ * or downward price adjustment would have found this the hard way.
+ */
+export function round2(value: number): number {
+  if (!Number.isFinite(value)) return value;
+
+  const scaled = Number(`${Math.abs(value)}e2`);
+  // A magnitude large enough to be written in exponential form breaks the
+  // string trick; ordinary arithmetic is accurate enough at that scale.
+  const rounded = Number.isFinite(scaled)
+    ? Math.round(scaled)
+    : Math.round(Math.abs(value) * 100);
+
+  return (value < 0 ? -rounded : rounded) / 100;
+}

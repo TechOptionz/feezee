@@ -3,20 +3,33 @@
 import Link from "next/link";
 import { useStore } from "@/components/store/store-provider";
 import { ProductCard } from "@/components/ui/product-card";
-import { productsByIds } from "@/content/products";
 import { formatPrice } from "@/lib/currency";
+import type { ProductView } from "@/modules/catalogue";
 
 /**
- * Everything hearted, from any page, kept in the browser. The tiles are the
- * same ones the shop grids use, so un-hearting a piece here removes it from
- * the page under your finger — which is the behaviour a wishlist should have.
+ * Everything hearted, from any page. The tiles are the same ones the shop grids
+ * use, so un-hearting a piece here removes it from the page under your finger —
+ * which is the behaviour a wishlist should have.
+ *
+ * Where the saved ids come from depends on who is asking: the database for a
+ * signed-in customer, `localStorage` for a guest. The store settles that, and
+ * `wishReady` is how it says it has finished settling it.
+ *
+ * The catalogue arrives as a prop either way: what a saved piece is worth and
+ * whether it is still on the rail is the database's to say, and a client
+ * component cannot ask it directly.
  */
-export function WishlistContents() {
-  const { wishedIds, currency, hydrated, addToBag } = useStore();
-  const saved = productsByIds(wishedIds);
+export function WishlistContents({ catalogue }: { catalogue: ProductView[] }) {
+  const { wishedIds, currency, wishReady, addToBag } = useStore();
 
-  // Nothing honest to draw until the saved list has been read back.
-  if (!hydrated) return <div className="min-h-[40vh]" />;
+  const saved = wishedIds.flatMap((id) => {
+    const found = catalogue.find((p) => p.id === id);
+    return found ? [found] : [];
+  });
+
+  // Nothing honest to draw until the saved list has been read back — from the
+  // browser for a guest, and from the database for anyone signed in.
+  if (!wishReady) return <div className="min-h-[40vh]" />;
 
   if (saved.length === 0) {
     return (
@@ -25,8 +38,8 @@ export function WishlistContents() {
           Nothing saved yet.
         </p>
         <p className="mt-3 mb-7 text-[15px] text-cocoa max-w-[46ch] mx-auto">
-          Tap the heart on any piece and it will wait for you here — on this
-          device, for as long as you like.
+          Tap the heart on any piece and it will wait for you here — on your
+          account if you are signed in, on this device if you are not.
         </p>
         <Link
           href="/new-in"
@@ -39,6 +52,31 @@ export function WishlistContents() {
   }
 
   const total = saved.reduce((sum, product) => sum + product.aed, 0);
+  const inStock = saved.filter((p) => p.variants.some((v) => v.stock > 0));
+
+  /*
+   * Bulk add takes the first size still on the rail for each piece, and the bag
+   * row prints which one it took. That is a real choice made on someone's
+   * behalf, so it is labelled as what it is rather than as a plain "add all".
+   */
+  const addAll = () => {
+    for (const product of inStock) {
+      const variant = product.variants.find((v) => v.stock > 0);
+      if (!variant) continue;
+      addToBag({
+        variantId: variant.id,
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        fabric: product.fabric,
+        image: product.img,
+        size: variant.size,
+        sku: variant.sku,
+        unitPriceAed: variant.priceAed,
+        ...(product.wasAed ? { wasAed: product.wasAed } : {}),
+      });
+    }
+  };
 
   return (
     <>
@@ -47,14 +85,15 @@ export function WishlistContents() {
           {saved.length} {saved.length === 1 ? "piece" : "pieces"} saved ·{" "}
           {formatPrice(total, currency)}
         </span>
-        {/* Wrapped, this has a line to itself, so it takes the width of it
-            rather than stopping short of the right edge. */}
         <button
           type="button"
-          onClick={() => saved.forEach((product) => addToBag(product.id))}
-          className="w-full sm:w-auto bg-ink text-cream border-none cursor-pointer px-6 py-3.5 sm:py-3 text-[12.5px] tracking-[0.16em] uppercase"
+          onClick={addAll}
+          disabled={inStock.length === 0}
+          className="w-full sm:w-auto bg-ink text-cream border-none cursor-pointer px-6 py-3.5 sm:py-3 text-[12.5px] tracking-[0.16em] uppercase disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Add all to bag
+          {inStock.length === 0
+            ? "All sold out"
+            : "Add first available size to bag"}
         </button>
       </div>
 

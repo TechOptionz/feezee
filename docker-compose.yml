@@ -1,0 +1,32 @@
+# Local PostgreSQL for FEEZEE Fashion.
+#
+#   docker compose up -d      start the database
+#   docker compose down       stop it, keeping the data
+#   docker compose down -v    stop it and wipe the volume
+#
+# The credentials here are deliberately boring: this file is for a laptop, not
+# for production. Production sets DATABASE_URL to a managed instance instead.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: feezee-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: feezee
+    ports:
+      - "5432:5432"
+    volumes:
+      - feezee-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # `prisma db push` immediately after `up -d` fails if Postgres is still
+      # opening its socket, so compose is told how to know it is actually ready.
+      test: ["CMD-SHELL", "pg_isready -U postgres -d feezee"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  feezee-pgdata:

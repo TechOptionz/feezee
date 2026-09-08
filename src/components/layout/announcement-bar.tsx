@@ -27,7 +27,7 @@ export function AnnouncementBar({ overlay = false }: { overlay?: boolean }) {
       */}
       <span className="sm:hidden">Free delivery over {threshold}</span>
       <span className="hidden sm:inline">
-        Free nationwide delivery on orders over {threshold}
+        Free delivery across Dubai and all 7 Emirates over {threshold}
       </span>
     </div>
   );

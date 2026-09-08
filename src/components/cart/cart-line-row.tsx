@@ -2,9 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useStore } from "@/components/store/store-provider";
+import { useStore, type CartLine } from "@/components/store/store-provider";
 import { PlusMinusIcon, TrashIcon } from "@/components/ui/icons";
-import { productHref, type Product } from "@/content/products";
 import { img } from "@/lib/assets";
 import { formatPrice } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -14,54 +13,51 @@ import { cn } from "@/lib/utils";
  * the quantity stepper behaves identically wherever the bag is opened. `wide`
  * is the bag page, which from the nav breakpoint has the room to reserve a
  * column for the line total so the totals line up down the list.
+ *
+ * `available` is the live stock the server reported for this variant when the
+ * page priced the bag. It is what stops the stepper at what is actually on the
+ * rail, rather than letting someone ask for six of the last two and finding out
+ * at checkout.
  */
 export function CartLineRow({
-  product,
-  qty,
-  size,
+  line,
   wide = false,
+  available,
 }: {
-  product: Product;
-  qty: number;
-  /** The size chosen on the garment's page. Absent for a card-added line. */
-  size?: string;
+  line: CartLine;
   wide?: boolean;
+  available?: number;
 }) {
   const { currency, setQty, removeFromBag } = useStore();
+  const href = `/product/${line.slug}`;
+  const atCeiling = available !== undefined && line.qty >= available;
 
   return (
     <div className="flex gap-4 py-5 border-b border-line last:border-b-0">
       <Link
-        href={productHref(product)}
+        href={href}
         className="relative w-[84px] shrink-0 aspect-[4/5] bg-sand overflow-hidden"
         aria-hidden
         tabIndex={-1}
       >
-        <Image
-          src={img(product.img)}
-          alt=""
-          fill
-          sizes="84px"
-          className="object-cover object-top"
-        />
+        {line.image && (
+          <Image
+            src={img(line.image)}
+            alt=""
+            fill
+            sizes="84px"
+            className="object-cover object-top"
+          />
+        )}
       </Link>
 
       <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-        {/*
-          The total used to be a third column of its own. Beside a 84px
-          photograph that left about 130px for everything in the middle, and on
-          a phone the name, the fabric and the size each broke over two lines
-          while the column beside them stood empty below the price. Sharing the
-          first line with the name instead gives the lines under it the whole
-          width — and on the bag page, where there is room, the price still
-          holds its own reserved column at the right.
-        */}
         <div className="flex items-start justify-between gap-3">
           <Link
-            href={productHref(product)}
+            href={href}
             className="min-w-0 text-[13px] tracking-[0.16em] uppercase text-ink hover:text-gold-dark"
           >
-            {product.name}
+            {line.name}
           </Link>
 
           <div
@@ -71,30 +67,33 @@ export function CartLineRow({
             )}
           >
             <span className="text-[14.5px] font-medium">
-              {formatPrice(product.aed * qty, currency)}
+              {formatPrice(line.unitPriceAed * line.qty, currency)}
             </span>
-            {product.wasAed && (
+            {line.wasAed && (
               <span className="text-[12.5px] text-muted line-through">
-                {formatPrice(product.wasAed * qty, currency)}
+                {formatPrice(line.wasAed * line.qty, currency)}
               </span>
             )}
-            {qty > 1 && (
+            {line.qty > 1 && (
               <span className="text-[12px] text-muted">
-                {formatPrice(product.aed, currency)} each
+                {formatPrice(line.unitPriceAed, currency)} each
               </span>
             )}
           </div>
         </div>
 
         <div className="text-[12.5px] text-muted tracking-[0.06em]">
-          {product.fabric}
+          {line.fabric}
         </div>
-        {/* A bag row without a size is one added straight off a grid; the
-            checkout confirms it on WhatsApp, so it says that rather than
-            pretending a size was chosen. */}
         <div className="text-[12.5px] tracking-[0.14em] uppercase text-muted">
-          {size ? `Size ${size}` : "Size confirmed on WhatsApp"}
+          Size {line.size}
         </div>
+
+        {available !== undefined && available <= 3 && available > 0 && (
+          <div className="text-[12.5px] text-wine">
+            Only {available} left on the rail
+          </div>
+        )}
 
         <div className="mt-1 flex items-center gap-3 flex-wrap">
           {/* A stepper rather than a number field: on a phone the keyboard
@@ -102,8 +101,8 @@ export function CartLineRow({
           <div className="flex items-center border border-line">
             <button
               type="button"
-              onClick={() => setQty(product.id, qty - 1, size)}
-              aria-label={`Reduce quantity of ${product.name}`}
+              onClick={() => setQty(line.variantId, line.qty - 1)}
+              aria-label={`Reduce quantity of ${line.name}`}
               className="w-9 h-9 flex items-center justify-center cursor-pointer text-ink hover:bg-panel"
             >
               <PlusMinusIcon open />
@@ -112,13 +111,23 @@ export function CartLineRow({
               aria-live="polite"
               className="min-w-8 text-center text-[14px] tabular-nums"
             >
-              {qty}
+              {line.qty}
             </span>
             <button
               type="button"
-              onClick={() => setQty(product.id, qty + 1, size)}
-              aria-label={`Increase quantity of ${product.name}`}
-              className="w-9 h-9 flex items-center justify-center cursor-pointer text-ink hover:bg-panel"
+              onClick={() => setQty(line.variantId, line.qty + 1)}
+              disabled={atCeiling}
+              aria-label={
+                atCeiling
+                  ? `No more ${line.name} in size ${line.size} available`
+                  : `Increase quantity of ${line.name}`
+              }
+              className={cn(
+                "w-9 h-9 flex items-center justify-center text-ink",
+                atCeiling
+                  ? "cursor-not-allowed text-muted/50"
+                  : "cursor-pointer hover:bg-panel",
+              )}
             >
               <PlusMinusIcon />
             </button>
@@ -126,8 +135,8 @@ export function CartLineRow({
 
           <button
             type="button"
-            onClick={() => removeFromBag(product.id, size)}
-            aria-label={`Remove ${product.name} from bag`}
+            onClick={() => removeFromBag(line.variantId)}
+            aria-label={`Remove ${line.name} from bag`}
             className="flex items-center gap-1.5 py-2 text-[12px] tracking-[0.14em] uppercase text-muted hover:text-wine cursor-pointer bg-transparent border-none"
           >
             <TrashIcon />

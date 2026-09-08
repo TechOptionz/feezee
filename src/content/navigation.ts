@@ -38,6 +38,6 @@ export const footerNav = {
       label: "WhatsApp Us",
       href: whatsappHref("Hello FEEZEE, I have a question."),
     },
-    { label: "Track Order", href: "#footer" },
+    { label: "Track Order", href: "/track-order" },
   ],
 } as const;

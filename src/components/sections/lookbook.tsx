@@ -3,10 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowIcon } from "@/components/ui/icons";
 import { ProductCard } from "@/components/ui/product-card";
-import { boutiqueLooks } from "@/content/products";
+import type { BoutiqueEntry } from "@/modules/catalogue/collections";
 import { cn } from "@/lib/utils";
-
-const looks = boutiqueLooks();
 
 /**
  * The boutique rail: the pieces hanging in the shop, each one carrying its own
@@ -17,7 +15,7 @@ const looks = boutiqueLooks();
  * neither. Every press moves by whole cards, so a photograph is never left half
  * in frame.
  */
-export function Lookbook() {
+export function Lookbook({ looks }: { looks: BoutiqueEntry[] }) {
   const rail = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);

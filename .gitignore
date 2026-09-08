@@ -36,6 +36,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# prisma — the client is generated from schema.prisma by `prisma generate`
+# (wired to postinstall), so it is build output rather than source.
+/src/generated/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
@@ -49,3 +53,6 @@ next-env.d.ts
 
 # local dev server log
 dev.log
+
+# ...but the template belongs in the repo.
+!.env.example

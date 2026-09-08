@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Reference copy of the Claude Design export — not application source.
     "design-source/**",
+    // Generated Prisma Client.
+    "src/generated/**",
   ]),
 ]);
 

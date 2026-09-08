@@ -41,6 +41,15 @@ function range(ids: readonly number[], price: PriceFormatter) {
   return `${price(Math.min(...amounts))} – ${price(Math.max(...amounts))}`;
 }
 
+/*
+ * What the catalogue actually costs, read off the catalogue. The figures that
+ * used to sit in the "how much" reply were rupee-era numbers formatted as
+ * dirhams, which is exactly the kind of thing that only stays wrong while it
+ * is written down twice.
+ */
+const catalogueAed = products.map((p) => p.aed);
+const pretAed = productsInCollection("Luxury Pret").map((p) => p.aed);
+
 const saleIds = products.filter((p) => p.wasAed).map((p) => p.id);
 const bestSellerIds = products.filter((p) => p.badge?.label === "Best Seller").map((p) => p.id);
 const newIds = products.filter((p) => p.badge?.label === "New").map((p) => p.id);
@@ -168,8 +177,8 @@ const staticTopics: ChatTopic[] = [
     question: "How much do pieces cost?",
     keywords: ["price", "prices", "cost", "how much", "rate", "budget", "expensive"],
     lines: (price) => [
-      `Kurtas start around ${price(4850)} and dupattas around ${price(2450)}. Luxury pret suits run up to ${price(18500)}.`,
-      "Prices show in AED across the site, delivery included.",
+      `Pieces on the rail run ${price(Math.min(...catalogueAed))} to ${price(Math.max(...catalogueAed))}. Luxury Pret tops out at ${price(Math.max(...pretAed))}.`,
+      `Everything is priced in AED, with 5% VAT added at checkout. Delivery is free on orders over ${price(storeConfig.freeShippingThresholdAed)}.`,
     ],
     followUps: ["payment", "sale", "categories"],
   },
@@ -190,9 +199,9 @@ const staticTopics: ChatTopic[] = [
     question: "Silai — made to order",
     keywords: ["silai", "made to order", "custom", "tailor", "tailoring", "stitching", "bespoke"],
     lines: () => [
-      "Choose any design on the site, send your measurements on WhatsApp, and our in-house tailors cut and finish the piece by hand.",
+      "Choose any design on the site, send your measurements on WhatsApp, or bring a garment that fits into our boutique at Madina Mall, Al Muhaisnah 4. Our in-house tailors cut and finish the piece by hand.",
       "Free alterations on every silai order — we keep altering until it fits.",
-      "A kurta takes 7–10 days, a three-piece 10–14, bridal 4–6 weeks. The Silai page carries the full table of charges and turnarounds.",
+      "Stitching starts at AED 24 for a kurta and AED 42 for a three-piece, with bridal from AED 158. A kurta takes 7–10 days, a three-piece 10–14, bridal 4–6 weeks — the Silai page carries the full table of AED charges and turnarounds.",
     ],
     followUps: ["silai-measurements", "alterations", "sizes", "contact"],
   },
@@ -212,7 +221,7 @@ const staticTopics: ChatTopic[] = [
     keywords: ["alter", "alteration", "alterations", "resize", "adjust", "loose", "tight"],
     lines: () => [
       "Free alterations on every silai order, for as many rounds as it takes.",
-      "Ready-to-wear can be altered too: send it back within 7 days and we cover the stitching, you cover return postage.",
+      "Ready-to-wear can be altered too: send it back within 7 days, or walk it into Madina Mall, and we cover the stitching — you cover return postage.",
     ],
     followUps: ["silai", "returns", "sizes"],
   },
@@ -230,10 +239,25 @@ const staticTopics: ChatTopic[] = [
   {
     id: "shipping",
     question: "Shipping & delivery",
-    keywords: ["ship", "shipping", "delivery", "deliver", "courier", "international", "worldwide", "abroad"],
+    /*
+     * The multi-word phrases are load-bearing, not padding. A keyword scores by
+     * how many words it has, and "how much" belongs to the *price* topic — so
+     * "how much is delivery" used to be answered with the price of a kurta.
+     * Naming the delivery-cost phrasings outright is what outweighs it.
+     */
+    keywords: [
+      "ship", "shipping", "delivery", "deliver", "courier",
+      "international", "worldwide", "abroad",
+      "delivery cost", "delivery charge", "delivery fee", "delivery price",
+      "shipping cost", "shipping charge", "shipping fee",
+      "cost of delivery", "charge for delivery",
+      "free delivery", "free shipping",
+      "how much is delivery", "how much for delivery",
+      "how much is shipping", "how much for shipping",
+    ],
     lines: (price) => [
-      `Free nationwide delivery on orders over ${price(storeConfig.freeShippingThresholdAed)}; below that a flat courier charge applies.`,
-      "Pakistan: 2–4 working days. UAE, UK and the rest of the world: 5–7 days.",
+      `Fast delivery across Dubai and all 7 Emirates — free on orders over ${price(storeConfig.freeShippingThresholdAed)}; below that a flat courier charge applies.`,
+      "Dubai and Sharjah: same or next day. The other emirates: 1–3 working days. Saudi Arabia, the UK and the rest of the world: 5–7 days.",
       "Silai orders add 7–10 working days of stitching before they ship.",
     ],
     followUps: ["track-order", "payment", "returns"],
@@ -243,9 +267,9 @@ const staticTopics: ChatTopic[] = [
     question: "How can I pay?",
     keywords: ["pay", "payment", "cod", "cash on delivery", "card", "bank", "transfer", "advance"],
     lines: () => [
-      "Cash on delivery anywhere in Pakistan, bank transfer, or card.",
-      "International orders are card or bank transfer only — no COD outside Pakistan.",
-      "Silai orders take 50% in advance and the rest on delivery.",
+      "Cash on delivery anywhere in the UAE, bank transfer to our Emirates account, or card and Apple Pay through Stripe.",
+      "Orders outside the UAE are card or bank transfer only — there is no cash on delivery abroad.",
+      "Silai orders take 50% in advance in AED and the rest on delivery.",
     ],
     followUps: ["shipping", "article-price", "returns"],
   },
@@ -254,9 +278,9 @@ const staticTopics: ChatTopic[] = [
     question: "Returns & exchange",
     keywords: ["return", "returns", "exchange", "refund", "swap", "damaged", "faulty"],
     lines: () => [
-      "Seven days from delivery to exchange a ready-to-wear piece — unworn, unwashed, tags on.",
+      "Seven days from delivery to exchange a ready-to-wear piece — unworn, unwashed, tags on. Post it back, or bring it to the boutique at Madina Mall, Al Muhaisnah 4.",
       "Made-to-measure silai cannot be exchanged for size, but alterations are free until it fits.",
-      "If a piece arrives damaged or is not what you ordered, we replace it and cover postage both ways.",
+      "If a piece arrives damaged or is not what you ordered, we replace it and cover postage both ways anywhere in the UAE. Card refunds go back to the card that paid; cash orders are refunded by transfer.",
     ],
     followUps: ["alterations", "track-order", "contact"],
   },
@@ -265,8 +289,9 @@ const staticTopics: ChatTopic[] = [
     question: "Where is my order?",
     keywords: ["track", "tracking", "order status", "dispatch", "dispatched", "shipped"],
     lines: () => [
-      "A tracking number reaches you by SMS and email the moment your parcel is handed to the courier.",
-      "Send us your order number on WhatsApp and we will check it for you right away.",
+      "Open the Track Order page and enter your order number — it is printed at the top of your confirmation email, and it is the only thing we need. No account, no sign-in, no email.",
+      "A tracking number reaches you by email the moment the parcel is handed to Aramex, Emirates Post or DHL.",
+      "Or send us your order number on WhatsApp and we will check it for you right away.",
     ],
     followUps: ["shipping", "contact"],
   },
@@ -290,7 +315,7 @@ const staticTopics: ChatTopic[] = [
     ],
     lines: () => [
       `WhatsApp us on ${contact.whatsapp.display} — our team answers ${contact.hours}.`,
-      `You can also write to ${contact.email}, or come and see us at ${contact.address.oneLine}.`,
+      `You can also write to ${contact.email}, or come and see us at our flagship boutique — ${contact.address.oneLine}.`,
     ],
     followUps: ["silai", "track-order", "categories"],
   },

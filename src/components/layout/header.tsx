@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
+import { StaffBar } from "@/components/layout/staff-bar";
 import { Logo } from "@/components/ui/logo";
-import { BagIcon, HeartIcon, SearchIcon } from "@/components/ui/icons";
+import { AccountIcon, BagIcon, HeartIcon, SearchIcon } from "@/components/ui/icons";
 import { useStore } from "@/components/store/store-provider";
 import { primaryNav } from "@/content/navigation";
 import { cn } from "@/lib/utils";
@@ -16,7 +17,7 @@ import { cn } from "@/lib/utils";
  * flow: cream, solid, and scrolling away with the rest of the page.
  */
 export function Header({ overHero = false }: { overHero?: boolean }) {
-  const { bagCount, wishCount, hydrated, menuOpen, toggleMenu, openCart } =
+  const { bagCount, wishCount, hydrated, wishReady, menuOpen, toggleMenu, openCart } =
     useStore();
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
@@ -49,6 +50,10 @@ export function Header({ overHero = false }: { overHero?: boolean }) {
             : "bg-[linear-gradient(180deg,rgba(43,33,24,0.52)_0%,rgba(43,33,24,0.18)_62%,rgba(43,33,24,0)_100%)]"),
       )}
     >
+      {/* Staff only, and above everything: the way back to the back office,
+          answering the admin sidebar's own "View the shop" link. */}
+      <StaffBar />
+
       <AnnouncementBar overlay={overlay} />
 
       {/*
@@ -122,6 +127,21 @@ export function Header({ overHero = false }: { overHero?: boolean }) {
             <SearchIcon />
           </button>
 
+          {/*
+            Always `/account`, never a link that depends on who is signed in.
+            Reading the session here would mean reading a cookie in the header,
+            and a cookie read makes every page that renders the header dynamic —
+            which would cost the whole shop its static rendering for the sake of
+            one icon. `/account` sends a guest to the sign-in page itself.
+          */}
+          <Link
+            href="/account"
+            aria-label="Your account"
+            className="bg-transparent border-none cursor-pointer p-2.5 nav:p-3 relative min-w-11 min-h-11 text-inherit hover:text-inherit flex items-center justify-center"
+          >
+            <AccountIcon />
+          </Link>
+
           {/* Beside search, and counted the same way as the bag. */}
           <Link
             href="/wishlist"
@@ -130,8 +150,8 @@ export function Header({ overHero = false }: { overHero?: boolean }) {
             }
             className="bg-transparent border-none cursor-pointer p-2.5 nav:p-3 relative min-w-11 min-h-11 text-inherit hover:text-inherit flex items-center justify-center"
           >
-            <HeartIcon filled={hydrated && wishCount > 0} />
-            {hydrated && wishCount > 0 && (
+            <HeartIcon filled={wishReady && wishCount > 0} />
+            {wishReady && wishCount > 0 && (
               <span className="absolute top-1.5 right-1 bg-wine text-white text-[12px] min-w-[18px] h-[18px] rounded-lg flex items-center justify-center px-1">
                 {wishCount}
               </span>

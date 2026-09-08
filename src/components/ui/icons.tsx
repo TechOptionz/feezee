@@ -252,3 +252,23 @@ export function CheckIcon({ size = 18 }: { size?: number }) {
     </svg>
   );
 }
+
+/** The account link in the header — a head and shoulders, drawn as one line. */
+export function AccountIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="8" r="3.6" />
+      <path d="M4.8 20c0-3.6 3.2-5.8 7.2-5.8s7.2 2.2 7.2 5.8" />
+    </svg>
+  );
+}

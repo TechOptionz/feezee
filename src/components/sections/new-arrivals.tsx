@@ -4,22 +4,22 @@ import { useState } from "react";
 import { FilterTabs } from "@/components/ui/filter-tabs";
 import { ProductCard } from "@/components/ui/product-card";
 import { ViewAll } from "@/components/ui/view-all";
-import {
-  newArrivalGroups,
-  productsByIds,
-  productsInCollection,
-} from "@/content/products";
+import type { ArrivalGroup } from "@/modules/catalogue/collections";
 
-const groupNames = newArrivalGroups.map((g) => g.name);
+/**
+ * The drop, three tabs of four looks. The curation is editorial and comes from
+ * `content/products.ts`; the garments themselves are resolved against live
+ * stock on the server and handed down here, so a price shown on the home page
+ * is the price the bag will charge.
+ */
+export function NewArrivals({ groups }: { groups: ArrivalGroup[] }) {
+  const groupNames = groups.map((g) => g.name);
+  const [active, setActive] = useState<string>(groups[0]?.name ?? "");
+  const index = Math.max(0, groups.findIndex((g) => g.name === active));
+  const group = groups[index];
+  const looks = group?.products ?? [];
 
-export function NewArrivals() {
-  const [active, setActive] = useState<string>(newArrivalGroups[0].name);
-  const index = Math.max(
-    0,
-    newArrivalGroups.findIndex((g) => g.name === active),
-  );
-  const group = newArrivalGroups[index];
-  const looks = productsByIds(group.productIds);
+  if (!group) return null;
 
   return (
     <section id="new" className="pt-[clamp(48px,7.5vw,96px)]">
@@ -30,7 +30,7 @@ export function NewArrivals() {
             className="h-px w-[clamp(22px,3vw,40px)] bg-gold/70"
             aria-hidden
           />
-          {productsInCollection(group.name).length} pieces
+          {group.lineSize} pieces
         </p>
 
         {/*
@@ -91,7 +91,7 @@ export function NewArrivals() {
           <span
             className="absolute inset-y-0 left-0 bg-ink transition-transform duration-500 ease-[cubic-bezier(0.22,0.61,0.36,1)]"
             style={{
-              width: `${100 / newArrivalGroups.length}%`,
+              width: `${100 / groups.length}%`,
               transform: `translateX(${index * 100}%)`,
             }}
           />

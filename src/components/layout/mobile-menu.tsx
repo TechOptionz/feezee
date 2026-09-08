@@ -11,7 +11,7 @@ import { useOverlay } from "@/lib/use-overlay";
 import { cn } from "@/lib/utils";
 
 export function MobileMenu() {
-  const { menuOpen, closeMenu, wishCount, hydrated } = useStore();
+  const { menuOpen, closeMenu, wishCount, wishReady } = useStore();
   const panelRef = useRef<HTMLDivElement>(null);
 
   // A drawer that covers the page has to behave like a dialog — see useOverlay.
@@ -65,9 +65,9 @@ export function MobileMenu() {
           onClick={closeMenu}
           className="mt-4 flex items-center gap-2.5 border-t border-line pt-4 text-[14px] tracking-[0.14em] uppercase text-ink hover:text-ink"
         >
-          <HeartIcon size={18} filled={hydrated && wishCount > 0} />
+          <HeartIcon size={18} filled={wishReady && wishCount > 0} />
           Wishlist
-          {hydrated && wishCount > 0 && (
+          {wishReady && wishCount > 0 && (
             <span className="text-wine">({wishCount})</span>
           )}
         </Link>

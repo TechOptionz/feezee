@@ -6,8 +6,12 @@ import { CollectionHeader } from "@/components/shop/collection-header";
 import { CollectionNote } from "@/components/shop/collection-note";
 import { MadeToOrderBand } from "@/components/shop/made-to-order-band";
 import { ProductRail } from "@/components/shop/product-rail";
-import { productsForPage, shopPage } from "@/content/collections";
-import { productsInCollection } from "@/content/products";
+import { shopPage } from "@/content/collections";
+import {
+  boutiqueLooks,
+  productsForShopPage,
+} from "@/modules/catalogue/collections";
+import { productsInCollection } from "@/modules/catalogue";
 
 const page = shopPage("/luxury-pret")!;
 
@@ -16,8 +20,12 @@ export const metadata: Metadata = {
   description: page.meta.description,
 };
 
-export default function LuxuryPretPage() {
-  const products = productsForPage(page);
+export default async function LuxuryPretPage() {
+  const [products, lawn, looks] = await Promise.all([
+    productsForShopPage(page),
+    productsInCollection("Printed Lawn"),
+    boutiqueLooks(),
+  ]);
 
   return (
     <PageFrame>
@@ -30,10 +38,10 @@ export default function LuxuryPretPage() {
       <ProductRail
         heading="Wear it before the occasion"
         standfirst="Lighter prints from the same season, for the days between the events."
-        products={productsInCollection("Printed Lawn").slice(0, 4)}
+        products={lawn.slice(0, 4)}
         viewAll={{ href: "/printed-lawn", label: "View all printed lawn" }}
       />
-      <Lookbook />
+      <Lookbook looks={looks} />
     </PageFrame>
   );
 }

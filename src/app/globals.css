@@ -18,6 +18,8 @@
   --color-taupe: var(--fz-taupe);
   --color-ink-line: var(--fz-ink-line);
   --color-ink-border: var(--fz-ink-border);
+  --color-wine-bright: var(--fz-wine-bright);
+  --color-gold-light: var(--fz-gold-light);
 
   --font-body: var(--font-jost), sans-serif;
   --font-display: var(--font-marcellus), serif;

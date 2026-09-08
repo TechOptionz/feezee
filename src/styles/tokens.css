@@ -30,6 +30,14 @@
   --fz-ink-line: #453824; /* hairline on ink */
   --fz-ink-border: #6b5b3e; /* input border on ink */
 
+  /*
+   * Admin-only. The shop's wine and gold are tuned for ink on cream; on the
+   * back office's ink ground they go muddy, so the two accents that have to
+   * read as a warning or a success there are lifted a step.
+   */
+  --fz-wine-bright: #d4708f; /* alerts on ink */
+  --fz-gold-light: #d9b866; /* success and links on ink */
+
   /* Layout */
   --fz-container: 1280px;
 }
