@@ -466,7 +466,6 @@ const LINE_CODE: Record<string, string> = {
   "Printed Lawn": "PL",
   "Luxury Pret": "LP",
   "Ready to Wear": "RW",
-  Sale: "SL",
 };
 
 function slugify(name: string): string {
@@ -578,9 +577,7 @@ export async function saveProductAction(
       newState: { name: product.name, collection, aed, isArchived: data.isArchived },
     });
 
-    revalidatePath("/admin/products");
-    revalidatePath(`/product/${product.slug}`);
-    revalidatePath("/");
+    revalidateForProduct(product.slug);
   } catch (error) {
     return fail(error);
   }
@@ -774,6 +771,7 @@ export async function removeFromSaleAction(
         wasAed: true,
         badgeLabel: true,
         badgeTone: true,
+        collection: true,
         slug: true,
       },
     });
@@ -785,6 +783,13 @@ export async function removeFromSaleAction(
      * would be silently thrown away with it.
      */
     const clearsBadge = before.badgeTone === "wine";
+    /*
+     * A safety net for the old data. "Sale" was once a line a piece could be
+     * filed under, and a row still carrying it would come off sale into a
+     * collection no page serves. Luxury Pret is where those pieces were
+     * migrated, so it is where a straggler goes.
+     */
+    const needsHome = before.collection === "Sale";
 
     await prisma.product.update({
       where: { id: productId },
@@ -792,6 +797,7 @@ export async function removeFromSaleAction(
         ...(restored !== null ? { aed: toDecimal(restored) } : {}),
         wasAed: null,
         ...(clearsBadge ? { badgeLabel: null, badgeTone: null } : {}),
+        ...(needsHome ? { collection: "Luxury Pret" } : {}),
       },
     });
 
@@ -805,12 +811,14 @@ export async function removeFromSaleAction(
         wasAed: toAedOrNull(before.wasAed),
         badgeLabel: before.badgeLabel,
         badgeTone: before.badgeTone,
+        collection: before.collection,
       },
       newState: {
         aed: restored ?? toAed(before.aed),
         wasAed: null,
         badgeLabel: clearsBadge ? null : before.badgeLabel,
         badgeTone: clearsBadge ? null : before.badgeTone,
+        collection: needsHome ? "Luxury Pret" : before.collection,
       },
     });
 

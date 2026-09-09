@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Products" };
 export const dynamic = "force-dynamic";
 
-const COLLECTIONS = ["Printed Lawn", "Luxury Pret", "Ready to Wear", "Sale"];
+const COLLECTIONS = ["Printed Lawn", "Luxury Pret", "Ready to Wear"];
 
 /**
  * The three views of the catalogue a buyer running a sale switches between.

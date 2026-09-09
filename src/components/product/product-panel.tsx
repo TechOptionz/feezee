@@ -102,7 +102,7 @@ export function ProductPanel({
           aria-hidden
           className={cn(
             "h-px w-[clamp(18px,2vw,30px)]",
-            product.collection === "Sale" ? "bg-wine/60" : "bg-gold/70",
+            product.wasAed ? "bg-wine/60" : "bg-gold/70",
           )}
         />
         <Link

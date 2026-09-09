@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const IDLE: AdminFormState = { status: "idle" };
 
-const COLLECTIONS = ["Printed Lawn", "Luxury Pret", "Ready to Wear", "Sale"];
+const COLLECTIONS = ["Printed Lawn", "Luxury Pret", "Ready to Wear"];
 const TYPES = ["Kurtas", "Suits", "Co-ords"];
 const FABRIC_FAMILIES = [
   "Lawn",

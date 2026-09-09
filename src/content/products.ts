@@ -1,10 +1,6 @@
-export type Collection =
-  | "Printed Lawn"
-  | "Luxury Pret"
-  | "Ready to Wear"
-  | "Sale";
+export type Collection = "Printed Lawn" | "Luxury Pret" | "Ready to Wear";
 
-/** The three lines that make up "New In". Sale sits outside them by design. */
+/** The three lines that make up "New In" — which is to say, all of them. */
 export const NEW_IN_COLLECTIONS = [
   "Printed Lawn",
   "Luxury Pret",
@@ -27,8 +23,8 @@ export type Product = {
   /** True when the piece is sold with its dupatta — the "Dupatta Sets" facet. */
   withDupatta: boolean;
   /**
-   * The line the piece belongs to. Exactly one, which is what keeps "New In"
-   * (the three lines together) and "Sale" from ever showing the same garment.
+   * The line the piece belongs to. Exactly one, and always a real line — a
+   * reduction is a price (`wasAed`), not somewhere else to hang the garment.
    */
   collection: Collection;
   /** Price in AED — formatted per currency at render time. */
@@ -80,7 +76,7 @@ export const products: Product[] = [
     type: "Suits",
     pieces: 3,
     withDupatta: true,
-    collection: "Sale",
+    collection: "Luxury Pret",
     aed: 114,
     wasAed: 163,
     img: "suit-rose-pink.jpg",
@@ -143,7 +139,7 @@ export const products: Product[] = [
     type: "Suits",
     pieces: 3,
     withDupatta: true,
-    collection: "Sale",
+    collection: "Printed Lawn",
     aed: 93,
     wasAed: 124,
     img: "dupatta-printed-chiffon.jpg",
@@ -206,7 +202,7 @@ export const products: Product[] = [
     type: "Kurtas",
     pieces: 1,
     withDupatta: false,
-    collection: "Sale",
+    collection: "Ready to Wear",
     aed: 74,
     wasAed: 113,
     img: "kurta-ivory-palm.jpg",
@@ -244,7 +240,7 @@ export const products: Product[] = [
     type: "Kurtas",
     pieces: 1,
     withDupatta: false,
-    collection: "Sale",
+    collection: "Printed Lawn",
     aed: 52,
     wasAed: 74,
     img: "kurta-grey-blossom.jpg",
@@ -308,7 +304,7 @@ export const products: Product[] = [
     type: "Co-ords",
     pieces: 2,
     withDupatta: false,
-    collection: "Sale",
+    collection: "Ready to Wear",
     aed: 64,
     wasAed: 91,
     img: "coord-monochrome.jpg",
@@ -322,7 +318,7 @@ export const products: Product[] = [
     type: "Kurtas",
     pieces: 1,
     withDupatta: false,
-    collection: "Sale",
+    collection: "Printed Lawn",
     aed: 45,
     wasAed: 64,
     img: "kurta-rose-print.jpg",
@@ -572,7 +568,6 @@ const LINE_CODE: Record<Collection, string> = {
   "Printed Lawn": "PL",
   "Luxury Pret": "LP",
   "Ready to Wear": "RW",
-  Sale: "SL",
 };
 
 /**
