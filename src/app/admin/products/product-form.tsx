@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { saveProductAction, type AdminFormState } from "@/app/actions/admin";
 import { ImageUploader } from "@/app/admin/products/image-uploader";
+import { SaleControls, SalePill } from "@/app/admin/products/sale-controls";
 import { cn } from "@/lib/utils";
 
 const IDLE: AdminFormState = { status: "idle" };
@@ -56,6 +57,7 @@ export type ProductFormValues = {
 export function ProductForm({ values }: { values: ProductFormValues }) {
   const [state, action] = useActionState(saveProductAction, IDLE);
   const isNew = values.id === null;
+  const onSale = values.wasAed !== null && values.wasAed > values.aed;
 
   return (
     <form action={action} className="flex flex-col gap-6">
@@ -133,6 +135,36 @@ export function ProductForm({ values }: { values: ProductFormValues }) {
       </Section>
 
       <Section title="Price">
+        {/*
+          The quick way and the long way, in that order.
+
+          The three fields below are the long way: they are saved with the rest
+          of the form, and they will happily let you set a "was" price that is
+          under the price, or a wine badge on a piece that is not reduced. The
+          control above is the short way — it writes both prices and the badge
+          together, immediately, and records who did it. A reduction made here
+          does not wait for Save, which is why it says so.
+        */}
+        {!isNew && (
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border border-ink-line bg-ink/60 px-4 py-3.5">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+                {onSale ? "On sale" : "Full price"}
+              </span>
+              <SalePill aed={values.aed} wasAed={values.wasAed} />
+              <span className="text-[12.5px] text-taupe">
+                Applied straight away, without saving the form.
+              </span>
+            </div>
+            <SaleControls
+              productId={values.id as number}
+              aed={values.aed}
+              wasAed={values.wasAed}
+              variant="form"
+            />
+          </div>
+        )}
+
         <div className="grid grid-cols-1 nav:grid-cols-3 gap-4">
           <Field
             label="Price (AED)"

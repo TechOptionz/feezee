@@ -20,7 +20,7 @@ import {
 import { resolveReturn, ReturnError, returnById } from "@/modules/returns";
 import { AuthError, login, logout } from "@/modules/customers";
 import { loginSchema } from "@/modules/customers";
-import { toDecimal } from "@/modules/shared/money";
+import { toAed, toAedOrNull, toDecimal, round2 } from "@/modules/shared/money";
 import {
   orderDispatchedEmail,
   returnUpdateEmail,
@@ -28,6 +28,7 @@ import {
 } from "@/modules/notifications";
 import { trackingUrlFor } from "@/modules/shipping";
 import { formatPrice } from "@/lib/currency";
+import { shopPages } from "@/content/collections";
 
 /**
  * Everything the shop's own staff can do.
@@ -613,4 +614,215 @@ export async function toggleArchiveAction(formData: FormData) {
   revalidatePath("/admin/products");
   revalidatePath(`/product/${before.slug}`);
   revalidatePath("/");
+}
+
+// ---------------------------------------------------------------------------
+// Sale
+// ---------------------------------------------------------------------------
+
+/**
+ * Putting a garment on sale and taking it off again.
+ *
+ * A reduction is a price, not a line: `wasAed` holds what the piece used to
+ * ask, `aed` holds what it asks now, and the difference between them is the
+ * whole of what "on sale" means. Nothing is moved between collections, so a
+ * reduced Luxury Pret piece stays on `/luxury-pret` and appears on `/sale` at
+ * the same time, and ending the reduction puts the original price back rather
+ * than leaving a guess behind.
+ *
+ * Unlike the form actions above these take arguments rather than a `FormData`:
+ * they are called from a button, not a form, and one of them lives inside the
+ * product editor's own `<form>` where a nested form would be invalid HTML.
+ */
+
+/**
+ * Every page a price change is visible on.
+ *
+ * All five shop pages, not just the garment's own line. A reduction is now
+ * cross-cutting: it puts the piece on `/sale`, leaves it on its line with a
+ * strikethrough, and changes the "already reduced" rail that the *other* line
+ * pages carry. Working out which of those five a given piece touches would be
+ * a rule to keep in step with the pages forever; five revalidations on an
+ * action a buyer takes a handful of times a season is not worth the cleverness.
+ */
+function revalidateForProduct(slug: string) {
+  revalidatePath(`/product/${slug}`);
+  revalidatePath("/admin/products");
+  revalidatePath("/");
+  for (const page of shopPages) revalidatePath(page.slug);
+}
+
+export async function putOnSaleAction(
+  productId: number,
+  discountPct?: number,
+  salePriceAed?: number,
+  customBadge?: string,
+): Promise<AdminFormState> {
+  let actor;
+  try {
+    actor = await requireStaffAction();
+  } catch (error) {
+    return fail(error);
+  }
+
+  try {
+    const before = await prisma.product.findUniqueOrThrow({
+      where: { id: productId },
+      select: {
+        aed: true,
+        wasAed: true,
+        badgeLabel: true,
+        badgeTone: true,
+        slug: true,
+      },
+    });
+
+    /*
+     * The price the discount is taken off. A piece already reduced keeps the
+     * `wasAed` it was first marked down from, so going 30% then 50% is 50% off
+     * the original rather than 50% off the 30% — which is what a percentage on
+     * a ticket means to the person reading it, and what the storefront's own
+     * strikethrough claims.
+     */
+    const wasAed = toAedOrNull(before.wasAed) ?? toAed(before.aed);
+
+    let newAed: number;
+    if (salePriceAed !== undefined) {
+      // An explicit price wins: a buyer who typed 349 meant 349, not "whatever
+      // the percentage next to it works out to".
+      if (!Number.isFinite(salePriceAed) || salePriceAed <= 0) {
+        return { status: "error", message: "Enter a sale price in AED." };
+      }
+      newAed = round2(salePriceAed);
+    } else if (discountPct !== undefined) {
+      if (!Number.isFinite(discountPct) || discountPct <= 0 || discountPct >= 100) {
+        return { status: "error", message: "A discount runs between 1% and 99%." };
+      }
+      newAed = round2(wasAed * (1 - discountPct / 100));
+    } else {
+      return { status: "error", message: "Choose a discount or type a sale price." };
+    }
+
+    if (newAed >= wasAed) {
+      return {
+        status: "error",
+        message: `That is not a reduction — the piece already asks ${formatPrice(wasAed)}.`,
+      };
+    }
+    if (newAed <= 0) {
+      return { status: "error", message: "A sale price still has to be above zero." };
+    }
+
+    /*
+     * The number on the badge. Taken from the percentage that was asked for
+     * when there was one, and worked back out of the two prices when the buyer
+     * typed a price instead — otherwise a custom price would print a ticket
+     * reading "undefined% Off".
+     */
+    const pct = discountPct ?? Math.round((1 - newAed / wasAed) * 100);
+    const badgeLabel = customBadge?.trim() || `${Math.round(pct)}% Off`;
+
+    await prisma.product.update({
+      where: { id: productId },
+      data: {
+        aed: toDecimal(newAed),
+        wasAed: toDecimal(wasAed),
+        badgeLabel,
+        badgeTone: "wine",
+      },
+    });
+
+    await audit({
+      actor,
+      action: "product.put_on_sale",
+      entityType: "Product",
+      entityId: String(productId),
+      previousState: {
+        aed: toAed(before.aed),
+        wasAed: toAedOrNull(before.wasAed),
+        badgeLabel: before.badgeLabel,
+        badgeTone: before.badgeTone,
+      },
+      newState: { aed: newAed, wasAed, badgeLabel, badgeTone: "wine" },
+    });
+
+    revalidateForProduct(before.slug);
+    return {
+      status: "ok",
+      message: `Reduced to ${formatPrice(newAed)}, was ${formatPrice(wasAed)}.`,
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function removeFromSaleAction(
+  productId: number,
+): Promise<AdminFormState> {
+  let actor;
+  try {
+    actor = await requireStaffAction();
+  } catch (error) {
+    return fail(error);
+  }
+
+  try {
+    const before = await prisma.product.findUniqueOrThrow({
+      where: { id: productId },
+      select: {
+        aed: true,
+        wasAed: true,
+        badgeLabel: true,
+        badgeTone: true,
+        slug: true,
+      },
+    });
+
+    const restored = toAedOrNull(before.wasAed);
+    /*
+     * Only a wine badge is cleared. A gold one says something else about the
+     * piece — "New", "Last few" — that has nothing to do with the reduction and
+     * would be silently thrown away with it.
+     */
+    const clearsBadge = before.badgeTone === "wine";
+
+    await prisma.product.update({
+      where: { id: productId },
+      data: {
+        ...(restored !== null ? { aed: toDecimal(restored) } : {}),
+        wasAed: null,
+        ...(clearsBadge ? { badgeLabel: null, badgeTone: null } : {}),
+      },
+    });
+
+    await audit({
+      actor,
+      action: "product.remove_from_sale",
+      entityType: "Product",
+      entityId: String(productId),
+      previousState: {
+        aed: toAed(before.aed),
+        wasAed: toAedOrNull(before.wasAed),
+        badgeLabel: before.badgeLabel,
+        badgeTone: before.badgeTone,
+      },
+      newState: {
+        aed: restored ?? toAed(before.aed),
+        wasAed: null,
+        badgeLabel: clearsBadge ? null : before.badgeLabel,
+        badgeTone: clearsBadge ? null : before.badgeTone,
+      },
+    });
+
+    revalidateForProduct(before.slug);
+    return {
+      status: "ok",
+      message:
+        restored !== null
+          ? `Back to ${formatPrice(restored)}.`
+          : "Off sale. It had no earlier price to restore, so the price stands.",
+    };
+  } catch (error) {
+    return fail(error);
+  }
 }

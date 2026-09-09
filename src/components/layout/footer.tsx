@@ -134,10 +134,25 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="max-w-[var(--fz-container)] mx-auto mt-[34px] border-t border-ink-line pt-[18px] flex justify-between gap-3 flex-wrap text-[13px] text-taupe">
+      {/*
+        The legal bar. The policy pages hang here rather than in the Help
+        column above, where they would read as one more shortcut between
+        "Wishlist" and "Track Order" — this is the line of a shop front that
+        says who is responsible, and the documents belong on it.
+      */}
+      <div className="max-w-[var(--fz-container)] mx-auto mt-[34px] border-t border-ink-line pt-[18px] flex justify-between gap-x-6 gap-y-3 flex-wrap text-[13px] text-taupe">
         <span>
           © {new Date().getFullYear()} {contact.legalName}
         </span>
+
+        <nav aria-label="Policies" className="flex flex-wrap gap-x-5 gap-y-2">
+          {footerNav.legal.map((link) => (
+            <Link key={link.href} href={link.href} className="hover:text-champagne">
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
         <span>Cash on Delivery · Bank Transfer · Cards</span>
       </div>
     </footer>

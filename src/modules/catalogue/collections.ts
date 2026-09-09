@@ -3,6 +3,7 @@ import {
   allProducts,
   newInProducts,
   productsInCollection,
+  saleProducts,
   type ProductView,
 } from "@/modules/catalogue";
 import type { ShopPage } from "@/content/collections";
@@ -20,9 +21,19 @@ import type { Collection } from "@/content/products";
  * and quietly drops anything that has been archived.
  */
 
-/** The garments a shop page shows. */
+/**
+ * The garments a shop page shows.
+ *
+ * Three of the five pages are a line and resolve to one; the other two are
+ * cross-cuts of the catalogue. New In gathers the three lines. Sale gathers
+ * whatever is reduced, wherever it hangs — which is why a piece can be on both
+ * its line's page and this one at the same time, exactly as it is in the shop,
+ * where a reduced kurta stays on the rail with a ticket on it rather than being
+ * carried off to a different room.
+ */
 export function productsForShopPage(page: ShopPage): Promise<ProductView[]> {
   if (page.slug === "/new-in") return newInProducts();
+  if (page.slug === "/sale") return saleProducts();
   return productsInCollection(page.nav as Collection);
 }
 

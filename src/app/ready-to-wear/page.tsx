@@ -8,7 +8,7 @@ import { MadeToOrderBand } from "@/components/shop/made-to-order-band";
 import { ProductRail } from "@/components/shop/product-rail";
 import { shopPage } from "@/content/collections";
 import { productsForShopPage } from "@/modules/catalogue/collections";
-import { productsInCollection } from "@/content/products";
+import { productsInCollection } from "@/modules/catalogue";
 
 const page = shopPage("/ready-to-wear")!;
 
@@ -18,7 +18,10 @@ export const metadata: Metadata = {
 };
 
 export default async function ReadyToWearPage() {
-  const products = await productsForShopPage(page);
+  const [products, pret] = await Promise.all([
+    productsForShopPage(page),
+    productsInCollection("Luxury Pret"),
+  ]);
 
   return (
     <PageFrame>
@@ -31,7 +34,7 @@ export default async function ReadyToWearPage() {
       <ProductRail
         heading="Dress it up"
         standfirst="The occasion pieces that go over the same trousers — hand-finished, dupatta included."
-        products={productsInCollection("Luxury Pret").slice(0, 4)}
+        products={pret.slice(0, 4)}
         viewAll={{ href: "/luxury-pret", label: "View all luxury pret" }}
       />
       <Values />

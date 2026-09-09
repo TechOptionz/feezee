@@ -10,9 +10,10 @@ import {
   Th,
 } from "@/app/admin/admin-ui";
 import { toggleArchiveAction } from "@/app/actions/admin";
+import { SaleControls, SalePill } from "@/app/admin/products/sale-controls";
 import { requireStaff } from "@/modules/admin";
 import { prisma } from "@/lib/prisma";
-import { toAed } from "@/modules/shared/money";
+import { toAed, toAedOrNull } from "@/modules/shared/money";
 import { img } from "@/lib/assets";
 import { formatPrice } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,17 @@ export const metadata: Metadata = { title: "Products" };
 export const dynamic = "force-dynamic";
 
 const COLLECTIONS = ["Printed Lawn", "Luxury Pret", "Ready to Wear", "Sale"];
+
+/**
+ * The three views of the catalogue a buyer running a sale switches between.
+ * `param` is what goes in the URL, `value` is what the page reads back out of
+ * it — an empty string for "All", which carries no parameter at all.
+ */
+const SALE_TABS = [
+  { param: "", value: "", label: "All" },
+  { param: "1", value: "on", label: "On sale" },
+  { param: "0", value: "off", label: "Full price" },
+] as const;
 
 export default async function AdminProductsPage({
   searchParams,
@@ -32,6 +44,21 @@ export default async function AdminProductsPage({
   const collection = typeof params.collection === "string" ? params.collection : "";
   const stock = typeof params.stock === "string" ? params.stock : "";
   const archived = params.archived === "1";
+  // "1" is the reduced rail, "0" is everything still at its first price, and
+  // anything else — including no parameter at all — is the whole catalogue.
+  const sale = params.sale === "1" ? "on" : params.sale === "0" ? "off" : "";
+
+  /** The same filters with the sale tab swapped, so the tabs keep a search. */
+  const tabHref = (value: string) => {
+    const next = new URLSearchParams();
+    if (q) next.set("q", q);
+    if (collection) next.set("collection", collection);
+    if (stock) next.set("stock", stock);
+    if (archived) next.set("archived", "1");
+    if (value) next.set("sale", value);
+    const query = next.toString();
+    return query ? `/admin/products?${query}` : "/admin/products";
+  };
 
   const rows = await prisma.product.findMany({
     where: {
@@ -54,9 +81,18 @@ export default async function AdminProductsPage({
     orderBy: { id: "asc" },
   });
 
-  // Stock is a property of the variants, not a column, so this one filter is
-  // applied after the query rather than inside it.
+  /*
+   * Two filters the query cannot do. Stock is a property of the variants
+   * rather than a column, and "on sale" is one column measured against another
+   * — both are cheap on the rows already in hand, and both would otherwise
+   * need either a join or a raw comparison in SQL.
+   */
   const products = rows.filter((product) => {
+    if (sale) {
+      const reduced =
+        product.wasAed !== null && toAed(product.wasAed) > toAed(product.aed);
+      if (sale === "on" ? !reduced : reduced) return false;
+    }
     if (!stock) return true;
     const total = product.variants.reduce((n, v) => n + v.stock, 0);
     const low = product.variants.some((v) => v.stock > 0 && v.stock <= v.lowStockThreshold);
@@ -81,7 +117,32 @@ export default async function AdminProductsPage({
       />
 
       <Panel>
+        <nav className="mb-4 flex flex-wrap gap-x-6 gap-y-2 border-b border-ink-line pb-3">
+          {SALE_TABS.map((tab) => (
+            <Link
+              key={tab.label}
+              href={tabHref(tab.param)}
+              aria-current={tab.value === sale ? "page" : undefined}
+              className={cn(
+                "border-b-2 pb-1 text-[11.5px] tracking-[0.16em] uppercase",
+                tab.value === sale
+                  ? "border-gold text-champagne"
+                  : "border-transparent text-taupe hover:text-champagne",
+              )}
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </nav>
+
         <form method="get" className="flex flex-wrap items-end gap-3">
+          {/* The tab lives in the URL, and this form rewrites the URL out of
+              its own fields — without this the chosen tab would fall off the
+              moment anyone pressed Filter. */}
+          {sale && (
+            <input type="hidden" name="sale" value={sale === "on" ? "1" : "0"} />
+          )}
+
           <label className="flex flex-col gap-2">
             <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
               Search
@@ -146,7 +207,7 @@ export default async function AdminProductsPage({
             Filter
           </button>
 
-          {(q || collection || stock || archived) && (
+          {(q || collection || stock || archived || sale) && (
             <Link
               href="/admin/products"
               className="pb-2.5 text-[11.5px] tracking-[0.14em] uppercase text-taupe hover:text-champagne"
@@ -209,12 +270,18 @@ export default async function AdminProductsPage({
                         </Td>
                         <Td>{product.collection}</Td>
                         <Td>
-                          {formatPrice(toAed(product.aed))}
-                          {product.wasAed && (
-                            <span className="ml-2 text-taupe line-through">
-                              {formatPrice(toAed(product.wasAed))}
-                            </span>
-                          )}
+                          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span>{formatPrice(toAed(product.aed))}</span>
+                            {product.wasAed && (
+                              <span className="text-taupe line-through">
+                                {formatPrice(toAed(product.wasAed))}
+                              </span>
+                            )}
+                            <SalePill
+                              aed={toAed(product.aed)}
+                              wasAed={toAedOrNull(product.wasAed)}
+                            />
+                          </span>
                         </Td>
                         <Td>
                           <span
@@ -248,6 +315,16 @@ export default async function AdminProductsPage({
                                 {product.isArchived ? "Restore" : "Archive"}
                               </button>
                             </form>
+                          </span>
+                          {/* On its own line under the two links: putting a
+                              piece on sale opens a panel, and that needs the
+                              width of the cell rather than a slot in a row. */}
+                          <span className="mt-2 flex justify-end">
+                            <SaleControls
+                              productId={product.id}
+                              aed={toAed(product.aed)}
+                              wasAed={toAedOrNull(product.wasAed)}
+                            />
                           </span>
                         </Td>
                       </tr>

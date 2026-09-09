@@ -25,9 +25,19 @@ export default async function SalePage() {
    * The three numbers a sale page is actually asked for. They are read off the
    * marked-down stock rather than typed into the copy, so a price change here
    * can never leave the banner claiming a discount that no longer exists.
+   *
+   * Spread over an empty list, `Math.max` returns -Infinity and `Math.min`
+   * returns Infinity — a banner reading "up to -Infinity% off". Now that a
+   * piece leaves this page the moment a buyer ends its reduction, an empty
+   * sale is an ordinary Tuesday rather than a hypothetical, so both are
+   * guarded.
    */
-  const deepest = Math.max(...products.map((p) => discountPct(p) ?? 0));
-  const cheapest = Math.min(...products.map((p) => p.aed));
+  const deepest = products.length
+    ? Math.max(...products.map((p) => discountPct(p) ?? 0))
+    : 0;
+  const cheapest = products.length
+    ? Math.min(...products.map((p) => p.aed))
+    : 0;
   const saving = products.reduce(
     (sum, p) => sum + ((p.wasAed ?? p.aed) - p.aed),
     0,
@@ -77,12 +87,12 @@ export default async function SalePage() {
       <CollectionHeader page={page} count={products.length} />
       <CollectionGrid products={products} />
       <CollectionNote page={page} />
-      {/* Nothing on this page is in New In — by construction, since a garment
-          belongs to exactly one line — so the way back to full price is a link
-          to the lines rather than a rail of the same pieces again. */}
+      {/* A reduced piece keeps its place on its own line's page, so this is a
+          way *into* the lines rather than a rail of pieces that are only here.
+          The count is the whole rail across the three lines, reduced or not. */}
       <LineStrip
-        heading="Back to full price"
-        standfirst={`Sale is last season. The ${fullPriceCount} pieces currently on the rail are split across these three lines.`}
+        heading="Shop the lines"
+        standfirst={`Every reduction above also hangs on its own line. The ${fullPriceCount} pieces on the rail are split across these three.`}
       />
     </PageFrame>
   );

@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { toAed, toAedOrNull } from "@/modules/shared/money";
+import { discountPct } from "@/content/products";
 import type { Collection, Product, ProductType } from "@/content/products";
 import type { Size, SizeState } from "@/content/product-detail";
 
@@ -117,7 +118,14 @@ export async function allProducts(): Promise<ProductView[]> {
   return rows.map(toView);
 }
 
-/** The garments in one line. */
+/**
+ * The garments in one line — every one of them, marked down or not.
+ *
+ * A reduction is a price, not a line. A Luxury Pret piece at 30% off is still
+ * Luxury Pret, so it stays on `/luxury-pret` with its strikethrough and its
+ * badge and *also* appears on `/sale`. Only the legacy pieces whose
+ * `collection` column literally reads "Sale" live on one page alone.
+ */
 export async function productsInCollection(
   collection: Collection,
 ): Promise<ProductView[]> {
@@ -127,6 +135,42 @@ export async function productsInCollection(
     orderBy: { id: "asc" },
   });
   return rows.map(toView);
+}
+
+/** True once a garment is asking less than it used to. */
+function isReduced(product: ProductView): boolean {
+  return product.wasAed !== undefined && product.wasAed > product.aed;
+}
+
+/**
+ * Everything currently reduced, deepest cut first.
+ *
+ * Two things land here. A piece marked down in place — `wasAed` above `aed`,
+ * whatever line it belongs to — which is how the shop discounts from now on,
+ * and a piece whose `collection` was set to "Sale" outright, which is how it
+ * was done before and is still honoured so no garment silently leaves the page.
+ *
+ * The comparison is made in JavaScript rather than in SQL: the narrowing the
+ * database can do (a `wasAed` at all, or the old line) is done there, and the
+ * column-against-column part — is the old price actually above the new one —
+ * is done on the handful of rows that come back, where the two Decimals have
+ * already been resolved to numbers by `toView`.
+ */
+export async function saleProducts(): Promise<ProductView[]> {
+  const rows = await prisma.product.findMany({
+    where: {
+      isArchived: false,
+      OR: [{ wasAed: { not: null } }, { collection: "Sale" }],
+    },
+    include: listInclude,
+    orderBy: { createdAt: "desc" },
+  });
+
+  return rows
+    .map(toView)
+    .filter((p) => isReduced(p) || p.collection === "Sale")
+    // Stable, so pieces cut by the same percentage stay newest first.
+    .sort((a, b) => (discountPct(b) ?? 0) - (discountPct(a) ?? 0));
 }
 
 /** New In: the three lines together, Sale excluded by construction. */
