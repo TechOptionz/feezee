@@ -3,7 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useActionState, useEffect, useRef, useState } from "react";
+import {
+  type Ref,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { trackOrderAction } from "@/app/actions/track-order";
 import {
   IDLE_TRACK,
@@ -57,6 +63,7 @@ export function TrackOrderForm() {
   }));
 
   const formRef = useRef<HTMLFormElement>(null);
+  const resultRef = useRef<HTMLElement>(null);
   const autoRan = useRef(false);
 
   /*
@@ -72,6 +79,25 @@ export function TrackOrderForm() {
     autoRan.current = true;
     formRef.current?.requestSubmit();
   }, [prefill]);
+
+  /*
+   * The result opens under the form, which on a phone is under the fold: the
+   * page does not visibly change, and a successful lookup reads as a dead
+   * button. Carry the viewport to it rather than asking the customer to go
+   * looking for it.
+   *
+   * The whole state is the dependency, not the order number: useActionState
+   * hands back a fresh object per submission, so this re-runs for every
+   * lookup — including a second one for the same parcel, after the customer
+   * has scrolled away and come back.
+   */
+  useEffect(() => {
+    if (state.status !== "found") return;
+    const el = resultRef.current;
+    if (!el) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+  }, [state]);
 
   return (
     <div className="flex flex-col gap-[clamp(28px,4vw,48px)]">
@@ -118,12 +144,20 @@ export function TrackOrderForm() {
         </SubmitButton>
       </form>
 
-      {state.status === "found" && state.order && <Result order={state.order} />}
+      {state.status === "found" && state.order && (
+        <Result ref={resultRef} order={state.order} />
+      )}
     </div>
   );
 }
 
-function Result({ order }: { order: NonNullable<TrackState["order"]> }) {
+function Result({
+  order,
+  ref,
+}: {
+  order: NonNullable<TrackState["order"]>;
+  ref?: Ref<HTMLElement>;
+}) {
   const placed = new Date(order.placedAt).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "long",
@@ -132,8 +166,11 @@ function Result({ order }: { order: NonNullable<TrackState["order"]> }) {
 
   return (
     <section
+      ref={ref}
       aria-live="polite"
-      className="border-t border-line pt-[clamp(26px,3.4vw,40px)]"
+      /* Air above the border, so the scroll does not land the result flush
+         against the top edge of the window. */
+      className="border-t border-line pt-[clamp(26px,3.4vw,40px)] scroll-mt-6"
     >
       <p className="m-0 flex items-center gap-3 text-[12.5px] tracking-[0.3em] uppercase text-muted">
         <span aria-hidden className="h-px w-[clamp(22px,3vw,40px)] bg-gold/70" />
