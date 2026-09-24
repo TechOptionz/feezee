@@ -69,7 +69,7 @@ export default async function AdminOrdersPage({
       <Panel>
         <form method="get" className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-2">
-            <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+            <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
               Search
             </span>
             <input
@@ -86,7 +86,7 @@ export default async function AdminOrdersPage({
 
           <button
             type="submit"
-            className="cursor-pointer border border-ink-border bg-transparent px-5 py-2.5 text-[11.5px] tracking-[0.16em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
+            className="cursor-pointer border border-ink-border bg-transparent px-5 py-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
           >
             Filter
           </button>
@@ -94,7 +94,7 @@ export default async function AdminOrdersPage({
           {(q || status || payment || emirate) && (
             <Link
               href="/admin/orders"
-              className="pb-2.5 text-[11.5px] tracking-[0.14em] uppercase text-taupe hover:text-champagne"
+              className="pb-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-taupe hover:text-champagne"
             >
               Clear
             </Link>
@@ -126,30 +126,30 @@ export default async function AdminOrdersPage({
                       <Td>
                         <Link
                           href={`/admin/orders/${order.id}`}
-                          className="text-champagne hover:text-gold-light"
+                          className="whitespace-nowrap font-medium tabular-nums text-champagne hover:text-gold-light"
                         >
                           {order.orderNumber}
                         </Link>
-                        <span className="block text-[11.5px] text-taupe">
+                        <span className="block text-[12px] text-taupe">
                           {order.items.reduce((n, i) => n + i.quantity, 0)} pieces
                         </span>
                       </Td>
                       <Td>{adminDate(order.placedAt)}</Td>
                       <Td>
                         <span className="block text-champagne">{order.customerName}</span>
-                        <span className="block text-[11.5px] text-taupe">
+                        <span className="block text-[12px] text-taupe">
                           {order.customerEmail}
                         </span>
                       </Td>
                       <Td>
                         {order.shippingCity}
-                        <span className="block text-[11.5px] text-taupe">
+                        <span className="block text-[12px] text-taupe">
                           {order.shippingEmirate}
                         </span>
                       </Td>
                       <Td>
                         <AdminPill status={order.paymentStatus} />
-                        <span className="mt-1 block text-[11.5px] text-taupe">
+                        <span className="mt-1 block text-[12px] text-taupe">
                           {order.paymentMethod === "COD"
                             ? "Cash"
                             : order.paymentMethod === "BANK_TRANSFER"
@@ -169,7 +169,7 @@ export default async function AdminOrdersPage({
           </TableWrap>
 
           {pages > 1 && (
-            <div className="mt-5 flex items-center justify-between gap-4 text-[12px] tracking-[0.14em] uppercase">
+            <div className="mt-5 flex items-center justify-between gap-4 text-[12px] font-medium tracking-[0.1em] uppercase">
               {page > 1 ? (
                 <Link href={query({ page: page - 1 })} className="text-gold-light hover:text-champagne">
                   ← Previous
@@ -208,13 +208,13 @@ function Filter({
 }) {
   return (
     <label className="flex flex-col gap-2">
-      <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+      <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
         {label}
       </span>
       <select
         name={name}
         defaultValue={value}
-        className="border border-ink-line bg-ink px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
+        className="border border-ink-line bg-admin-surface px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
       >
         <option value="">Any</option>
         {options.map((option) => (

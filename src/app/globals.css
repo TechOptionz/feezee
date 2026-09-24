@@ -20,9 +20,17 @@
   --color-ink-border: var(--fz-ink-border);
   --color-wine-bright: var(--fz-wine-bright);
   --color-gold-light: var(--fz-gold-light);
+  --color-admin-surface: var(--fz-admin-surface);
+  --color-admin-raised: var(--fz-admin-raised);
 
   --font-body: var(--font-jost), sans-serif;
   --font-display: var(--font-marcellus), serif;
+  /*
+   * The back office's text face. `--font-inter` is set on the admin wrapper,
+   * not on <html>, so the shop never downloads it; the fallback stack keeps a
+   * legible sans in place while it loads.
+   */
+  --font-admin: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
   /* The design switches between the mobile drawer and the desktop nav at 860px. */
   --breakpoint-nav: 860px;
@@ -66,6 +74,56 @@
   img {
     display: block;
   }
+}
+
+/*
+ * The back office.
+ *
+ * Everything under `/admin` sits in this scope. The admin is drawn on the
+ * shop's cream, in the shop's gold, so the two feel like one product — but it
+ * is read for its figures, not its photographs, so three things differ:
+ *
+ * 1. The text tokens are re-pointed. The admin's components were written in
+ *    the vocabulary of the shop's ink footer — `champagne` for headings,
+ *    `sandstone` for body, `taupe` for labels, `ink-line` for rules. Here
+ *    each of those names is bound to the shade that plays the same role on
+ *    cream: ink for headings, a dark brown for body, a muted brown that still
+ *    clears 5:1 for the small labels. One block re-tunes every admin page and
+ *    leaves the shop's own use of those tokens exactly as it was.
+ *
+ * 2. The text face changes. Marcellus stays for the brand lockup and page
+ *    titles, but figures — prices, counts, dates, order numbers — are set in
+ *    Inter, whose digits are wide, open and unambiguous (a 1 is not an l, a 0
+ *    is not an O), and every digit in the scope is tabular so columns of
+ *    numbers line up.
+ *
+ * 3. Table rows tint under the cursor, which the pages cannot do themselves
+ *    without a class on every `<tr>`.
+ */
+.fz-admin {
+  --fz-champagne: #2b2118; /* headings, figures, primary text */
+  --fz-sandstone: #4a3d2e; /* body text in tables and prose */
+  --fz-taupe: #7d6c4f; /* labels, hints, secondary lines */
+  --fz-ink-line: #e3d8c1; /* hairlines */
+  --fz-ink-border: #c7b995; /* input and chip borders */
+
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+.fz-admin tbody tr:hover > td {
+  background: color-mix(in oklab, var(--fz-gold) 7%, transparent);
+}
+
+.fz-admin input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.fz-admin select option {
+  background: var(--fz-admin-surface);
+  color: var(--fz-champagne);
 }
 
 /* Lookbook rail: scrollable, no visible scrollbar (design uses scrollbar-width:none) */

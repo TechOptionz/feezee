@@ -228,6 +228,9 @@ The session cookie is signed, so its `role` claim cannot be forged — but it wa
 minted when the person signed in. Someone demoted from ADMIN an hour ago would
 otherwise keep admin rights until their token expired. `requireStaff` costs one
 indexed lookup per admin page view and makes a revocation take effect at once.
+One per *request*, not per component: `currentActor` is wrapped in React's
+`cache`, so the layout (which needs it to decide whether to draw the sidebar)
+and the page (which needs it as a guard) share a single lookup — see 4.21.
 
 Every server action re-checks the session independently. A server action is a
 public HTTP endpoint; the fact that only the admin UI links to it protects
@@ -563,6 +566,40 @@ running total of what someone has spent with us is the shop's figure to hold,
 not theirs to be met with. Two tiles now, on a two-column grid.
 
 ---
+
+### 4.21 The database is a hundred milliseconds away
+
+The hosted Postgres is Supabase in `ap-southeast-1` (Singapore). Measured from
+the UAE: ~100 ms per round trip, ~480 ms to open a connection (TCP + TLS + the
+pooler's handshake). The data itself is tiny — a few orders, ~130 variants —
+so **every admin page's load time is network, not query time**, and the rules
+that follow are about counting round trips and connections, not rows.
+
+What made the admin slow, and what changed:
+
+- **pg dropped idle connections after ten seconds** (its default), so each
+  click after a short pause paid the ~480 ms handshake again. The pool in
+  `src/lib/prisma.ts` now keeps connections for ten minutes with TCP keepalive.
+- **Parallel queries on a cold pool each open their own connection, at the same
+  time.** The dashboard fired 13 queries; a cold pool of 10 cost a full second
+  in simultaneous handshakes before a single row arrived. The pool is capped
+  at 6, and the dashboard was cut to 6 queries: the six KPI aggregates are one
+  `FILTER`-based statement, and the "latest orders" strip has its own
+  `recentOrders` that selects seven columns instead of `listOrders` with three
+  relations and a count.
+- **The guard ran twice per page** — layout and page each called
+  `currentActor`. It is memoised per request with React's `cache` (4.8).
+- **Vercel functions default to `iad1` (US East)**, which is ~200 ms from
+  Singapore in each direction. `vercel.json` pins them to `sin1`, next to the
+  database. A staff member in Dubai pays one extra hop to Singapore for the
+  page itself; the page in turn pays nothing for its several hops to the
+  database. If the shop ever moves its database closer to the UAE, move this
+  region with it.
+
+The rule going forward: **a new admin page should need one round trip after
+the guard.** Prefer one SQL statement with several aggregates over several
+Prisma calls in a `Promise.all`; the latter looks parallel and is, but each
+branch wants a connection of its own.
 
 ## 5. Data model notes
 

@@ -15,8 +15,18 @@ const RATES: Record<Currency, number> = { AED: 1, PKR: 1 / 76, GBP: 4.671 };
 
 const PREFIX: Record<Currency, string> = { AED: "AED ", PKR: "Rs ", GBP: "£" };
 
-/** Format an AED amount in the given currency, e.g. `AED 209`. */
+/**
+ * Format an AED amount in the given currency, e.g. `AED 209`.
+ *
+ * Catalogue prices are whole dirhams and print without a fraction. Anything
+ * that is not whole — VAT, a net figure, a discounted total — prints with
+ * exactly two decimals, so `239.4` never sits in a column above `103.95`.
+ */
 export function formatPrice(aed: number, currency: Currency = DEFAULT_CURRENCY) {
   const value = currency === "AED" ? aed : Math.round(aed / RATES[currency]);
-  return `${PREFIX[currency]}${value.toLocaleString("en-US")}`;
+  const whole = Math.round(value * 100) % 100 === 0;
+  return `${PREFIX[currency]}${value.toLocaleString("en-US", {
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  })}`;
 }

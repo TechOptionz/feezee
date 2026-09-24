@@ -31,12 +31,22 @@
   --fz-ink-border: #6b5b3e; /* input border on ink */
 
   /*
-   * Admin-only. The shop's wine and gold are tuned for ink on cream; on the
-   * back office's ink ground they go muddy, so the two accents that have to
-   * read as a warning or a success there are lifted a step.
+   * Admin-only. The back office shares the shop's cream, but it is read for
+   * its figures, so `.fz-admin` in globals.css re-tunes the text tokens a step
+   * darker than the shop's editorial greys. These two are the accents the
+   * admin uses for "this needs you" and "this went through"; they are tuned
+   * for cream, and the names date from when the admin was drawn on ink.
    */
-  --fz-wine-bright: #d4708f; /* alerts on ink */
-  --fz-gold-light: #d9b866; /* success and links on ink */
+  --fz-wine-bright: #8f2d4f; /* alerts */
+  --fz-gold-light: #7c5f20; /* success and links */
+
+  /*
+   * Admin surfaces. Panels sit on the cream page as paper — a touch whiter
+   * than the ground so a card has an edge — and the raised tone is the row
+   * under the cursor, the nav entry you are on, and the ground of a control.
+   */
+  --fz-admin-surface: #fffdf8;
+  --fz-admin-raised: #f3ecdc;
 
   /* Layout */
   --fz-container: 1280px;

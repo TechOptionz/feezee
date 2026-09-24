@@ -19,6 +19,7 @@ import {
   topSellers,
 } from "@/modules/reporting";
 import { formatPrice } from "@/lib/currency";
+import { shopDateKey } from "@/lib/shop-time";
 
 export const metadata: Metadata = { title: "Reports" };
 export const dynamic = "force-dynamic";
@@ -44,7 +45,7 @@ export default async function AdminReportsPage({
 
   // The CSV routes take the resolved dates, so a preset and a custom range both
   // export exactly what is on screen.
-  const dates = `from=${range.from.toISOString().slice(0, 10)}&to=${range.to.toISOString().slice(0, 10)}`;
+  const dates = `from=${shopDateKey(range.from)}&to=${shopDateKey(range.to)}`;
 
   return (
     <>
@@ -55,7 +56,7 @@ export default async function AdminReportsPage({
 
       <DateRangeTabs preset={preset} from={from} to={to} basePath="/admin/reports" />
 
-      <div className="mt-[clamp(20px,2.6vw,30px)] grid grid-cols-2 nav:grid-cols-3 wide:grid-cols-5 gap-3">
+      <div className="mt-[clamp(20px,2.6vw,30px)] grid grid-cols-2 nav:grid-cols-3 min-[1560px]:grid-cols-5 gap-3">
         <StatCard label="Gross revenue" value={formatPrice(kpis.grossRevenueAed)} />
         <StatCard label="Net collected" value={formatPrice(kpis.netRevenueAed)} />
         <StatCard label="VAT collected" value={formatPrice(kpis.vatCollectedAed)} />

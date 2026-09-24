@@ -66,7 +66,7 @@ export function ProductForm({ values }: { values: ProductFormValues }) {
       {state.status === "error" && state.message && (
         <p
           role="alert"
-          className="m-0 border border-wine/50 bg-wine/10 px-4 py-3 text-[13.5px] text-wine-bright"
+          className="m-0 border border-wine/50 bg-wine/10 px-4 py-3 text-[14px] text-wine-bright"
         >
           {state.message}
         </p>
@@ -146,9 +146,9 @@ export function ProductForm({ values }: { values: ProductFormValues }) {
           does not wait for Save, which is why it says so.
         */}
         {!isNew && (
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border border-ink-line bg-ink/60 px-4 py-3.5">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border border-ink-line bg-admin-raised px-4 py-3.5">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+              <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
                 {onSale ? "On sale" : "Full price"}
               </span>
               <SalePill aed={values.aed} wasAed={values.wasAed} />
@@ -233,7 +233,7 @@ export function ProductForm({ values }: { values: ProductFormValues }) {
                     <th
                       key={head}
                       scope="col"
-                      className="whitespace-nowrap border-b border-ink-line py-2.5 pr-5 text-left text-[11px] tracking-[0.16em] uppercase font-normal text-taupe"
+                      className="whitespace-nowrap border-b border-ink-line py-2.5 pr-5 text-left text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe"
                     >
                       {head}
                     </th>
@@ -243,13 +243,13 @@ export function ProductForm({ values }: { values: ProductFormValues }) {
               <tbody>
                 {values.variants.map((variant) => (
                   <tr key={variant.id}>
-                    <td className="border-b border-ink-line/60 py-2.5 pr-5 text-[13.5px] text-champagne">
+                    <td className="border-b border-ink-line/70 py-2.5 pr-5 text-[14px] text-champagne">
                       {variant.size}
                     </td>
-                    <td className="border-b border-ink-line/60 py-2.5 pr-5 text-[13px] text-taupe">
+                    <td className="border-b border-ink-line/70 py-2.5 pr-5 text-[13px] text-taupe">
                       {variant.sku}
                     </td>
-                    <td className="border-b border-ink-line/60 py-2.5 pr-5 text-[13.5px] tabular-nums">
+                    <td className="border-b border-ink-line/70 py-2.5 pr-5 text-[14px] tabular-nums">
                       <Link
                         href={`/admin/inventory?q=${encodeURIComponent(values.name)}`}
                         className={cn(
@@ -269,7 +269,7 @@ export function ProductForm({ values }: { values: ProductFormValues }) {
       )}
 
       {isNew && (
-        <p className="m-0 border border-ink-line bg-ink/40 px-5 py-4 text-[13.5px] leading-[1.7] text-taupe">
+        <p className="m-0 border border-ink-line bg-admin-surface px-5 py-4 text-[14px] leading-[1.7] text-taupe">
           Six sizes (XS–XXL) are created at zero stock. Put the pieces on the
           rail from the inventory screen once they are counted in.
         </p>
@@ -294,7 +294,7 @@ function Save({ isNew }: { isNew: boolean }) {
     <button
       type="submit"
       disabled={pending}
-      className="cursor-pointer border-none bg-gold px-7 py-3.5 text-[12.5px] tracking-[0.18em] uppercase text-ink disabled:cursor-not-allowed disabled:opacity-60"
+      className="cursor-pointer border-none bg-gold px-7 py-3.5 text-[12.5px] font-semibold tracking-[0.12em] uppercase text-ink disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? "Saving…" : isNew ? "Create product" : "Save changes"}
     </button>
@@ -303,7 +303,7 @@ function Save({ isNew }: { isNew: boolean }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border border-ink-line bg-ink/40 p-[clamp(16px,2.2vw,24px)]">
+    <section className="border border-ink-line bg-admin-surface p-[clamp(16px,2.2vw,24px)]">
       <h2 className="m-0 mb-4 border-b border-ink-line pb-3 text-[12.5px] tracking-[0.22em] uppercase font-normal text-champagne">
         {title}
       </h2>
@@ -324,7 +324,7 @@ function Field({
 }) {
   return (
     <label className={cn("flex flex-col gap-2", className)}>
-      <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+      <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
         {label}
       </span>
       <input
@@ -356,11 +356,11 @@ function Select({
 }) {
   return (
     <label className={cn("flex flex-col gap-2", className)}>
-      <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+      <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
         {label}
       </span>
       <select
-        className="border border-ink-line bg-ink px-3 py-2.5 text-[14.5px] text-champagne outline-none focus:border-gold"
+        className="border border-ink-line bg-admin-surface px-3 py-2.5 text-[14.5px] text-champagne outline-none focus:border-gold"
         {...rest}
       >
         {options.map((option) => (
@@ -383,7 +383,7 @@ function Area({
 }) {
   return (
     <label className={cn("flex flex-col gap-2", className)}>
-      <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+      <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
         {label}
       </span>
       <textarea
@@ -404,7 +404,7 @@ function Check({
   defaultChecked: boolean;
 }) {
   return (
-    <label className="flex items-center gap-2.5 text-[13.5px] text-sandstone cursor-pointer">
+    <label className="flex items-center gap-2.5 text-[14px] text-sandstone cursor-pointer">
       <input
         type="checkbox"
         name={name}

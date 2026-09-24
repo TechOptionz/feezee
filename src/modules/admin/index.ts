@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Prisma, Role } from "@/generated/prisma/client";
@@ -14,6 +15,13 @@ import { getSession, type SessionClaims } from "@/modules/customers/session";
  * an hour ago would otherwise keep admin rights until their token expired.
  * One indexed lookup per admin page view is a cheap way to make a revocation
  * take effect immediately.
+ *
+ * One, not two: the layout asks who is signed in to decide whether to draw the
+ * sidebar, and every page asks again to guard itself. `currentActor` is wrapped
+ * in React's `cache`, which memoises it for the life of a single request, so
+ * the layout and the page share the cookie read, the JWT check and the user
+ * lookup. With the database a hundred milliseconds away (§4.21), the second
+ * lookup was pure latency.
  */
 
 export type Actor = {
@@ -40,10 +48,10 @@ async function verify(session: SessionClaims | null): Promise<Actor | null> {
   return user;
 }
 
-/** The signed-in staff member, or null. Does not redirect. */
-export async function currentActor(): Promise<Actor | null> {
+/** The signed-in staff member, or null. Does not redirect. Once per request. */
+export const currentActor = cache(async function currentActor(): Promise<Actor | null> {
   return verify(await getSession());
-}
+});
 
 /**
  * Guard an admin page. Redirects to the admin login rather than throwing, so an

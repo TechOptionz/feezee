@@ -1,8 +1,8 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { toAed, round2 } from "@/modules/shared/money";
-import { lowStockCount, lowStockVariants } from "@/modules/inventory";
-import { openReturnCount } from "@/modules/returns";
+import { lowStockVariants } from "@/modules/inventory";
+import { shiftShopDay, shopDateKey, startOfShopDay } from "@/lib/shop-time";
 
 /**
  * What the shop made, and what it needs to reorder.
@@ -25,26 +25,26 @@ export const RANGE_PRESETS = [
 
 export type RangePreset = (typeof RANGE_PRESETS)[number];
 
-/** A named range, resolved against the current clock. */
+/** A named range, resolved against the shop's clock — Dubai days, not the server's. */
 export function resolveRange(preset: RangePreset): DateRange {
   const to = new Date();
-  const from = new Date();
-  from.setHours(0, 0, 0, 0);
+  const today = shopDateKey(to);
 
+  let start = today;
   switch (preset) {
     case "Today":
       break;
     case "Last 7 Days":
-      from.setDate(from.getDate() - 6);
+      start = shiftShopDay(today, -6);
       break;
     case "Last 30 Days":
-      from.setDate(from.getDate() - 29);
+      start = shiftShopDay(today, -29);
       break;
     case "This Month":
-      from.setDate(1);
+      start = `${today.slice(0, 8)}01`;
       break;
   }
-  return { from, to };
+  return { from: startOfShopDay(start)!, to };
 }
 
 export type Metrics = {
@@ -59,43 +59,69 @@ export type Metrics = {
   openReturns: number;
 };
 
+/**
+ * Every headline number in one statement.
+ *
+ * This used to be six queries run in parallel, which reads as free and is
+ * not: with the database ~100 ms away (§4.21) six parallel queries want six
+ * connections, and on a cold pool each one is a ~500 ms handshake paid
+ * simultaneously. One statement is one connection and one round trip. The
+ * order aggregates share a single scan of the range via `FILTER`; the three
+ * all-time counts are scalar subqueries on their own indexes.
+ */
 export async function metrics(range: DateRange): Promise<Metrics> {
-  const placedIn = { placedAt: { gte: range.from, lte: range.to } };
+  const [row] = await prisma.$queryRaw<
+    {
+      gross: string;
+      vat: string;
+      orders: bigint;
+      net: string;
+      items: bigint;
+      pending: bigint;
+      lowStock: bigint;
+      openReturns: bigint;
+    }[]
+  >`
+    WITH placed AS (
+      SELECT id, "totalAed", "vatAed", "fulfillmentStatus", "paymentStatus"
+        FROM "Order"
+       WHERE "placedAt" BETWEEN ${range.from} AND ${range.to}
+    )
+    SELECT COALESCE(SUM("totalAed") FILTER (WHERE "fulfillmentStatus" <> 'CANCELLED'), 0)::text AS gross,
+           COALESCE(SUM("vatAed")   FILTER (WHERE "fulfillmentStatus" <> 'CANCELLED'), 0)::text AS vat,
+           COUNT(*)                 FILTER (WHERE "fulfillmentStatus" <> 'CANCELLED')            AS orders,
+           COALESCE(SUM("totalAed") FILTER (WHERE "paymentStatus" = 'PAID'), 0)::text          AS net,
+           (SELECT COALESCE(SUM(oi.quantity), 0)::bigint
+              FROM "OrderItem" oi
+              JOIN placed o ON o.id = oi."orderId"
+             WHERE o."fulfillmentStatus" <> 'CANCELLED')                                       AS items,
+           (SELECT COUNT(*)::bigint
+              FROM "Order"
+             WHERE "fulfillmentStatus" IN ('PENDING', 'PROCESSING'))                          AS pending,
+           (SELECT COUNT(*)::bigint
+              FROM "ProductVariant" v
+              JOIN "Product" p ON p.id = v."productId"
+             WHERE p."isArchived" = false
+               AND v.stock <= v."lowStockThreshold")                                          AS "lowStock",
+           (SELECT COUNT(*)::bigint
+              FROM "ReturnRequest"
+             WHERE status IN ('PENDING', 'APPROVED', 'RECEIVED'))                            AS "openReturns"
+      FROM placed
+  `;
 
-  const [live, paid, items, pending, lowStock, returns] = await Promise.all([
-    prisma.order.aggregate({
-      where: { ...placedIn, fulfillmentStatus: { not: "CANCELLED" } },
-      _sum: { totalAed: true, vatAed: true },
-      _count: true,
-    }),
-    prisma.order.aggregate({
-      where: { ...placedIn, paymentStatus: "PAID" },
-      _sum: { totalAed: true },
-    }),
-    prisma.orderItem.aggregate({
-      where: { order: { ...placedIn, fulfillmentStatus: { not: "CANCELLED" } } },
-      _sum: { quantity: true },
-    }),
-    prisma.order.count({
-      where: { fulfillmentStatus: { in: ["PENDING", "PROCESSING"] } },
-    }),
-    lowStockCount(),
-    openReturnCount(),
-  ]);
-
-  const grossRevenueAed = toAed(live._sum.totalAed);
-  const orderCount = live._count;
+  const grossRevenueAed = round2(Number(row?.gross ?? 0));
+  const orderCount = Number(row?.orders ?? 0);
 
   return {
     grossRevenueAed,
-    netRevenueAed: toAed(paid._sum.totalAed),
-    vatCollectedAed: toAed(live._sum.vatAed),
+    netRevenueAed: round2(Number(row?.net ?? 0)),
+    vatCollectedAed: round2(Number(row?.vat ?? 0)),
     orderCount,
     averageOrderValueAed: orderCount ? round2(grossRevenueAed / orderCount) : 0,
-    itemsSold: items._sum.quantity ?? 0,
-    pendingOrders: pending,
-    lowStockCount: lowStock,
-    openReturns: returns,
+    itemsSold: Number(row?.items ?? 0),
+    pendingOrders: Number(row?.pending ?? 0),
+    lowStockCount: Number(row?.lowStock ?? 0),
+    openReturns: Number(row?.openReturns ?? 0),
   };
 }
 
@@ -112,7 +138,7 @@ export async function revenueSeries(range: DateRange): Promise<SeriesPoint[]> {
   const rows = await prisma.$queryRaw<
     { day: Date; revenue: string | null; orders: bigint }[]
   >`
-    SELECT date_trunc('day', "placedAt") AS day,
+    SELECT date_trunc('day', ("placedAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Dubai') AS day,
            SUM("totalAed")              AS revenue,
            COUNT(*)::bigint             AS orders
       FROM "Order"
@@ -129,19 +155,17 @@ export async function revenueSeries(range: DateRange): Promise<SeriesPoint[]> {
     ]),
   );
 
+  // Keys sort as strings, so the walk from the first Dubai day to the last
+  // needs no Date arithmetic and cannot drift across a timezone boundary.
   const out: SeriesPoint[] = [];
-  const cursor = new Date(range.from);
-  cursor.setHours(0, 0, 0, 0);
-
-  while (cursor <= range.to) {
-    const key = cursor.toISOString().slice(0, 10);
+  const last = shopDateKey(range.to);
+  for (let key = shopDateKey(range.from); key <= last; key = shiftShopDay(key, 1)) {
     const hit = found.get(key);
     out.push({
       date: key,
       revenueAed: hit?.revenueAed ?? 0,
       orders: hit?.orders ?? 0,
     });
-    cursor.setDate(cursor.getDate() + 1);
   }
 
   return out;

@@ -70,7 +70,7 @@ export function StockAdjuster({
       {settled && (
         <p
           role="status"
-          className="mb-4 border border-gold/40 bg-gold/10 px-4 py-3 text-[13.5px] text-gold-light"
+          className="mb-4 border border-gold/40 bg-gold/10 px-4 py-3 text-[14px] text-gold-light"
         >
           {settled}
         </p>
@@ -81,7 +81,7 @@ export function StockAdjuster({
         onClose={onClose}
         aria-label="Adjust stock"
         className={cn(
-          "m-auto w-[min(460px,calc(100vw-32px))] border border-ink-line bg-ink p-0 text-sandstone",
+          "m-auto w-[min(460px,calc(100vw-32px))] border border-ink-line bg-admin-surface p-0 text-sandstone",
           "backdrop:bg-black/60",
         )}
       >
@@ -93,7 +93,7 @@ export function StockAdjuster({
               <h2 className="m-0 font-display text-[20px] leading-tight text-champagne">
                 {target.productName}
               </h2>
-              <p className="m-0 mt-1.5 text-[12.5px] tracking-[0.12em] uppercase text-taupe">
+              <p className="m-0 mt-1.5 text-[12.5px] font-medium tracking-[0.1em] uppercase text-taupe">
                 Size {target.size} · {target.sku}
               </p>
             </div>
@@ -107,13 +107,15 @@ export function StockAdjuster({
               </p>
             )}
 
-            <div className="border border-ink-line px-4 py-3 text-[13.5px]">
-              On the rail now:{" "}
-              <span className="text-champagne tabular-nums">{target.stock}</span>
+            <div className="flex items-baseline justify-between gap-4 border border-ink-line bg-admin-surface px-4 py-3 text-[14px]">
+              <span className="text-taupe">On the rail now</span>
+              <span className="text-[18px] font-semibold tabular-nums text-champagne">
+                {target.stock}
+              </span>
             </div>
 
             <label className="flex flex-col gap-2">
-              <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+              <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
                 New count
               </span>
               <input
@@ -124,7 +126,7 @@ export function StockAdjuster({
                 required
                 defaultValue={target.stock}
                 autoFocus
-                className="border border-ink-line bg-transparent px-3 py-2.5 text-[15px] text-champagne outline-none focus:border-gold tabular-nums"
+                className="border border-ink-line bg-transparent px-3 py-2.5 text-[18px] font-semibold text-champagne outline-none focus:border-gold tabular-nums"
               />
               {state.fieldErrors?.stock && (
                 <span role="alert" className="text-[12px] text-wine-bright">
@@ -134,14 +136,14 @@ export function StockAdjuster({
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+              <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
                 Reason
               </span>
               <select
                 name="reason"
                 required
                 defaultValue="RESTOCK"
-                className="border border-ink-line bg-ink px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
+                className="border border-ink-line bg-admin-surface px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
               >
                 {REASONS.map((reason) => (
                   <option key={reason.value} value={reason.value}>
@@ -152,7 +154,7 @@ export function StockAdjuster({
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+              <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
                 Note (optional)
               </span>
               <input
@@ -167,7 +169,7 @@ export function StockAdjuster({
               <button
                 type="button"
                 onClick={onClose}
-                className="cursor-pointer border-none bg-transparent p-0 text-[12px] tracking-[0.14em] uppercase text-taupe hover:text-champagne"
+                className="cursor-pointer border-none bg-transparent p-0 text-[12px] font-medium tracking-[0.1em] uppercase text-taupe hover:text-champagne"
               >
                 Cancel
               </button>
@@ -185,7 +187,7 @@ function Save() {
     <button
       type="submit"
       disabled={pending}
-      className="cursor-pointer border-none bg-gold px-6 py-3 text-[12px] tracking-[0.16em] uppercase text-ink disabled:cursor-not-allowed disabled:opacity-60"
+      className="cursor-pointer border-none bg-gold px-6 py-3 text-[12px] font-semibold tracking-[0.12em] uppercase text-ink disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? "Saving…" : "Save count"}
     </button>

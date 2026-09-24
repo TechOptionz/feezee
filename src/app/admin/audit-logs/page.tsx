@@ -38,6 +38,15 @@ export default async function AdminAuditLogPage({
 
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  /** The same search and entity filter, on another page. */
+  const pageHref = (n: number) => {
+    const search = new URLSearchParams();
+    if (q) search.set("q", q);
+    if (entityType) search.set("entityType", entityType);
+    search.set("page", String(n));
+    return `/admin/audit-logs?${search.toString()}`;
+  };
+
   return (
     <>
       <AdminHeading
@@ -48,7 +57,7 @@ export default async function AdminAuditLogPage({
       <Panel>
         <form method="get" className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-2">
-            <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+            <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
               Search
             </span>
             <input
@@ -60,13 +69,13 @@ export default async function AdminAuditLogPage({
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+            <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
               Entity
             </span>
             <select
               name="entityType"
               defaultValue={entityType}
-              className="border border-ink-line bg-ink px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
+              className="border border-ink-line bg-admin-surface px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
             >
               <option value="">Anything</option>
               {types.map((type) => (
@@ -79,7 +88,7 @@ export default async function AdminAuditLogPage({
 
           <button
             type="submit"
-            className="cursor-pointer border border-ink-border bg-transparent px-5 py-2.5 text-[11.5px] tracking-[0.16em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
+            className="cursor-pointer border border-ink-border bg-transparent px-5 py-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
           >
             Filter
           </button>
@@ -87,7 +96,7 @@ export default async function AdminAuditLogPage({
           {(q || entityType) && (
             <Link
               href="/admin/audit-logs"
-              className="pb-2.5 text-[11.5px] tracking-[0.14em] uppercase text-taupe hover:text-champagne"
+              className="pb-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-taupe hover:text-champagne"
             >
               Clear
             </Link>
@@ -119,7 +128,7 @@ export default async function AdminAuditLogPage({
                           {adminDateTime(log.createdAt)}
                         </span>
                         {log.ipAddress && (
-                          <span className="block text-[11px] text-taupe">
+                          <span className="block text-[12px] text-taupe">
                             {log.ipAddress}
                           </span>
                         )}
@@ -130,7 +139,7 @@ export default async function AdminAuditLogPage({
                       </Td>
                       <Td>
                         {log.entityType}
-                        <span className="block text-[11.5px] text-taupe">
+                        <span className="block text-[12px] text-taupe">
                           {log.entityId}
                         </span>
                       </Td>
@@ -145,10 +154,10 @@ export default async function AdminAuditLogPage({
           </TableWrap>
 
           {pages > 1 && (
-            <div className="mt-5 flex items-center justify-between gap-4 text-[12px] tracking-[0.14em] uppercase">
+            <div className="mt-5 flex items-center justify-between gap-4 text-[12px] font-medium tracking-[0.1em] uppercase">
               {page > 1 ? (
                 <Link
-                  href={`/admin/audit-logs?page=${page - 1}`}
+                  href={pageHref(page - 1)}
                   className="text-gold-light hover:text-champagne"
                 >
                   ← Previous
@@ -161,7 +170,7 @@ export default async function AdminAuditLogPage({
               </span>
               {page < pages ? (
                 <Link
-                  href={`/admin/audit-logs?page=${page + 1}`}
+                  href={pageHref(page + 1)}
                   className="text-gold-light hover:text-champagne"
                 >
                   Next →

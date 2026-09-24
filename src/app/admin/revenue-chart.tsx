@@ -1,5 +1,7 @@
 import type { SeriesPoint } from "@/modules/reporting";
+import { Figure, LABEL } from "@/app/admin/admin-ui";
 import { formatPrice } from "@/lib/currency";
+import { shopDayLabel } from "@/lib/shop-time";
 
 /**
  * Revenue per day, drawn as an inline SVG.
@@ -23,6 +25,7 @@ export function RevenueChart({ series }: { series: SeriesPoint[] }) {
 
   const peak = Math.max(...series.map((point) => point.revenueAed), 1);
   const total = series.reduce((sum, point) => sum + point.revenueAed, 0);
+  const orders = series.reduce((sum, point) => sum + point.orders, 0);
 
   // Every fifth label on a long range, so a month does not print 31 dates on
   // top of each other.
@@ -30,17 +33,31 @@ export function RevenueChart({ series }: { series: SeriesPoint[] }) {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <span className="font-display text-[clamp(20px,2.4vw,28px)] leading-none text-champagne">
-          {formatPrice(total)}
-        </span>
-        <span className="text-[12px] tracking-[0.14em] uppercase text-taupe">
-          Peak day {formatPrice(peak)}
-        </span>
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+        <div>
+          <div className={LABEL}>Taken in this range</div>
+          <div className="mt-2 text-[clamp(24px,2.4vw,30px)] font-semibold leading-none tracking-[-0.015em] text-champagne">
+            <Figure value={formatPrice(total)} />
+          </div>
+        </div>
+        <dl className="m-0 flex flex-wrap gap-x-7 gap-y-2">
+          <div>
+            <dt className={LABEL}>Peak day</dt>
+            <dd className="m-0 mt-1 text-[15px] font-medium tabular-nums text-sandstone">
+              {formatPrice(peak)}
+            </dd>
+          </div>
+          <div>
+            <dt className={LABEL}>Orders</dt>
+            <dd className="m-0 mt-1 text-[15px] font-medium tabular-nums text-sandstone">
+              {orders}
+            </dd>
+          </div>
+        </dl>
       </div>
 
       <div
-        className="flex items-end gap-[3px]"
+        className="flex items-end gap-[3px] border-b border-ink-line"
         style={{ height: "clamp(120px, 18vw, 190px)" }}
         role="img"
         aria-label={`Revenue by day. Total ${formatPrice(total)}, highest day ${formatPrice(peak)}.`}
@@ -58,35 +75,33 @@ export function RevenueChart({ series }: { series: SeriesPoint[] }) {
               className="group relative flex-1 min-w-[4px] h-full flex items-end"
             >
               <div
-                className="w-full bg-gold/70 transition-colors group-hover:bg-champagne"
+                className="w-full bg-gold/80 transition-colors group-hover:bg-champagne"
                 style={{ height: `${height}%` }}
               />
-              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap border border-ink-line bg-ink px-2.5 py-1.5 text-[11.5px] text-champagne group-hover:block">
-                {new Date(point.date).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "short",
-                })}
-                {" · "}
-                {formatPrice(point.revenueAed)}
-                {" · "}
-                {point.orders} {point.orders === 1 ? "order" : "orders"}
+              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap border border-ink-border bg-admin-raised px-3 py-2 text-[12.5px] leading-snug text-sandstone shadow-[0_8px_24px_rgba(0,0,0,0.35)] group-hover:block">
+                <span className="block text-[11px] font-medium tracking-[0.1em] uppercase text-taupe">
+                  {shopDayLabel(point.date, { weekday: true })}
+                </span>
+                <span className="mt-0.5 block font-semibold tabular-nums text-champagne">
+                  {formatPrice(point.revenueAed)}
+                </span>
+                <span className="block tabular-nums">
+                  {point.orders} {point.orders === 1 ? "order" : "orders"}
+                </span>
               </span>
             </div>
           );
         })}
       </div>
 
-      <div className="mt-2.5 flex gap-[3px]">
+      <div className="mt-2 flex gap-[3px]">
         {series.map((point, i) => (
           <span
             key={point.date}
-            className="flex-1 min-w-[4px] text-center text-[10px] text-taupe"
+            className="flex-1 min-w-[4px] text-center text-[11px] font-medium tabular-nums text-taupe"
           >
             {i % labelEvery === 0
-              ? new Date(point.date).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "short",
-                })
+              ? shopDayLabel(point.date)
               : ""}
           </span>
         ))}

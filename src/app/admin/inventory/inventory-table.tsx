@@ -39,14 +39,14 @@ export function InventoryTable({ rows }: { rows: InventoryRow[] }) {
                 <th
                   key={head}
                   scope="col"
-                  className="whitespace-nowrap border-b border-ink-line py-2.5 pr-5 text-left text-[11px] tracking-[0.16em] uppercase font-normal text-taupe"
+                  className="whitespace-nowrap border-b border-ink-line py-2.5 pr-5 text-left text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe"
                 >
                   {head}
                 </th>
               ))}
               <th
                 scope="col"
-                className="whitespace-nowrap border-b border-ink-line py-2.5 text-right text-[11px] tracking-[0.16em] uppercase font-normal text-taupe"
+                className="whitespace-nowrap border-b border-ink-line py-2.5 text-right text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe"
               >
                 Stock
               </th>
@@ -66,38 +66,38 @@ export function InventoryTable({ rows }: { rows: InventoryRow[] }) {
 
                 return (
                   <tr key={row.variantId}>
-                    <td className="border-b border-ink-line/60 py-2.5 pr-5 text-[13.5px] text-champagne">
+                    <td className="border-b border-ink-line/70 py-3 pr-5 text-[14px] font-medium text-champagne">
                       {row.productName}
                       {row.isArchived && (
-                        <span className="ml-2 text-[11px] tracking-[0.14em] uppercase text-taupe">
+                        <span className="ml-2 text-[11px] font-medium tracking-[0.08em] uppercase text-taupe">
                           archived
                         </span>
                       )}
                     </td>
-                    <td className="border-b border-ink-line/60 py-2.5 pr-5 text-[13px] text-sandstone">
+                    <td className="border-b border-ink-line/70 py-3 pr-5 text-[13.5px] text-sandstone">
                       {row.collection}
                     </td>
-                    <td className="border-b border-ink-line/60 py-2.5 pr-5 text-[13.5px] text-sandstone">
+                    <td className="border-b border-ink-line/70 py-3 pr-5 text-[14px] font-medium text-sandstone">
                       {row.size}
                     </td>
-                    <td className="border-b border-ink-line/60 py-2.5 pr-5 text-[12.5px] text-taupe">
+                    <td className="border-b border-ink-line/70 py-3 pr-5 text-[13px] tabular-nums text-taupe">
                       {row.sku}
                     </td>
-                    <td className="border-b border-ink-line/60 py-2.5 pr-5">
+                    <td className="border-b border-ink-line/70 py-3 pr-5">
                       <span
                         className={cn(
-                          "inline-block border px-2.5 py-1 text-[11px] tracking-[0.14em] uppercase",
+                          "inline-block border px-2.5 py-[3px] text-[11px] font-medium tracking-[0.08em] uppercase",
                           out
                             ? "border-wine/50 bg-wine/10 text-wine-bright"
                             : low
                               ? "border-gold/50 bg-gold/10 text-gold-light"
-                              : "border-ink-border text-taupe",
+                              : "border-ink-border bg-admin-raised/60 text-sandstone",
                         )}
                       >
                         {out ? "Sold out" : low ? "Low" : "In stock"}
                       </span>
                     </td>
-                    <td className="border-b border-ink-line/60 py-2.5 text-right">
+                    <td className="border-b border-ink-line/70 py-3 text-right">
                       <button
                         type="button"
                         onClick={() =>
@@ -111,10 +111,12 @@ export function InventoryTable({ rows }: { rows: InventoryRow[] }) {
                         }
                         aria-label={`Adjust stock for ${row.productName}, size ${row.size} — currently ${row.stock}`}
                         className={cn(
-                          "min-w-[52px] cursor-pointer border px-3 py-1.5 text-[14px] tabular-nums transition-colors",
+                          "min-w-[56px] cursor-pointer border bg-admin-raised px-3 py-1.5 text-[15px] font-semibold tabular-nums transition-colors",
                           out
                             ? "border-wine/50 text-wine-bright hover:border-wine"
-                            : "border-ink-line text-champagne hover:border-gold",
+                            : low
+                              ? "border-gold/50 text-gold-light hover:border-gold"
+                              : "border-ink-border text-champagne hover:border-gold",
                         )}
                       >
                         {row.stock}

@@ -106,7 +106,7 @@ export function SaleControls({
           disabled={pending}
           onClick={() => run(() => removeFromSaleAction(productId))}
           className={cn(
-            "cursor-pointer whitespace-nowrap text-[11.5px] tracking-[0.14em] uppercase text-wine-bright disabled:cursor-not-allowed disabled:opacity-60",
+            "cursor-pointer whitespace-nowrap text-[12px] font-medium tracking-[0.1em] uppercase text-wine-bright disabled:cursor-not-allowed disabled:opacity-60",
             variant === "row"
               ? "border-none bg-transparent p-0 hover:text-champagne"
               : "border border-wine/50 bg-wine/10 px-5 py-2.5 hover:border-wine-bright",
@@ -133,7 +133,7 @@ export function SaleControls({
         aria-expanded={open}
         onClick={() => setOpen((was) => !was)}
         className={cn(
-          "cursor-pointer whitespace-nowrap text-[11.5px] tracking-[0.14em] uppercase disabled:cursor-not-allowed disabled:opacity-60",
+          "cursor-pointer whitespace-nowrap text-[12px] font-medium tracking-[0.1em] uppercase disabled:cursor-not-allowed disabled:opacity-60",
           variant === "row"
             ? "border-none bg-transparent p-0 text-taupe hover:text-gold-light"
             : "border border-ink-border bg-transparent px-5 py-2.5 text-sandstone hover:border-gold hover:text-gold-light",
@@ -154,11 +154,11 @@ export function SaleControls({
       {open && (
         <span
           className={cn(
-            "mt-2 block w-[250px] border border-ink-border bg-ink p-4 text-left",
+            "mt-2 block w-[250px] border border-ink-border bg-admin-surface p-4 text-left shadow-[0_8px_24px_rgba(43,33,24,0.12)]",
             variant === "row" && "shadow-[0_18px_40px_rgba(0,0,0,0.45)]",
           )}
         >
-          <span className="mb-3 block text-[11px] tracking-[0.16em] uppercase text-taupe">
+          <span className="mb-3 block text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
             Off {formatAed(aed)}
           </span>
 
@@ -181,7 +181,7 @@ export function SaleControls({
 
           <span className="mt-3 block border-t border-ink-line pt-3">
             <label className="flex flex-col gap-2">
-              <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+              <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
                 Or a price
               </span>
               <span className="flex gap-2">
@@ -201,13 +201,13 @@ export function SaleControls({
                     applyCustom();
                   }}
                   placeholder="AED"
-                  className="w-full min-w-0 border border-ink-line bg-transparent px-2.5 py-2 text-[13.5px] text-champagne outline-none placeholder:text-taupe focus:border-gold"
+                  className="w-full min-w-0 border border-ink-line bg-transparent px-2.5 py-2 text-[14px] text-champagne outline-none placeholder:text-taupe focus:border-gold"
                 />
                 <button
                   type="button"
                   disabled={pending}
                   onClick={applyCustom}
-                  className="cursor-pointer border-none bg-gold px-3.5 py-2 text-[11px] tracking-[0.14em] uppercase text-ink disabled:cursor-not-allowed disabled:opacity-60"
+                  className="cursor-pointer border-none bg-gold px-3.5 py-2 text-[11px] font-medium tracking-[0.08em] uppercase text-ink disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Set
                 </button>
@@ -226,7 +226,7 @@ export function SaleControls({
 export function SalePill({ aed, wasAed }: { aed: number; wasAed: number | null }) {
   if (wasAed === null || wasAed <= aed) return null;
   return (
-    <span className="inline-block whitespace-nowrap border border-wine/50 bg-wine/15 px-2 py-0.5 text-[11px] tracking-[0.1em] tabular-nums text-wine-bright">
+    <span className="inline-block whitespace-nowrap border border-wine/50 bg-wine/15 px-2 py-0.5 text-[11px] font-medium tracking-[0.06em] tabular-nums text-wine-bright">
       −{Math.round((1 - aed / wasAed) * 100)}%
     </span>
   );

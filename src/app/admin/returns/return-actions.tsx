@@ -70,14 +70,14 @@ export function ReturnActions({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="flex flex-col gap-2">
-          <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+          <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
             Decision
           </span>
           <select
             name="status"
             value={next}
             onChange={(e) => setNext(e.target.value)}
-            className="border border-ink-line bg-ink px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
+            className="border border-ink-line bg-admin-surface px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
           >
             {options.map((option) => (
               <option key={option} value={option}>
@@ -89,7 +89,7 @@ export function ReturnActions({
 
         {next === "REFUNDED" && (
           <label className="flex flex-col gap-2">
-            <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+            <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
               Refund (AED)
             </span>
             <input
@@ -116,7 +116,7 @@ export function ReturnActions({
       )}
 
       <label className="flex flex-col gap-2">
-        <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+        <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
           Note to the customer (optional)
         </span>
         <textarea
@@ -124,12 +124,12 @@ export function ReturnActions({
           rows={2}
           defaultValue={adminNotes ?? ""}
           placeholder="Post to Shop 1-35, Madina Mall. We refund within two working days of it arriving."
-          className="border border-ink-line bg-transparent px-3 py-2.5 text-[13.5px] leading-[1.7] text-champagne outline-none resize-y placeholder:text-taupe focus:border-gold"
+          className="border border-ink-line bg-transparent px-3 py-2.5 text-[14px] leading-[1.7] text-champagne outline-none resize-y placeholder:text-taupe focus:border-gold"
         />
       </label>
 
       {!isRestocked && (
-        <label className="flex items-center gap-2.5 text-[13.5px] text-sandstone cursor-pointer">
+        <label className="flex items-center gap-2.5 text-[14px] text-sandstone cursor-pointer">
           <input
             type="checkbox"
             name="restock"
@@ -150,7 +150,7 @@ function Submit() {
     <button
       type="submit"
       disabled={pending}
-      className="self-start cursor-pointer border-none bg-gold px-6 py-3 text-[12px] tracking-[0.16em] uppercase text-ink disabled:cursor-not-allowed disabled:opacity-60"
+      className="self-start cursor-pointer border-none bg-gold px-6 py-3 text-[12px] font-semibold tracking-[0.12em] uppercase text-ink disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? "Saving…" : "Save decision"}
     </button>

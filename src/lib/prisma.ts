@@ -19,9 +19,36 @@ if (!connectionString) {
   );
 }
 
+/**
+ * The pool is tuned for a database that is far away, because it is.
+ *
+ * The hosted Postgres sits in Singapore; from the UAE, or from a Vercel
+ * function in the US, one round trip is ~100 ms and opening a connection
+ * (TCP, TLS, then the pooler's handshake) is ~500 ms. pg's defaults were
+ * written for a database on the same rack: idle connections are dropped after
+ * ten seconds, so every admin click after a short pause paid the full
+ * handshake again — and a page that fires several queries in parallel paid it
+ * once *per connection*, all at the same time. See PROJECT_MEMORY §4.21.
+ *
+ * - `idleTimeoutMillis`: keep warm connections for ten minutes, the length of
+ *   a working session rather than a single click. Supabase's pooler is built
+ *   to hold many idle client connections; that is what it is for.
+ * - `keepAlive`: stop a NAT or load balancer from silently dropping an idle
+ *   socket, which would surface as a slow failure on the next query.
+ * - `max`: a page never needs more than a handful in flight, and each extra
+ *   connection is another 500 ms handshake to pay on a cold start.
+ * - `connectionTimeoutMillis`: fail loudly rather than hang if the pooler is
+ *   unreachable.
+ */
 function createClient() {
   return new PrismaClient({
-    adapter: new PrismaPg({ connectionString }),
+    adapter: new PrismaPg({
+      connectionString,
+      max: 6,
+      idleTimeoutMillis: 10 * 60 * 1000,
+      keepAlive: true,
+      connectionTimeoutMillis: 10_000,
+    }),
     log:
       process.env.NODE_ENV === "development"
         ? ["warn", "error"]

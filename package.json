@@ -15,7 +15,9 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts",
-    "setup": "docker compose up -d && prisma db push && tsx prisma/seed.ts"
+    "setup": "docker compose up -d && prisma db push && tsx prisma/seed.ts",
+    "demo:add": "tsx prisma/demo-data.ts",
+    "demo:remove": "tsx prisma/demo-data.ts --remove"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

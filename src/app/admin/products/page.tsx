@@ -109,7 +109,7 @@ export default async function AdminProductsPage({
         action={
           <Link
             href="/admin/products/new"
-            className="border-none bg-gold px-6 py-3 text-[12px] tracking-[0.16em] uppercase text-ink hover:text-ink"
+            className="border-none bg-gold px-6 py-3 text-[12px] font-semibold tracking-[0.12em] uppercase text-ink hover:text-ink"
           >
             New product
           </Link>
@@ -124,7 +124,7 @@ export default async function AdminProductsPage({
               href={tabHref(tab.param)}
               aria-current={tab.value === sale ? "page" : undefined}
               className={cn(
-                "border-b-2 pb-1 text-[11.5px] tracking-[0.16em] uppercase",
+                "border-b-2 pb-1 text-[12px] font-medium tracking-[0.1em] uppercase",
                 tab.value === sale
                   ? "border-gold text-champagne"
                   : "border-transparent text-taupe hover:text-champagne",
@@ -144,7 +144,7 @@ export default async function AdminProductsPage({
           )}
 
           <label className="flex flex-col gap-2">
-            <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+            <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
               Search
             </span>
             <input
@@ -156,13 +156,13 @@ export default async function AdminProductsPage({
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+            <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
               Line
             </span>
             <select
               name="collection"
               defaultValue={collection}
-              className="border border-ink-line bg-ink px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
+              className="border border-ink-line bg-admin-surface px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
             >
               <option value="">All lines</option>
               {COLLECTIONS.map((line) => (
@@ -174,13 +174,13 @@ export default async function AdminProductsPage({
           </label>
 
           <label className="flex flex-col gap-2">
-            <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+            <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
               Stock
             </span>
             <select
               name="stock"
               defaultValue={stock}
-              className="border border-ink-line bg-ink px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
+              className="border border-ink-line bg-admin-surface px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
             >
               <option value="">Any</option>
               <option value="in">In stock</option>
@@ -189,7 +189,7 @@ export default async function AdminProductsPage({
             </select>
           </label>
 
-          <label className="flex items-center gap-2.5 pb-2.5 text-[13.5px] text-sandstone cursor-pointer">
+          <label className="flex items-center gap-2.5 pb-2.5 text-[14px] text-sandstone cursor-pointer">
             <input
               type="checkbox"
               name="archived"
@@ -202,7 +202,7 @@ export default async function AdminProductsPage({
 
           <button
             type="submit"
-            className="cursor-pointer border border-ink-border bg-transparent px-5 py-2.5 text-[11.5px] tracking-[0.16em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
+            className="cursor-pointer border border-ink-border bg-transparent px-5 py-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
           >
             Filter
           </button>
@@ -210,7 +210,7 @@ export default async function AdminProductsPage({
           {(q || collection || stock || archived || sale) && (
             <Link
               href="/admin/products"
-              className="pb-2.5 text-[11.5px] tracking-[0.14em] uppercase text-taupe hover:text-champagne"
+              className="pb-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-taupe hover:text-champagne"
             >
               Clear
             </Link>
@@ -271,9 +271,11 @@ export default async function AdminProductsPage({
                         <Td>{product.collection}</Td>
                         <Td>
                           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <span>{formatPrice(toAed(product.aed))}</span>
+                            <span className="font-medium tabular-nums text-champagne">
+                              {formatPrice(toAed(product.aed))}
+                            </span>
                             {product.wasAed && (
-                              <span className="text-taupe line-through">
+                              <span className="tabular-nums text-taupe line-through">
                                 {formatPrice(toAed(product.wasAed))}
                               </span>
                             )}
@@ -298,7 +300,7 @@ export default async function AdminProductsPage({
                           <span className="flex justify-end gap-4">
                             <Link
                               href={`/admin/products/${product.id}`}
-                              className="text-[11.5px] tracking-[0.14em] uppercase text-gold-light hover:text-champagne"
+                              className="text-[12px] font-medium tracking-[0.1em] uppercase text-gold-light hover:text-champagne"
                             >
                               Edit
                             </Link>
@@ -310,7 +312,7 @@ export default async function AdminProductsPage({
                               />
                               <button
                                 type="submit"
-                                className="cursor-pointer border-none bg-transparent p-0 text-[11.5px] tracking-[0.14em] uppercase text-taupe hover:text-wine-bright"
+                                className="cursor-pointer border-none bg-transparent p-0 text-[12px] font-medium tracking-[0.1em] uppercase text-taupe hover:text-wine-bright"
                               >
                                 {product.isArchived ? "Restore" : "Archive"}
                               </button>

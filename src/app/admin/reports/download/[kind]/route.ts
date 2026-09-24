@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { currentActor } from "@/modules/admin";
 import { inventoryCsv, ordersCsv, salesCsv, resolveRange } from "@/modules/reporting";
 import type { DateRange } from "@/modules/reporting";
+import { endOfShopDay, startOfShopDay } from "@/lib/shop-time";
 
 /**
  * CSV downloads.
@@ -56,9 +57,9 @@ function rangeFromSearch(search: URLSearchParams): DateRange {
   const to = search.get("to");
 
   if (from && to) {
-    const start = new Date(`${from}T00:00:00`);
-    const end = new Date(`${to}T23:59:59`);
-    if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+    const start = startOfShopDay(from);
+    const end = endOfShopDay(to);
+    if (start && end && start <= end) {
       return { from: start, to: end };
     }
   }

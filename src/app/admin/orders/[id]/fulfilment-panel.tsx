@@ -44,7 +44,7 @@ export function FulfilmentPanel({
   return (
     <div className="flex flex-col gap-4">
       {allowed.length === 0 ? (
-        <p className="m-0 border border-ink-line px-4 py-3 text-[13.5px] leading-[1.7] text-taupe">
+        <p className="m-0 border border-ink-line px-4 py-3 text-[14px] leading-[1.7] text-taupe">
           This order is {current.toLowerCase()} — there is nowhere left for it to
           go. A delivered order that comes back is handled as a return.
         </p>
@@ -70,14 +70,14 @@ export function FulfilmentPanel({
           )}
 
           <label className="flex flex-col gap-2">
-            <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+            <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
               Move to
             </span>
             <select
               name="status"
               value={next}
               onChange={(e) => setNext(e.target.value)}
-              className="border border-ink-line bg-ink px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
+              className="border border-ink-line bg-admin-surface px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
             >
               {allowed.map((option) => (
                 <option key={option} value={option}>
@@ -90,14 +90,14 @@ export function FulfilmentPanel({
           {next === "DISPATCHED" && (
             <div className="flex flex-col gap-4 border border-ink-line p-4">
               <label className="flex flex-col gap-2">
-                <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+                <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
                   Courier
                 </span>
                 <select
                   name="courierName"
                   defaultValue={courierName ?? couriers[0]}
                   required
-                  className="border border-ink-line bg-ink px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
+                  className="border border-ink-line bg-admin-surface px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
                 >
                   {couriers.map((courier) => (
                     <option key={courier} value={courier}>
@@ -108,7 +108,7 @@ export function FulfilmentPanel({
               </label>
 
               <label className="flex flex-col gap-2">
-                <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+                <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
                   Courier tracking number
                 </span>
                 <input
@@ -156,13 +156,13 @@ export function FulfilmentPanel({
         )}
 
         <label className="flex flex-col gap-2">
-          <span className="text-[11px] tracking-[0.16em] uppercase text-taupe">
+          <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
             Payment
           </span>
           <select
             name="paymentStatus"
             defaultValue={paymentStatus}
-            className="border border-ink-line bg-ink px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
+            className="border border-ink-line bg-admin-surface px-3 py-2.5 text-[14px] text-champagne outline-none focus:border-gold"
           >
             {["PENDING", "PAID", "REFUNDED", "FAILED"].map((option) => (
               <option key={option} value={option}>

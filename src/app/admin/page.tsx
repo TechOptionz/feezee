@@ -21,8 +21,9 @@ import {
   topSellers,
   lowStockVariants,
 } from "@/modules/reporting";
-import { listOrders } from "@/modules/orders";
+import { recentOrders } from "@/modules/orders";
 import { formatPrice } from "@/lib/currency";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ export default async function AdminDashboard({
     salesByCollection(range),
     topSellers(range, 6),
     lowStockVariants(8),
-    listOrders({ take: 6 }),
+    recentOrders(6),
   ]);
 
   const collectionTotal = byCollection.reduce((sum, s) => sum + s.revenueAed, 0);
@@ -59,7 +60,7 @@ export default async function AdminDashboard({
 
       <DateRangeTabs preset={preset} from={from} to={to} />
 
-      <div className="mt-[clamp(20px,2.6vw,30px)] grid grid-cols-2 nav:grid-cols-3 wide:grid-cols-6 gap-3">
+      <div className="mt-[clamp(20px,2.6vw,30px)] grid grid-cols-2 nav:grid-cols-3 min-[1560px]:grid-cols-6 gap-3">
         <StatCard label="Gross revenue" value={formatPrice(kpis.grossRevenueAed)} />
         <StatCard
           label="Net collected"
@@ -105,22 +106,22 @@ export default async function AdminDashboard({
               {byCollection.map((slice) => (
                 <li key={slice.collection}>
                   <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-[13.5px] text-sandstone">
+                    <span className="text-[14px] text-sandstone">
                       {slice.collection}
                     </span>
-                    <span className="text-[13.5px] text-champagne tabular-nums">
+                    <span className="text-[14px] font-medium text-champagne tabular-nums">
                       {formatPrice(slice.revenueAed)}
                     </span>
                   </div>
-                  <div className="mt-2 h-[5px] bg-ink-line">
+                  <div className="mt-2 h-[6px] bg-ink-line">
                     <div
-                      className="h-full bg-gold/70"
+                      className="h-full bg-gold/80"
                       style={{
                         width: `${collectionTotal ? (slice.revenueAed / collectionTotal) * 100 : 0}%`,
                       }}
                     />
                   </div>
-                  <div className="mt-1.5 text-[11.5px] text-taupe">
+                  <div className="mt-1.5 text-[12.5px] tabular-nums text-taupe">
                     {slice.units} {slice.units === 1 ? "piece" : "pieces"}
                   </div>
                 </li>
@@ -165,7 +166,7 @@ export default async function AdminDashboard({
           action={
             <Link
               href="/admin/inventory"
-              className="text-[11.5px] tracking-[0.14em] uppercase text-gold-light hover:text-champagne"
+              className="text-[12px] font-medium tracking-[0.1em] uppercase text-gold-light hover:text-champagne"
             >
               Restock →
             </Link>
@@ -196,7 +197,12 @@ export default async function AdminDashboard({
                       </Td>
                       <Td>{row.size}</Td>
                       <Td align="right">
-                        <span className={row.stock === 0 ? "text-wine-bright" : "text-sandstone"}>
+                        <span
+                          className={cn(
+                            "font-semibold",
+                            row.stock === 0 ? "text-wine-bright" : "text-gold-light",
+                          )}
+                        >
                           {row.stock === 0 ? "Sold out" : row.stock}
                         </span>
                       </Td>
@@ -215,7 +221,7 @@ export default async function AdminDashboard({
           action={
             <Link
               href="/admin/orders"
-              className="text-[11.5px] tracking-[0.14em] uppercase text-gold-light hover:text-champagne"
+              className="text-[12px] font-medium tracking-[0.1em] uppercase text-gold-light hover:text-champagne"
             >
               All orders →
             </Link>
@@ -234,15 +240,15 @@ export default async function AdminDashboard({
                 </tr>
               </thead>
               <tbody>
-                {recent.orders.length === 0 ? (
+                {recent.length === 0 ? (
                   <EmptyRow span={6}>No orders yet.</EmptyRow>
                 ) : (
-                  recent.orders.map((order) => (
+                  recent.map((order) => (
                     <tr key={order.id}>
                       <Td>
                         <Link
                           href={`/admin/orders/${order.id}`}
-                          className="text-champagne hover:text-gold-light"
+                          className="whitespace-nowrap font-medium tabular-nums text-champagne hover:text-gold-light"
                         >
                           {order.orderNumber}
                         </Link>

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { RANGE_PRESETS, type DateRange, resolveRange } from "@/modules/reporting";
+import { ACTION } from "@/app/admin/admin-ui";
+import { endOfShopDay, startOfShopDay } from "@/lib/shop-time";
 import { cn } from "@/lib/utils";
 
 /**
@@ -33,10 +35,11 @@ export function DateRangeTabs({
             href={`${basePath}?range=${encodeURIComponent(option)}`}
             aria-current={here ? "page" : undefined}
             className={cn(
-              "border px-3.5 py-2 text-[11.5px] tracking-[0.14em] uppercase transition-colors",
+              ACTION,
+              "border px-3.5 py-2 transition-colors",
               here
-                ? "border-gold text-champagne hover:text-champagne"
-                : "border-ink-line text-taupe hover:border-ink-border hover:text-champagne",
+                ? "border-gold bg-gold/10 text-champagne hover:text-champagne"
+                : "border-ink-line bg-admin-surface text-taupe hover:border-ink-border hover:text-champagne",
             )}
           >
             {option}
@@ -51,22 +54,23 @@ export function DateRangeTabs({
           name="from"
           defaultValue={from}
           aria-label="From date"
-          className="border border-ink-line bg-transparent px-2.5 py-[7px] text-[12px] text-sandstone outline-none focus:border-gold"
+          className="border border-ink-line bg-admin-surface px-2.5 py-[6px] text-[13px] tabular-nums text-sandstone outline-none focus:border-gold"
         />
         <input
           type="date"
           name="to"
           defaultValue={to}
           aria-label="To date"
-          className="border border-ink-line bg-transparent px-2.5 py-[7px] text-[12px] text-sandstone outline-none focus:border-gold"
+          className="border border-ink-line bg-admin-surface px-2.5 py-[6px] text-[13px] tabular-nums text-sandstone outline-none focus:border-gold"
         />
         <button
           type="submit"
           className={cn(
-            "cursor-pointer border px-3.5 py-2 text-[11.5px] tracking-[0.14em] uppercase",
+            ACTION,
+            "cursor-pointer border px-3.5 py-2",
             custom
-              ? "border-gold bg-transparent text-champagne"
-              : "border-ink-line bg-transparent text-taupe hover:border-ink-border hover:text-champagne",
+              ? "border-gold bg-gold/10 text-champagne"
+              : "border-ink-line bg-admin-surface text-taupe hover:border-ink-border hover:text-champagne",
           )}
         >
           Apply
@@ -89,9 +93,9 @@ export function rangeFromParams(params: {
   to?: string;
 }): { range: DateRange; preset: string; from?: string; to?: string } {
   if (params.from && params.to) {
-    const from = new Date(`${params.from}T00:00:00`);
-    const to = new Date(`${params.to}T23:59:59`);
-    if (!Number.isNaN(from.getTime()) && !Number.isNaN(to.getTime()) && from <= to) {
+    const from = startOfShopDay(params.from);
+    const to = endOfShopDay(params.to);
+    if (from && to && from <= to) {
       return { range: { from, to }, preset: "Custom", from: params.from, to: params.to };
     }
   }

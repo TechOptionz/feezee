@@ -657,6 +657,39 @@ export async function listOrders(filter: OrderFilter = {}) {
   return { orders: rows.map(toOrderView), total };
 }
 
+/**
+ * The dashboard's "latest orders" strip.
+ *
+ * Deliberately not `listOrders`: that loads items, transactions and returns
+ * and runs a count alongside, which for six rows that display none of it is
+ * several round trips to a database ~100 ms away (§4.21). This is one.
+ */
+export async function recentOrders(limit = 6) {
+  const rows = await prisma.order.findMany({
+    select: {
+      id: true,
+      orderNumber: true,
+      customerName: true,
+      shippingEmirate: true,
+      placedAt: true,
+      fulfillmentStatus: true,
+      totalAed: true,
+    },
+    orderBy: { placedAt: "desc" },
+    take: limit,
+  });
+
+  return rows.map((row) => ({
+    id: row.id,
+    orderNumber: row.orderNumber,
+    customerName: row.customerName,
+    shippingEmirate: row.shippingEmirate,
+    fulfillmentStatus: row.fulfillmentStatus,
+    placedAt: row.placedAt.toISOString(),
+    totalAed: toAed(row.totalAed),
+  }));
+}
+
 // ---------------------------------------------------------------------------
 // Moving an order along
 // ---------------------------------------------------------------------------

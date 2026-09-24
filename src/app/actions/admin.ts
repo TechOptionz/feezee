@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { Prisma } from "@/generated/prisma/client";
 import { redirect } from "next/navigation";
 import {
   FulfillmentStatus,
@@ -475,6 +476,25 @@ function slugify(name: string): string {
     .replace(/^-|-$/g, "");
 }
 
+/**
+ * A slug nobody else holds. Two pieces both called "Sage Kurta" become
+ * `sage-kurta` and `sage-kurta-2` rather than a unique-constraint error the
+ * buyer sees as "Something went wrong".
+ */
+async function uniqueSlug(tx: Prisma.TransactionClient, base: string): Promise<string> {
+  const stem = base || "piece";
+  const rows = await tx.product.findMany({
+    where: { slug: { startsWith: stem } },
+    select: { slug: true },
+  });
+  const taken = new Set(rows.map((row) => row.slug));
+  if (!taken.has(stem)) return stem;
+  for (let n = 2; ; n++) {
+    const candidate = `${stem}-${n}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+}
+
 export async function saveProductAction(
   _previous: AdminFormState,
   formData: FormData,
@@ -509,7 +529,6 @@ export async function saveProductAction(
 
   const data = {
     name,
-    slug: slugify(name),
     fabric: String(formData.get("fabric") ?? "").trim(),
     fabricFamily: String(formData.get("fabricFamily") ?? "").trim(),
     type: String(formData.get("type") ?? "Kurtas").trim(),
@@ -529,9 +548,17 @@ export async function saveProductAction(
 
   try {
     const product = await prisma.$transaction(async (tx) => {
+      /*
+       * The slug is minted once, when the piece is created, and never
+       * rewritten: it is the garment's URL, and renaming "Sage Kurta" to
+       * "Sage Green Kurta" must not break every link, bookmark and search
+       * result that points at it.
+       */
       const row = id
         ? await tx.product.update({ where: { id }, data })
-        : await tx.product.create({ data });
+        : await tx.product.create({
+            data: { ...data, slug: await uniqueSlug(tx, slugify(name)) },
+          });
 
       await tx.productImage.deleteMany({ where: { productId: row.id } });
       if (images.length > 0) {

@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import {
   AdminHeading,
   AdminPill,
+  Figure,
+  LABEL,
   Panel,
   adminDateTime,
 } from "@/app/admin/admin-ui";
@@ -37,6 +39,7 @@ export default async function AdminOrderPage({
       <div className="print:hidden">
         <AdminHeading
           title={order.orderNumber}
+          identifier
           standfirst={`Placed ${adminDateTime(order.placedAt)} · ${order.items.reduce((n, i) => n + i.quantity, 0)} pieces`}
           action={
             <div className="flex flex-wrap items-center gap-3">
@@ -46,7 +49,7 @@ export default async function AdminOrderPage({
               />
               <Link
                 href="/admin/orders"
-                className="border border-ink-border px-5 py-2.5 text-[11.5px] tracking-[0.16em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
+                className="border border-ink-border px-5 py-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
               >
                 ← All orders
               </Link>
@@ -57,7 +60,7 @@ export default async function AdminOrderPage({
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <AdminPill status={order.fulfillmentStatus} />
           <AdminPill status={order.paymentStatus} />
-          <span className="text-[12.5px] tracking-[0.14em] uppercase text-taupe">
+          <span className="text-[12.5px] font-medium tracking-[0.1em] uppercase text-taupe">
             {order.paymentMethod === "COD"
               ? "Cash on delivery"
               : order.paymentMethod === "BANK_TRANSFER"
@@ -73,7 +76,7 @@ export default async function AdminOrderPage({
                 {order.items.map((item) => (
                   <li
                     key={item.id}
-                    className="flex gap-4 border-b border-ink-line/60 py-3.5 last:border-b-0"
+                    className="flex gap-4 border-b border-ink-line/70 py-3.5 last:border-b-0"
                   >
                     <div className="relative h-[64px] w-[50px] shrink-0 overflow-hidden bg-ink-line">
                       {item.image && (
@@ -87,22 +90,22 @@ export default async function AdminOrderPage({
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[14px] text-champagne">{item.productName}</div>
+                      <div className="text-[14px] font-medium text-champagne">{item.productName}</div>
                       <div className="mt-1 text-[12px] text-taupe">
                         Size {item.variantSize} · {item.sku}
                       </div>
-                      <div className="mt-1 text-[12.5px] text-sandstone">
+                      <div className="mt-1 text-[13px] tabular-nums text-sandstone">
                         {item.quantity} × {formatPrice(item.unitPriceAed)}
                       </div>
                     </div>
-                    <div className="whitespace-nowrap text-[14px] text-champagne tabular-nums">
+                    <div className="whitespace-nowrap text-[15px] font-medium text-champagne tabular-nums">
                       {formatPrice(item.totalAed)}
                     </div>
                   </li>
                 ))}
               </ul>
 
-              <dl className="m-0 mt-5 flex flex-col gap-2 border-t border-ink-line pt-4 text-[13.5px]">
+              <dl className="m-0 mt-5 flex flex-col gap-2 border-t border-ink-line pt-4 text-[14px]">
                 <Row label="Subtotal" value={formatPrice(order.subtotalAed)} />
                 <Row
                   label="Delivery"
@@ -111,12 +114,10 @@ export default async function AdminOrderPage({
                   }
                 />
                 <Row label="VAT (5%)" value={formatPrice(order.vatAed)} />
-                <div className="flex justify-between gap-4 border-t border-ink-line pt-3">
-                  <dt className="text-[11.5px] tracking-[0.16em] uppercase text-taupe self-center">
-                    Total
-                  </dt>
-                  <dd className="m-0 text-[17px] text-champagne tabular-nums">
-                    {formatPrice(order.totalAed)}
+                <div className="flex items-baseline justify-between gap-4 border-t border-ink-line pt-3">
+                  <dt className={LABEL}>Total</dt>
+                  <dd className="m-0 text-[22px] font-semibold leading-none tracking-[-0.01em] text-champagne">
+                    <Figure value={formatPrice(order.totalAed)} />
                   </dd>
                 </div>
               </dl>
@@ -128,7 +129,7 @@ export default async function AdminOrderPage({
                   {order.transactions.map((transaction) => (
                     <li
                       key={transaction.id}
-                      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-ink-line/60 pb-2.5 last:border-b-0 last:pb-0 text-[13px]"
+                      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-ink-line/70 pb-2.5 last:border-b-0 last:pb-0 text-[13px]"
                     >
                       <span className="text-sandstone">
                         {transaction.provider}
@@ -156,7 +157,7 @@ export default async function AdminOrderPage({
                   {order.returns.map((ret) => (
                     <li
                       key={ret.id}
-                      className="flex flex-wrap items-center justify-between gap-3 text-[13.5px]"
+                      className="flex flex-wrap items-center justify-between gap-3 text-[14px]"
                     >
                       <Link
                         href="/admin/returns"
@@ -186,7 +187,7 @@ export default async function AdminOrderPage({
             </Panel>
 
             <Panel title="Customer">
-              <div className="flex flex-col gap-3 text-[13.5px] leading-[1.7]">
+              <div className="flex flex-col gap-3 text-[14px] leading-[1.7]">
                 <div>
                   <div className="text-champagne">{order.customerName}</div>
                   <a
@@ -210,7 +211,7 @@ export default async function AdminOrderPage({
                 </div>
 
                 <div className="border-t border-ink-line pt-3">
-                  <div className="mb-1.5 text-[11px] tracking-[0.16em] uppercase text-taupe">
+                  <div className="mb-1.5 text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
                     Delivering to
                   </div>
                   <address className="not-italic text-sandstone">
@@ -228,7 +229,7 @@ export default async function AdminOrderPage({
 
                 {order.shippingNotes && (
                   <div className="border-t border-ink-line pt-3">
-                    <div className="mb-1.5 text-[11px] tracking-[0.16em] uppercase text-taupe">
+                    <div className="mb-1.5 text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
                       Note from the customer
                     </div>
                     <p className="m-0 text-sandstone">{order.shippingNotes}</p>
@@ -237,7 +238,7 @@ export default async function AdminOrderPage({
 
                 {order.trackingNumber && (
                   <div className="border-t border-ink-line pt-3">
-                    <div className="mb-1.5 text-[11px] tracking-[0.16em] uppercase text-taupe">
+                    <div className="mb-1.5 text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
                       Courier tracking
                     </div>
                     <p className="m-0 text-sandstone">
@@ -270,7 +271,7 @@ function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4">
       <dt className="text-taupe">{label}</dt>
-      <dd className="m-0 text-sandstone tabular-nums">{value}</dd>
+      <dd className="m-0 font-medium text-sandstone tabular-nums">{value}</dd>
     </div>
   );
 }

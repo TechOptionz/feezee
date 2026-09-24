@@ -40,7 +40,7 @@ export default async function EditProductPage({
             <Link
               href={`/product/${product.slug}`}
               target="_blank"
-              className="border border-ink-border px-5 py-2.5 text-[11.5px] tracking-[0.16em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
+              className="border border-ink-border px-5 py-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
             >
               View in shop ↗
             </Link>

@@ -73,14 +73,14 @@ export default async function AdminReturnsPage({
                     <div className="flex items-center gap-2">
                       <AdminPill status={request.status} />
                       {request.isRestocked && (
-                        <span className="border border-gold/40 bg-gold/10 px-2.5 py-1 text-[11px] tracking-[0.14em] uppercase text-gold-light">
+                        <span className="border border-gold/40 bg-gold/10 px-2.5 py-1 text-[11px] font-medium tracking-[0.08em] uppercase text-gold-light">
                           restocked
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <ul className="m-0 mt-4 p-0 list-none flex flex-col gap-1.5 text-[13.5px] text-sandstone">
+                  <ul className="m-0 mt-4 p-0 list-none flex flex-col gap-1.5 text-[14px] text-sandstone">
                     {request.items.map((item) => (
                       <li key={item.id}>
                         {item.quantity} × {item.productName}{" "}
@@ -92,7 +92,7 @@ export default async function AdminReturnsPage({
                     ))}
                   </ul>
 
-                  <p className="m-0 mt-4 text-[13.5px] leading-[1.7] text-sandstone">
+                  <p className="m-0 mt-4 text-[14px] leading-[1.7] text-sandstone">
                     <span className="text-taupe">Reason:</span> {request.reason}
                   </p>
                   {request.customerNotes && (
@@ -101,7 +101,7 @@ export default async function AdminReturnsPage({
                     </p>
                   )}
 
-                  <p className="m-0 mt-4 text-[13.5px] text-sandstone">
+                  <p className="m-0 mt-4 text-[14px] text-sandstone">
                     <span className="text-taupe">
                       {request.status === "REFUNDED" ? "Refunded:" : "Full refund would be:"}
                     </span>{" "}
@@ -146,7 +146,7 @@ function Tab({
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "border px-3.5 py-2 text-[11.5px] tracking-[0.14em] uppercase transition-colors",
+        "border px-3.5 py-2 text-[12px] font-medium tracking-[0.1em] uppercase transition-colors",
         active
           ? "border-gold text-champagne hover:text-champagne"
           : "border-ink-line text-taupe hover:border-ink-border hover:text-champagne",

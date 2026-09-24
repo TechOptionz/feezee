@@ -21,6 +21,9 @@ const LINKS = [
  *
  * `/admin` is matched exactly; every other entry matches its whole subtree, so
  * an order's own page keeps "Orders" lit.
+ *
+ * The entry you are on gets a raised ground and a gold rule: along its left
+ * edge in the sidebar, along its bottom edge when the nav is a row on a phone.
  */
 export function AdminNav() {
   const pathname = usePathname();
@@ -28,7 +31,7 @@ export function AdminNav() {
   return (
     <nav
       aria-label="Admin sections"
-      className="flex gap-x-1 gap-y-0 overflow-x-auto px-3 pb-3 nav:flex-col nav:overflow-visible nav:px-3 nav:py-2"
+      className="flex gap-x-1 gap-y-0 overflow-x-auto px-3 pb-3 nav:flex-col nav:gap-y-0.5 nav:overflow-visible nav:px-3 nav:py-2"
     >
       {LINKS.map((link) => {
         const here =
@@ -42,10 +45,10 @@ export function AdminNav() {
             href={link.href}
             aria-current={here ? "page" : undefined}
             className={cn(
-              "whitespace-nowrap px-3 py-2.5 text-[12.5px] tracking-[0.14em] uppercase transition-colors",
+              "whitespace-nowrap px-3 py-2.5 text-[13px] font-medium tracking-[0.08em] uppercase transition-colors",
               here
-                ? "bg-ink-line/60 text-champagne hover:text-champagne"
-                : "text-taupe hover:text-champagne",
+                ? "bg-admin-raised text-champagne shadow-[inset_0_-2px_0_0_var(--fz-gold)] nav:shadow-[inset_2px_0_0_0_var(--fz-gold)] hover:text-champagne"
+                : "text-taupe hover:bg-admin-surface hover:text-champagne",
             )}
           >
             {link.label}

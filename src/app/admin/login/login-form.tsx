@@ -22,7 +22,7 @@ export function AdminLoginForm({ next }: { next: string }) {
       {state.status === "error" && state.message && (
         <p
           role="alert"
-          className="m-0 border border-wine/50 bg-wine/10 px-4 py-3 text-[13.5px] leading-[1.6] text-wine-bright"
+          className="m-0 border border-wine/50 bg-wine/10 px-4 py-3 text-[14px] leading-[1.6] text-wine-bright"
         >
           {state.message}
         </p>
@@ -54,7 +54,7 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-2">
-      <span className="text-[11.5px] tracking-[0.18em] uppercase text-taupe">
+      <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
         {label}
       </span>
       <input
@@ -74,7 +74,7 @@ function Submit() {
     <button
       type="submit"
       disabled={pending}
-      className="mt-1 cursor-pointer border-none bg-gold px-7 py-3.5 text-[12.5px] tracking-[0.18em] uppercase text-ink disabled:cursor-not-allowed disabled:opacity-60"
+      className="mt-1 cursor-pointer border-none bg-gold px-7 py-3.5 text-[12.5px] font-semibold tracking-[0.12em] uppercase text-ink disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? "Signing in…" : "Sign in"}
     </button>
