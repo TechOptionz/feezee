@@ -63,6 +63,12 @@ export function trackOrderUrl(orderNumber: string): string {
  */
 export const contact = {
   legalName: "FEEZEE SILAI FASHION L.L.C",
+  /**
+   * The Tax Registration Number printed on every invoice. Configuration
+   * rather than a literal: the invoice prints a dash until it is set, which
+   * is better than printing a number that is not the shop's.
+   */
+  trn: process.env.NEXT_PUBLIC_TRN ?? "",
   email: "feezeesilai@gmail.com",
   whatsapp: {
     e164: "971582279302",

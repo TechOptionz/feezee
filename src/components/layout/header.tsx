@@ -40,7 +40,7 @@ export function Header({ overHero = false }: { overHero?: boolean }) {
   return (
     <header
       className={cn(
-        "z-50 transition-colors duration-500",
+        "z-50 transition-colors duration-500 print:hidden",
         overHero
           ? "fixed inset-x-0 top-0"
           : "relative bg-cream border-b border-line",

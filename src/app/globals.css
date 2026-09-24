@@ -238,3 +238,34 @@
     opacity: 0.5;
   }
 }
+
+/*
+ * Paper.
+ *
+ * The receipt and the back-office order page each carry a `PrintInvoice` that
+ * is `hidden print:block`; every piece of chrome around it is `print:hidden`.
+ * What is left here is what utilities cannot say: the page size, a white
+ * ground under the ink-coloured admin, and no fixed widgets floating over the
+ * invoice. Colours are kept exactly as authored so the hairlines on the
+ * invoice table survive a printer's "no backgrounds" default.
+ */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 16mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Anything pinned to the viewport: chat bubble, drawers, sticky bars. */
+  .fixed,
+  .sticky {
+    display: none !important;
+  }
+}

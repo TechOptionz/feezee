@@ -127,7 +127,7 @@ export function ChatWidget({ products }: { products: ProductView[] }) {
         aria-controls={panelId}
         aria-label={open ? "Close the FEEZEE assistant" : "Ask the FEEZEE assistant"}
         className={cn(
-          "fixed bottom-5 right-5 z-70 w-14 h-14 rounded-full cursor-pointer",
+          "print:hidden fixed bottom-5 right-5 z-70 w-14 h-14 rounded-full cursor-pointer",
           "flex items-center justify-center border border-gold/40",
           "bg-ink text-champagne shadow-[0_10px_30px_rgba(43,33,24,0.35)]",
           "transition-transform duration-300 hover:scale-105",
@@ -144,7 +144,7 @@ export function ChatWidget({ products }: { products: ProductView[] }) {
           role="dialog"
           aria-label="FEEZEE assistant"
           className={cn(
-            "fixed z-70 flex flex-col overflow-hidden bg-cream",
+            "print:hidden fixed z-70 flex flex-col overflow-hidden bg-cream",
             "border border-line shadow-[0_24px_60px_rgba(43,33,24,0.28)]",
             "bottom-24 right-5 w-[min(380px,calc(100vw-40px))] max-h-[min(560px,calc(100vh-140px))]",
             "max-[520px]:inset-x-3 max-[520px]:bottom-3 max-[520px]:top-3 max-[520px]:w-auto max-[520px]:max-h-none",

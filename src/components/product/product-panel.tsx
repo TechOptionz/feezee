@@ -4,12 +4,13 @@ import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { ShareRow } from "@/components/product/share-row";
 import { useStore } from "@/components/store/store-provider";
-import { HeartIcon, PlusMinusIcon } from "@/components/ui/icons";
+import { HeartIcon, PlusMinusIcon, WhatsAppIcon } from "@/components/ui/icons";
 import { collectionHref } from "@/content/collections";
 import { COLOUR_NOTE, sizeGuide } from "@/content/product-detail";
 import { discountPct } from "@/content/products";
 import type { ProductView, VariantView } from "@/modules/catalogue";
 import { formatPrice } from "@/lib/currency";
+import { whatsappHref } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const TABS = ["Details", "Description", "Size Guide"] as const;
@@ -56,6 +57,17 @@ export function ProductPanel({
 
   const isWished = Boolean(wished[product.id]);
   const maxQty = Math.max(1, Math.min(chosen?.stock ?? 1, 10));
+
+  /* The WhatsApp inquiry opens with the garment, the size on screen and the
+     dirham price already written, so the boutique can answer without asking
+     which one. Always in AED whatever the shopper is browsing in: that is the
+     currency the shop quotes and invoices in. When no size is chosen — every
+     size gone — the sentence simply leaves the size out. */
+  const inquiryHref = whatsappHref(
+    `Hello FEEZEE Boutique, I am inquiring about the ${product.name}${
+      chosen ? ` in size ${chosen.size}` : ""
+    } (${formatPrice(chosen?.priceAed ?? product.aed, "AED")}): ${url}`,
+  );
 
   /* "Size chart" is the same panel as the third tab rather than a dialog of
      its own: one copy of the table, and it stays open while sizes are tried. */
@@ -281,6 +293,29 @@ export function ProductPanel({
           <HeartIcon size={16} filled={isWished} />
           {isWished ? "Saved to wishlist" : "Add to wishlist"}
         </button>
+
+        {/* Order or inquire via WhatsApp: a quiet line rather than a third
+            button, because it is for the question, not the purchase. */}
+        <a
+          href={inquiryHref}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Inquire about ${product.name} on WhatsApp`}
+          className="group mt-1 flex items-start justify-center gap-2.5 px-2 py-1.5 text-center text-[13px] leading-[1.6] text-cocoa transition-colors duration-200 hover:text-ink"
+        >
+          <span
+            aria-hidden
+            className="mt-[3px] shrink-0 text-gold-dark transition-colors duration-200 group-hover:text-ink"
+          >
+            <WhatsAppIcon size={16} />
+          </span>
+          <span>
+            Need styling advice or custom sizing?{" "}
+            <span className="whitespace-nowrap border-b border-gold-dark/60 pb-px tracking-[0.04em] text-gold-dark transition-colors duration-200 group-hover:border-ink group-hover:text-ink">
+              Chat with our Dubai boutique on WhatsApp
+            </span>
+          </span>
+        </a>
       </div>
 
       {/* Every garment on this site can be cut to measure, and a sold-out size

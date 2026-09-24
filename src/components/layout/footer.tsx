@@ -52,7 +52,7 @@ export function Footer() {
   return (
     <footer
       id="footer"
-      className="bg-ink text-sandstone mt-[clamp(48px,7vw,90px)] px-[18px] pt-[clamp(40px,6vw,70px)] pb-[30px]"
+      className="print:hidden bg-ink text-sandstone mt-[clamp(48px,7vw,90px)] px-[18px] pt-[clamp(40px,6vw,70px)] pb-[30px]"
     >
       <div className="max-w-[var(--fz-container)] mx-auto flex flex-wrap gap-[38px]">
         <div className="flex-[1_1_260px] flex flex-col gap-3">

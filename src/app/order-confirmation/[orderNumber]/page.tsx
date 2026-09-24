@@ -7,6 +7,8 @@ import { Breadcrumb } from "@/components/shop/breadcrumb";
 import { Values } from "@/components/sections/values";
 import { WhatsAppIcon } from "@/components/ui/icons";
 import { OrderTimeline } from "@/components/orders/order-timeline";
+import { PrintButton } from "@/components/orders/print-button";
+import { PrintInvoice } from "@/components/orders/print-invoice";
 import { currentUser } from "@/modules/customers";
 import { orderByNumber } from "@/modules/orders";
 import { formatUaePhone } from "@/modules/checkout";
@@ -72,7 +74,12 @@ export default async function OrderConfirmationPage({
 
   return (
     <PageFrame>
-      <div className="max-w-[var(--fz-container)] mx-auto px-[18px] pt-[clamp(20px,3vw,40px)]">
+      {/*
+        The screen version and the paper version are siblings: everything the
+        customer scrolls through is hidden when printing, and the formal tax
+        invoice below it is shown only then.
+      */}
+      <div className="print:hidden max-w-[var(--fz-container)] mx-auto px-[18px] pt-[clamp(20px,3vw,40px)]">
         <Breadcrumb trail={["Order confirmed"]} />
 
         <p className="m-0 mt-[clamp(20px,3vw,34px)] flex items-center gap-3 text-[12.5px] tracking-[0.3em] uppercase text-muted">
@@ -120,6 +127,11 @@ export default async function OrderConfirmationPage({
                 Opens with this number already filled in.
               </span>
             </div>
+
+            <PrintButton
+              label="Print Tax Receipt"
+              className="mt-4 border border-line text-ink hover:text-ink px-6 py-3"
+            />
 
             <p className="m-0 mt-5 max-w-[62ch] text-[14px] leading-[1.7] text-cocoa">
               <strong className="text-ink">Save this number.</strong> It is all
@@ -319,7 +331,11 @@ export default async function OrderConfirmationPage({
         </div>
       </div>
 
-      <Values />
+      <div className="print:hidden">
+        <Values />
+      </div>
+
+      <PrintInvoice order={order} kind="receipt" redactContact={!showContactInFull} />
     </PageFrame>
   );
 }

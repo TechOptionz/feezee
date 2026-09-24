@@ -29,9 +29,9 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-ink text-sandstone">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col nav:flex-row">
-        <aside className="shrink-0 border-b border-ink-line nav:w-[232px] nav:border-b-0 nav:border-r">
+    <div className="min-h-screen bg-ink text-sandstone print:min-h-0 print:bg-white print:text-black">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col nav:flex-row print:block print:min-h-0 print:max-w-none">
+        <aside className="print:hidden shrink-0 border-b border-ink-line nav:w-[232px] nav:border-b-0 nav:border-r">
           <div className="flex items-center justify-between gap-4 px-5 py-5 nav:block">
             <Link href="/admin" className="block">
               <span className="block font-display text-[20px] leading-none tracking-[0.22em] uppercase text-champagne">
@@ -63,7 +63,7 @@ export default async function AdminLayout({
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-ink-line px-[clamp(16px,2.4vw,32px)] py-4">
+          <header className="print:hidden flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-ink-line px-[clamp(16px,2.4vw,32px)] py-4">
             <div className="min-w-0">
               <div className="truncate text-[13.5px] text-champagne">
                 {actor.name}
@@ -84,7 +84,7 @@ export default async function AdminLayout({
             </form>
           </header>
 
-          <main className="px-[clamp(16px,2.4vw,32px)] py-[clamp(20px,3vw,36px)]">
+          <main className="px-[clamp(16px,2.4vw,32px)] py-[clamp(20px,3vw,36px)] print:p-0">
             {children}
           </main>
         </div>

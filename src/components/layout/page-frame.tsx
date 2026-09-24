@@ -18,7 +18,7 @@ export async function PageFrame({ children }: { children: React.ReactNode }) {
   const products = await catalogueForClient();
 
   return (
-    <div className="bg-cream min-h-screen flex flex-col">
+    <div className="bg-cream min-h-screen flex flex-col print:min-h-0 print:bg-white">
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />
