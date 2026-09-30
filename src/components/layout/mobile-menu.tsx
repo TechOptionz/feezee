@@ -58,8 +58,8 @@ export function MobileMenu() {
           </Link>
         ))}
 
-        {/* Search is hidden at this width, so the wishlist gets a line of its
-            own here rather than disappearing with it. */}
+        {/* The wishlist gets a line of its own here as well as its icon in the
+            header, so it can be reached from the menu by name. */}
         <Link
           href="/wishlist"
           onClick={closeMenu}

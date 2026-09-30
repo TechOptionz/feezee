@@ -1,12 +1,3 @@
-export function SearchIcon({ size = 26 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <circle cx="8.5" cy="8.5" r="6" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="13" y1="13" x2="18" y2="18" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
 /**
  * The wishlist mark, in the header and on every product tile. `filled` is the
  * saved state — same outline, flooded, so the two states sit on exactly the

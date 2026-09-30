@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { saveProductAction, type AdminFormState } from "@/app/actions/admin";
+import { DeleteProduct } from "@/app/admin/products/delete-product";
 import { ImageUploader } from "@/app/admin/products/image-uploader";
 import { SaleControls, SalePill } from "@/app/admin/products/sale-controls";
 import { cn } from "@/lib/utils";
@@ -109,11 +110,17 @@ export function ProductForm({ values }: { values: ProductFormValues }) {
             max={3}
             defaultValue={String(values.pieces)}
           />
+          {/* The same rule the action applies, so "1234" is stopped here
+              rather than after a round trip that clears the form. */}
           <Field
             label="Colour"
             name="colour"
             defaultValue={values.colour}
             placeholder="Sage Green"
+            required
+            pattern="\p{L}[\p{L} &',\/\-]*\p{L}"
+            title="A colour name in letters, e.g. Sage Green"
+            error={state.fieldErrors?.colour}
           />
           <Field
             label="Cut"
@@ -283,6 +290,11 @@ export function ProductForm({ values }: { values: ProductFormValues }) {
         >
           Cancel
         </Link>
+        {values.id !== null && (
+          <span className="ml-auto">
+            <DeleteProduct productId={values.id} name={values.name} variant="form" />
+          </span>
+        )}
       </div>
     </form>
   );

@@ -56,7 +56,8 @@ export function ProductPanel({
   );
 
   const isWished = Boolean(wished[product.id]);
-  const maxQty = Math.max(1, Math.min(chosen?.stock ?? 1, 10));
+  // No limit of the shop's own: the stepper stops at what is on the rail.
+  const maxQty = Math.max(1, chosen?.stock ?? 1);
 
   /* The WhatsApp inquiry opens with the garment, the size on screen and the
      dirham price already written, so the boutique can answer without asking

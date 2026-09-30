@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { StaffBar } from "@/components/layout/staff-bar";
 import { Logo } from "@/components/ui/logo";
-import { AccountIcon, BagIcon, HeartIcon, SearchIcon } from "@/components/ui/icons";
+import { AccountIcon, BagIcon, HeartIcon } from "@/components/ui/icons";
 import { useStore } from "@/components/store/store-provider";
 import { primaryNav } from "@/content/navigation";
 import { cn } from "@/lib/utils";
@@ -105,7 +105,7 @@ export function Header({ overHero = false }: { overHero?: boolean }) {
         </Link>
 
         {/*
-         * Ordered after the nav so search, wishlist and bag close the single
+         * Ordered after the nav so account, wishlist and bag close the single
          * line at the right gutter instead of sitting in against the lockup.
          * That hands their width back to the nav on the left, which carries the
          * two link groups — and the channel between them — clear of the model's
@@ -119,15 +119,11 @@ export function Header({ overHero = false }: { overHero?: boolean }) {
             overlay ? "text-cream" : "text-ink",
           )}
         >
-          <button
-            type="button"
-            aria-label="Search"
-            className="hidden nav:block bg-transparent border-none cursor-pointer p-3 text-inherit"
-          >
-            <SearchIcon />
-          </button>
-
           {/*
+            No search here. The boutique carries a few dozen pieces, and the
+            filter on every shop page already narrows them faster than typing
+            would — an icon that opened nothing was worse than no icon.
+
             Always `/account`, never a link that depends on who is signed in.
             Reading the session here would mean reading a cookie in the header,
             and a cookie read makes every page that renders the header dynamic —
@@ -142,7 +138,7 @@ export function Header({ overHero = false }: { overHero?: boolean }) {
             <AccountIcon />
           </Link>
 
-          {/* Beside search, and counted the same way as the bag. */}
+          {/* Counted the same way as the bag. */}
           <Link
             href="/wishlist"
             aria-label={

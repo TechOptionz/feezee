@@ -69,17 +69,49 @@ const phoneField = z
     return normalised;
   });
 
+/**
+ * The three lines a rider reads off the parcel.
+ *
+ * A length check alone lets "1234" through as a name, an area and a street, and
+ * a courier cannot deliver to any of them. So each has to contain actual words:
+ * letters in any script — an address typed in Arabic is as good as one in
+ * English — and enough of them that a bare villa number does not pass for a
+ * street. They are exported because the address book saves the same three
+ * fields and must not accept what the checkout would refuse.
+ */
+function letters(value: string): number {
+  return value.match(/\p{L}/gu)?.length ?? 0;
+}
+
+export const fullNameField = z
+  .string()
+  .trim()
+  .min(2, "Enter the full name for the parcel.")
+  .refine((value) => letters(value) >= 2, "Enter the name of whoever receives the parcel.");
+
+export const cityField = z
+  .string()
+  .trim()
+  .min(2, "Enter the area or city.")
+  .refine((value) => letters(value) >= 2, "Enter the area or city by name, e.g. Al Barsha.");
+
+export const addressLineField = z
+  .string()
+  .trim()
+  .min(5, "Enter the street and the building or villa, e.g. Villa 12, Al Wasl Road.")
+  .refine(
+    (value) => letters(value) >= 3,
+    "Enter the street and the building or villa, e.g. Villa 12, Al Wasl Road.",
+  );
+
 /** The delivery half of the checkout form. */
 export const shippingSchema = z.object({
-  fullName: z.string().trim().min(2, "Enter the full name for the parcel."),
+  fullName: fullNameField,
   email: z.email("Enter an email we can send the receipt to."),
   phone: phoneField,
   emirate: z.enum(EMIRATES, { message: "Choose an emirate." }),
-  city: z.string().trim().min(2, "Enter the area or city."),
-  addressLine1: z
-    .string()
-    .trim()
-    .min(4, "Enter the street, building or villa number."),
+  city: cityField,
+  addressLine1: addressLineField,
   addressLine2: z.string().trim().max(160).optional().or(z.literal("")),
   landmark: z.string().trim().max(160).optional().or(z.literal("")),
   notes: z.string().trim().max(500).optional().or(z.literal("")),

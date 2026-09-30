@@ -4,7 +4,13 @@ import { Prisma, Role } from "@/generated/prisma/client";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { EMIRATES, normaliseUaePhone } from "@/modules/checkout";
+import {
+  EMIRATES,
+  addressLineField,
+  cityField,
+  fullNameField,
+  normaliseUaePhone,
+} from "@/modules/checkout";
 import { createSession, destroySession, getSession } from "@/modules/customers/session";
 
 export * from "@/modules/customers/session";
@@ -286,7 +292,7 @@ export async function resetPassword(
 // ---------------------------------------------------------------------------
 
 export const addressSchema = z.object({
-  fullName: z.string().trim().min(2, "Enter the full name for the parcel."),
+  fullName: fullNameField,
   phone: z
     .string()
     .trim()
@@ -302,8 +308,8 @@ export const addressSchema = z.object({
       return normalised;
     }),
   emirate: z.enum(EMIRATES, { message: "Choose an emirate." }),
-  city: z.string().trim().min(2, "Enter the area or city."),
-  addressLine1: z.string().trim().min(4, "Enter the street, building or villa."),
+  city: cityField,
+  addressLine1: addressLineField,
   addressLine2: z.string().trim().max(160).optional().or(z.literal("")),
   landmark: z.string().trim().max(160).optional().or(z.literal("")),
   isDefault: z.boolean().optional(),

@@ -463,6 +463,15 @@ export async function resolveReturnAction(
 
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
+/**
+ * A colour is a name: "Sage Green", "Off-White", "Black & Ivory". Letters in
+ * any script, joined by the few marks a colour name actually uses — and no
+ * digits, so "1234" cannot end up printed under "Colour" on a garment's page.
+ * The product form carries the same pattern so the mistake is caught before
+ * the form is sent.
+ */
+const COLOUR_NAME = /^\p{L}[\p{L} &',/-]*\p{L}$/u;
+
 const LINE_CODE: Record<string, string> = {
   "Printed Lawn": "PL",
   "Luxury Pret": "LP",
@@ -511,9 +520,13 @@ export async function saveProductAction(
   const collection = String(formData.get("collection") ?? "").trim();
   const aed = Number(formData.get("aed"));
   const wasRaw = String(formData.get("wasAed") ?? "").trim();
+  const colour = String(formData.get("colour") ?? "").trim();
 
   const fieldErrors: Record<string, string> = {};
   if (name.length < 2) fieldErrors.name = "Give the piece a name.";
+  if (!COLOUR_NAME.test(colour)) {
+    fieldErrors.colour = "Enter the colour as a name, e.g. Sage Green.";
+  }
   if (!Number.isFinite(aed) || aed <= 0) fieldErrors.aed = "Enter a price in AED.";
   if (wasRaw && !Number.isFinite(Number(wasRaw))) {
     fieldErrors.wasAed = "Enter an amount, or leave it blank.";
@@ -540,7 +553,7 @@ export async function saveProductAction(
     badgeLabel: String(formData.get("badgeLabel") ?? "").trim() || null,
     badgeTone: String(formData.get("badgeTone") ?? "").trim() || null,
     cut: String(formData.get("cut") ?? "").trim(),
-    colour: String(formData.get("colour") ?? "").trim(),
+    colour,
     description: String(formData.get("description") ?? "").trim(),
     careInstructions: String(formData.get("careInstructions") ?? "").trim(),
     isArchived: formData.get("isArchived") === "on",
@@ -638,6 +651,98 @@ export async function toggleArchiveAction(formData: FormData) {
   revalidatePath("/admin/products");
   revalidatePath(`/product/${before.slug}`);
   revalidatePath("/");
+}
+
+/**
+ * Deleting a piece for good — the one thing here that cannot be undone.
+ *
+ * Archiving is still the usual way to take a garment off the site: it keeps
+ * the sizes, the stock and the ledger behind them. Deleting is for the piece
+ * that should never have existed — a test product, a duplicate, a listing made
+ * by mistake — and it takes the sizes, the photographs' rows, the stock ledger
+ * and any wishlist hearts with it.
+ *
+ * What it never takes is a sale. An order line carries its own copy of the
+ * name, size, SKU and price, so every invoice that mentions the piece reads
+ * exactly as it did. The one case it refuses is a piece on an order that has
+ * not gone out yet: cancelling that order afterwards would have no size left
+ * to put the stock back on, so those orders are settled first.
+ *
+ * Takes the id as an argument rather than a `FormData` for the same reason the
+ * sale actions below do — one of its buttons lives inside the product editor's
+ * own `<form>`.
+ */
+export async function deleteProductAction(
+  productId: number,
+): Promise<AdminFormState> {
+  let actor;
+  try {
+    actor = await requireStaffAction();
+  } catch (error) {
+    return fail(error);
+  }
+
+  try {
+    const before = Number.isInteger(productId)
+      ? await prisma.product.findUnique({
+          where: { id: productId },
+          select: {
+            name: true,
+            slug: true,
+            collection: true,
+            aed: true,
+            isArchived: true,
+            variants: { select: { id: true, sku: true, stock: true } },
+          },
+        })
+      : null;
+    if (!before) {
+      return { status: "error", message: "That piece has already been deleted." };
+    }
+
+    const openOrders = await prisma.order.count({
+      where: {
+        fulfillmentStatus: {
+          in: [FulfillmentStatus.PENDING, FulfillmentStatus.PROCESSING],
+        },
+        items: { some: { variantId: { in: before.variants.map((v) => v.id) } } },
+      },
+    });
+    if (openOrders > 0) {
+      return {
+        status: "error",
+        message: `${before.name} is on ${openOrders} ${
+          openOrders === 1 ? "order" : "orders"
+        } still to be dispatched. Dispatch or cancel ${
+          openOrders === 1 ? "it" : "them"
+        } first, or archive the piece instead.`,
+      };
+    }
+
+    await prisma.product.delete({ where: { id: productId } });
+
+    await audit({
+      actor,
+      action: "product.delete",
+      entityType: "Product",
+      entityId: String(productId),
+      previousState: {
+        name: before.name,
+        slug: before.slug,
+        collection: before.collection,
+        aed: toAed(before.aed),
+        isArchived: before.isArchived,
+        variants: before.variants.map((v) => ({ sku: v.sku, stock: v.stock })),
+      },
+    });
+
+    revalidateForProduct(before.slug);
+    revalidatePath("/admin/inventory");
+    revalidatePath("/admin");
+    return { status: "ok", message: `${before.name} deleted.` };
+  } catch (error) {
+    return fail(error);
+  }
 }
 
 // ---------------------------------------------------------------------------

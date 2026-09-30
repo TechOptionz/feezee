@@ -59,7 +59,9 @@ export async function submitCheckout(
     .filter((line) => typeof line.variantId === "string" && line.variantId)
     .map((line) => ({
       variantId: line.variantId,
-      quantity: Math.max(1, Math.min(Math.floor(line.quantity) || 1, 20)),
+      // A whole number of at least one; stock is the only ceiling, and the
+      // order transaction checks it.
+      quantity: Math.max(1, Math.floor(line.quantity) || 1),
     }));
 
   if (safeLines.length === 0) {

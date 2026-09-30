@@ -10,6 +10,7 @@ import {
   Th,
 } from "@/app/admin/admin-ui";
 import { toggleArchiveAction } from "@/app/actions/admin";
+import { DeleteProduct } from "@/app/admin/products/delete-product";
 import { SaleControls, SalePill } from "@/app/admin/products/sale-controls";
 import { requireStaff } from "@/modules/admin";
 import { prisma } from "@/lib/prisma";
@@ -105,7 +106,7 @@ export default async function AdminProductsPage({
     <>
       <AdminHeading
         title="Products"
-        standfirst="The catalogue the shop reads. Archiving a piece takes it off the site without deleting what it has already sold."
+        standfirst="The catalogue the shop reads. Archiving a piece takes it off the site and keeps it here; deleting removes it for good, though orders already placed keep their lines."
         action={
           <Link
             href="/admin/products/new"
@@ -326,6 +327,14 @@ export default async function AdminProductsPage({
                               productId={product.id}
                               aed={toAed(product.aed)}
                               wasAed={toAedOrNull(product.wasAed)}
+                            />
+                          </span>
+                          {/* Last and apart from Archive, so the one action
+                              that cannot be undone is never the nearest one. */}
+                          <span className="mt-2 flex justify-end">
+                            <DeleteProduct
+                              productId={product.id}
+                              name={product.name}
                             />
                           </span>
                         </Td>

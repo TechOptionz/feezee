@@ -20,7 +20,9 @@ export async function priceBag(lines: BasketLine[]): Promise<PricedBasket> {
     .filter((line) => typeof line.variantId === "string" && line.variantId.length > 0)
     .map((line) => ({
       variantId: line.variantId,
-      quantity: Math.max(1, Math.min(Math.floor(line.quantity) || 1, 20)),
+      // A whole number of at least one. There is no ceiling of the shop's own:
+      // `priceBasket` brings every line down to what is left on the rail.
+      quantity: Math.max(1, Math.floor(line.quantity) || 1),
     }));
 
   return priceBasket(safe);
