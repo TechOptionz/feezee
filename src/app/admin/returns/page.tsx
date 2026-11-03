@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ReturnStatus } from "@/generated/prisma/enums";
 import { AdminHeading, AdminPill, Panel, adminDate } from "@/app/admin/admin-ui";
 import { ReturnActions } from "@/app/admin/returns/return-actions";
-import { requireStaff } from "@/modules/admin";
+import { getAdminPath, requireStaff } from "@/modules/admin";
 import { listReturns } from "@/modules/returns";
 import { formatPrice } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,8 @@ export const dynamic = "force-dynamic";
 export default async function AdminReturnsPage({
   searchParams,
 }: PageProps<"/admin/returns">) {
-  await requireStaff("/admin/returns");
+  await requireStaff("/returns");
+  const adminPath = await getAdminPath();
 
   const params = await searchParams;
   const status = typeof params.status === "string" ? params.status : "";
@@ -32,11 +33,11 @@ export default async function AdminReturnsPage({
       />
 
       <div className="mb-4 flex flex-wrap gap-1">
-        <Tab href="/admin/returns" label="All" active={!filter} />
+        <Tab href={adminPath("/returns")} label="All" active={!filter} />
         {Object.values(ReturnStatus).map((option) => (
           <Tab
             key={option}
-            href={`/admin/returns?status=${option}`}
+            href={adminPath(`/returns?status=${option}`)}
             label={option.toLowerCase()}
             active={filter === option}
           />
@@ -62,7 +63,7 @@ export default async function AdminReturnsPage({
                       </div>
                       <div className="mt-1 text-[12px] text-taupe">
                         <Link
-                          href={`/admin/orders?q=${encodeURIComponent(request.orderNumber)}`}
+                          href={adminPath(`/orders?q=${encodeURIComponent(request.orderNumber)}`)}
                           className="text-taupe hover:text-gold-light"
                         >
                           {request.orderNumber}

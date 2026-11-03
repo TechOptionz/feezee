@@ -11,7 +11,7 @@ import {
 } from "@/app/admin/admin-ui";
 import { DateRangeTabs, rangeFromParams } from "@/app/admin/date-range";
 import { RevenueChart } from "@/app/admin/revenue-chart";
-import { requireStaff } from "@/modules/admin";
+import { getAdminPath, requireStaff } from "@/modules/admin";
 import {
   metrics,
   revenueSeries,
@@ -27,7 +27,8 @@ export const dynamic = "force-dynamic";
 export default async function AdminReportsPage({
   searchParams,
 }: PageProps<"/admin/reports">) {
-  await requireStaff("/admin/reports");
+  await requireStaff("/reports");
+  const adminPath = await getAdminPath();
 
   const params = await searchParams;
   const { range, preset, from, to } = rangeFromParams({
@@ -54,7 +55,7 @@ export default async function AdminReportsPage({
         standfirst="The same figures as the dashboard, with everything downloadable. CSVs open in Excel as UTF-8, so dirham amounts and Arabic names come through intact."
       />
 
-      <DateRangeTabs preset={preset} from={from} to={to} basePath="/admin/reports" />
+      <DateRangeTabs preset={preset} from={from} to={to} basePath={adminPath("/reports")} />
 
       <div className="mt-[clamp(20px,2.6vw,30px)] grid grid-cols-2 nav:grid-cols-3 min-[1560px]:grid-cols-5 gap-3">
         <StatCard label="Gross revenue" value={formatPrice(kpis.grossRevenueAed)} />
@@ -71,17 +72,17 @@ export default async function AdminReportsPage({
         <Panel title="Downloads">
           <div className="flex flex-wrap gap-3">
             <Download
-              href={`/admin/reports/download/orders?${dates}`}
+              href={adminPath(`/reports/download/orders?${dates}`)}
               title="Orders"
               note="Every order in the range, with VAT, delivery and tracking."
             />
             <Download
-              href={`/admin/reports/download/sales?${dates}`}
+              href={adminPath(`/reports/download/sales?${dates}`)}
               title="Sales"
               note="Daily takings and the split by line."
             />
             <Download
-              href="/admin/reports/download/inventory"
+              href={adminPath("/reports/download/inventory")}
               title="Inventory"
               note="Every size, its SKU and what is on the rail right now."
             />

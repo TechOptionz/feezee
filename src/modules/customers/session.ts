@@ -17,6 +17,11 @@ import { STAFF_HINT_COOKIE, STAFF_HINT_VALUE } from "@/lib/staff-hint";
  * means a role *change* does not take effect until the session is renewed, so
  * anything destructive re-reads the user from the database rather than trusting
  * the claim — see `requireAdmin` in the admin module.
+ *
+ * None of the three cookies sets a `domain`, and that is deliberate: a cookie
+ * without one belongs to the exact host that set it. A staff session made on
+ * the admin host is never sent to the shop's, and a customer's never to the
+ * admin's — the two hosts share a deploy, not a cookie jar.
  */
 
 const COOKIE = "feezee_session";

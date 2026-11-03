@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
+import { adminEntryUrl } from "@/lib/admin-host";
 import { readStaffHint } from "@/lib/staff-hint";
 
 /**
@@ -54,7 +55,8 @@ export function StaffBar() {
         </span>
 
         <Link
-          href="/admin"
+          // Only drawn after mount, so `location` is always there to ask.
+          href={adminEntryUrl(window.location.host)}
           className="text-[11.5px] tracking-[0.18em] uppercase text-gold hover:text-champagne"
         >
           Go to dashboard ↗

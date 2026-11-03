@@ -13,7 +13,7 @@ import {
 import { FulfilmentPanel } from "@/app/admin/orders/[id]/fulfilment-panel";
 import { PrintButton } from "@/components/orders/print-button";
 import { PrintInvoice } from "@/components/orders/print-invoice";
-import { requireStaff } from "@/modules/admin";
+import { getAdminPath, requireStaff } from "@/modules/admin";
 import { nextStatuses, orderById } from "@/modules/orders";
 import { courierNames } from "@/modules/shipping";
 import { formatUaePhone } from "@/modules/checkout";
@@ -27,7 +27,8 @@ export const dynamic = "force-dynamic";
 export default async function AdminOrderPage({
   params,
 }: PageProps<"/admin/orders/[id]">) {
-  await requireStaff("/admin/orders");
+  await requireStaff("/orders");
+  const adminPath = await getAdminPath();
 
   const { id } = await params;
   const order = await orderById(id);
@@ -48,7 +49,7 @@ export default async function AdminOrderPage({
                 className="border border-champagne/60 px-5 py-2.5 text-[11.5px] text-champagne hover:border-champagne hover:bg-champagne/10"
               />
               <Link
-                href="/admin/orders"
+                href={adminPath("/orders")}
                 className="border border-ink-border px-5 py-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
               >
                 ← All orders
@@ -160,7 +161,7 @@ export default async function AdminOrderPage({
                       className="flex flex-wrap items-center justify-between gap-3 text-[14px]"
                     >
                       <Link
-                        href="/admin/returns"
+                        href={adminPath("/returns")}
                         className="text-champagne hover:text-gold-light"
                       >
                         {ret.returnNumber}

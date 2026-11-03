@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   AuthError,
@@ -27,6 +28,7 @@ import {
   sendEmail,
   sendEmailInBackground,
 } from "@/modules/notifications";
+import { adminEntryUrl } from "@/lib/admin-host";
 import { site } from "@/lib/site";
 import { prisma } from "@/lib/prisma";
 
@@ -43,8 +45,11 @@ export type FormState = {
   status: "idle" | "error" | "ok";
   message?: string;
   fieldErrors?: Record<string, string>;
-  /** Staff typed their credentials into the shop's form — offer them the back office. */
-  staffDoor?: boolean;
+  /**
+   * Staff typed their credentials into the shop's form — offer them the back
+   * office. The URL of its sign-in, which is on another host in production.
+   */
+  staffDoor?: string;
 };
 
 /** Zod issues, flattened to one message per field. */
@@ -98,7 +103,8 @@ export async function loginAction(
     // Only reachable once the password has been accepted, so the form can say
     // where to go instead of only "no". The link is drawn by `LoginForm`.
     if (error instanceof StaffDoorError) {
-      return { status: "error", message: error.message, staffDoor: true };
+      const staffDoor = adminEntryUrl((await headers()).get("host"), "/login");
+      return { status: "error", message: error.message, staffDoor };
     }
     return fail(error);
   }

@@ -12,7 +12,7 @@ import {
 import { toggleArchiveAction } from "@/app/actions/admin";
 import { DeleteProduct } from "@/app/admin/products/delete-product";
 import { SaleControls, SalePill } from "@/app/admin/products/sale-controls";
-import { requireStaff } from "@/modules/admin";
+import { getAdminPath, requireStaff } from "@/modules/admin";
 import { prisma } from "@/lib/prisma";
 import { toAed, toAedOrNull } from "@/modules/shared/money";
 import { img } from "@/lib/assets";
@@ -38,7 +38,8 @@ const SALE_TABS = [
 export default async function AdminProductsPage({
   searchParams,
 }: PageProps<"/admin/products">) {
-  await requireStaff("/admin/products");
+  await requireStaff("/products");
+  const adminPath = await getAdminPath();
 
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
@@ -58,7 +59,7 @@ export default async function AdminProductsPage({
     if (archived) next.set("archived", "1");
     if (value) next.set("sale", value);
     const query = next.toString();
-    return query ? `/admin/products?${query}` : "/admin/products";
+    return adminPath(query ? `/products?${query}` : "/products");
   };
 
   const rows = await prisma.product.findMany({
@@ -109,7 +110,7 @@ export default async function AdminProductsPage({
         standfirst="The catalogue the shop reads. Archiving a piece takes it off the site and keeps it here; deleting removes it for good, though orders already placed keep their lines."
         action={
           <Link
-            href="/admin/products/new"
+            href={adminPath("/products/new")}
             className="border-none bg-gold px-6 py-3 text-[12px] font-semibold tracking-[0.12em] uppercase text-ink hover:text-ink"
           >
             New product
@@ -210,7 +211,7 @@ export default async function AdminProductsPage({
 
           {(q || collection || stock || archived || sale) && (
             <Link
-              href="/admin/products"
+              href={adminPath("/products")}
               className="pb-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-taupe hover:text-champagne"
             >
               Clear
@@ -258,7 +259,7 @@ export default async function AdminProductsPage({
                             </span>
                             <span className="min-w-0">
                               <Link
-                                href={`/admin/products/${product.id}`}
+                                href={adminPath(`/products/${product.id}`)}
                                 className="block text-champagne hover:text-gold-light"
                               >
                                 {product.name}
@@ -300,7 +301,7 @@ export default async function AdminProductsPage({
                         <Td align="right">
                           <span className="flex justify-end gap-4">
                             <Link
-                              href={`/admin/products/${product.id}`}
+                              href={adminPath(`/products/${product.id}`)}
                               className="text-[12px] font-medium tracking-[0.1em] uppercase text-gold-light hover:text-champagne"
                             >
                               Edit

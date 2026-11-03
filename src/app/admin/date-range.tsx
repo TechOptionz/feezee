@@ -16,12 +16,13 @@ export function DateRangeTabs({
   preset,
   from,
   to,
-  basePath = "/admin",
+  basePath,
 }: {
   preset: string;
   from?: string;
   to?: string;
-  basePath?: string;
+  /** The page the tabs reload, already passed through `adminPath`. */
+  basePath: string;
 }) {
   const custom = Boolean(from && to);
 

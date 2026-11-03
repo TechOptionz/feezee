@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { saveProductAction, type AdminFormState } from "@/app/actions/admin";
+import { useAdminPath } from "@/app/admin/admin-path";
 import { DeleteProduct } from "@/app/admin/products/delete-product";
 import { ImageUploader } from "@/app/admin/products/image-uploader";
 import { SaleControls, SalePill } from "@/app/admin/products/sale-controls";
@@ -57,6 +58,7 @@ export type ProductFormValues = {
  */
 export function ProductForm({ values }: { values: ProductFormValues }) {
   const [state, action] = useActionState(saveProductAction, IDLE);
+  const adminPath = useAdminPath();
   const isNew = values.id === null;
   const onSale = values.wasAed !== null && values.wasAed > values.aed;
 
@@ -258,7 +260,7 @@ export function ProductForm({ values }: { values: ProductFormValues }) {
                     </td>
                     <td className="border-b border-ink-line/70 py-2.5 pr-5 text-[14px] tabular-nums">
                       <Link
-                        href={`/admin/inventory?q=${encodeURIComponent(values.name)}`}
+                        href={adminPath(`/inventory?q=${encodeURIComponent(values.name)}`)}
                         className={cn(
                           "hover:text-champagne",
                           variant.stock === 0 ? "text-wine-bright" : "text-gold-light",
@@ -285,7 +287,7 @@ export function ProductForm({ values }: { values: ProductFormValues }) {
       <div className="flex flex-wrap items-center gap-4">
         <Save isNew={isNew} />
         <Link
-          href="/admin/products"
+          href={adminPath("/products")}
           className="text-[12px] tracking-[0.16em] uppercase text-taupe hover:text-champagne"
         >
           Cancel

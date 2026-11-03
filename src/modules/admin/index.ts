@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Prisma, Role } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { adminBaseFor, adminPath, surfaceOf, type AdminBase, type Surface } from "@/lib/admin-host";
 import { getSession, type SessionClaims } from "@/modules/customers/session";
 
 /**
@@ -53,15 +54,42 @@ export const currentActor = cache(async function currentActor(): Promise<Actor |
   return verify(await getSession());
 });
 
+// ---------------------------------------------------------------------------
+// Links
+// ---------------------------------------------------------------------------
+
+/** Which face of the site this request came in on — see `@/lib/admin-host`. */
+export async function requestSurface(): Promise<Surface> {
+  return surfaceOf((await headers()).get("host"));
+}
+
+/** `""` on the admin host, `/admin` on a preview. */
+export async function getAdminBase(): Promise<AdminBase> {
+  return adminBaseFor(await requestSurface());
+}
+
+/**
+ * The link writer for this request: `adminPath("/orders")` is `/orders` on the
+ * admin host and `/admin/orders` on a deploy preview. Every admin link, redirect
+ * and `next` parameter goes through it. Client components use `useAdminPath`.
+ */
+export async function getAdminPath(): Promise<(path: string) => string> {
+  const base = await getAdminBase();
+  return (path) => adminPath(base, path);
+}
+
 /**
  * Guard an admin page. Redirects to the admin login rather than throwing, so an
  * expired session lands somewhere useful instead of on an error page.
+ *
+ * `returnTo` is written without the prefix, like any other `adminPath`.
  */
 export async function requireStaff(returnTo?: string): Promise<Actor> {
   const actor = await currentActor();
   if (!actor) {
-    const next = returnTo ? `?next=${encodeURIComponent(returnTo)}` : "";
-    redirect(`/admin/login${next}`);
+    const to = await getAdminPath();
+    const next = returnTo ? `?next=${encodeURIComponent(to(returnTo))}` : "";
+    redirect(`${to("/login")}${next}`);
   }
   return actor;
 }

@@ -32,7 +32,9 @@ npm run db:seed            # migrate the 21 garments in from src/content/
 Then:
 
 - Shop — <http://localhost:3000>
-- Back office — <http://localhost:3000/admin> · `admin@feezee.ae` / `FeezeeAdmin2026!`
+- Back office — <http://admin.localhost:3000> · `admin@feezee.ae` / `FeezeeAdmin2026!`
+  (see [The admin host](#the-admin-host); `localhost:3000/admin` is a 404, as
+  it is on the live shop)
 
 **Change that password before this goes anywhere real**, under Admin → My
 account. If `npm run dev` shows a Google Fonts "Module not found" error on
@@ -151,21 +153,22 @@ priced and again when the order is placed.
 `/account` — overview, orders, order detail with a tracking timeline, return
 requests, and a UAE address book.
 
-`/admin` — ink and champagne rather than cream and gold, so a glance says which
-of the two you are looking at:
+The back office — ink and champagne rather than cream and gold, so a glance
+says which of the two you are looking at. It lives on its own host (below), so
+its URLs have no prefix; the routes underneath are `src/app/admin/*`:
 
-| Route | What it does |
+| URL on the admin host | What it does |
 | --- | --- |
-| `/admin` | Revenue, orders, AOV, pending, low stock, charts, date filters |
-| `/admin/products` | Catalogue CRUD, search, filter, archive |
-| `/admin/inventory` | Variant matrix; click a count to recount it, with a reason |
-| `/admin/orders` | Filter, search, then fulfil — courier, tracking, cancel |
-| `/admin/returns` | Approve, reject, refund, and restock as a separate decision |
-| `/admin/customers` | Directory with lifetime value |
-| `/admin/reports` | The same figures, downloadable as CSV |
-| `/admin/audit-logs` | Who changed what, with a before/after diff |
+| `/` | Revenue, orders, AOV, pending, low stock, charts, date filters |
+| `/products` | Catalogue CRUD, search, filter, archive |
+| `/inventory` | Variant matrix; click a count to recount it, with a reason |
+| `/orders` | Filter, search, then fulfil — courier, tracking, cancel |
+| `/returns` | Approve, reject, refund, and restock as a separate decision |
+| `/customers` | Directory with lifetime value |
+| `/reports` | The same figures, downloadable as CSV |
+| `/audit-logs` | Who changed what, with a before/after diff |
 
-Staff sign in at `/admin/login`, and **only** there. Roles are `ADMIN` and
+Staff sign in at the admin host's `/login`, and **only** there. Roles are `ADMIN` and
 `STAFF`; a `CUSTOMER` account is refused at that form exactly as a wrong
 password would be, and an `ADMIN` or `STAFF` account is refused at the shop's
 own `/account/login` — with a link to the back office, since that refusal only
@@ -174,6 +177,38 @@ happens once the password has already been accepted.
 A staff session still shops: `/account`, the wishlist and the checkout all work
 from it. The sidebar's "View the shop ↗" goes one way and the staff strip above
 the announcement bar comes back the other.
+
+### The admin host
+
+`src/proxy.ts` decides by `Host` header, using the helpers in
+`src/lib/admin-host.ts` (the only place hostnames are written down):
+
+| Host | Behaviour |
+| --- | --- |
+| `ADMIN_HOST` (`admin.feezeefashion.ae`) | Every page URL is served from `/admin/*`: `/orders` → `/admin/orders`. Typing `/admin/…` 308s to the clean URL. `/api`, `/_next`, `/media`, `/img`, `/favicon*` and `/robots.txt` pass through. Every response carries `X-Robots-Tag: noindex, nofollow`. |
+| `*.netlify.app` (deploy previews) | Unchanged: shop and `/admin` side by side. |
+| Anything else (`www.…`, `localhost`) | `/admin/*` answers with the ordinary 404 page. `/api/admin/*` is a 404 unless the `Origin`/`Referer` is the admin host. |
+
+Admin links are never written by hand: server code calls
+`const adminPath = await getAdminPath()` (`@/modules/admin`), client components
+`const adminPath = useAdminPath()` (`@/app/admin/admin-path`), and both take the
+path without the prefix — `adminPath("/orders")`.
+
+The session cookie sets no `Domain`, so it belongs to the host that issued it:
+signing in on the admin host is never seen by `www`, and the admin's sign-in
+action refuses to run on the shop's host at all.
+
+**Testing locally.** Browsers resolve `*.localhost` to your own machine, so no
+hosts-file entry is needed: run `npm run dev` and open
+<http://admin.localhost:3000>. In development `admin.localhost` is always
+treated as the admin host, whatever `ADMIN_HOST` says, and it is listed in
+`allowedDevOrigins` so hot reload works there. If a tool will not resolve it
+(curl does not on every platform), send the header yourself —
+`curl -H "Host: admin.localhost:3000" http://127.0.0.1:3000/login` — or add
+`127.0.0.1 admin.localhost` to `C:\Windows\System32\drivers\etc\hosts`
+(`/etc/hosts` on macOS/Linux). For `next start`, which runs as production,
+build with `ADMIN_HOST=admin.localhost:3000`. Use any host ending in
+`.netlify.app` in the `Host` header to see the deploy-preview behaviour.
 
 ## Assets
 
@@ -201,6 +236,7 @@ and deploys — nothing in the app imports from it.
 | `DATABASE_URL` | PostgreSQL | the app will not start |
 | `SESSION_SECRET` | Signs the session cookie (≥ 32 chars) | sign-in throws |
 | `NEXT_PUBLIC_SITE_URL` | Metadata, emails, payment returns | `localhost:3000` |
+| `ADMIN_HOST` | The back office's own host (build time) | `admin.feezeefashion.ae` |
 | `STRIPE_SECRET_KEY` | Cards and Apple Pay | the card option is withdrawn |
 | `STRIPE_WEBHOOK_SECRET` | Marking card orders paid | the webhook 400s |
 | `BANK_TRANSFER_IBAN` | Bank transfer option | the option is withdrawn |
@@ -228,6 +264,10 @@ pages run next to the database. Uploaded product photos are stored in Netlify
 Blobs automatically; nothing needs configuring.
 
 Add the Stripe webhook at `https://<your-domain>/api/webhooks/stripe`.
+
+Add `admin.feezeefashion.ae` as a domain alias of the same Netlify site (and
+its DNS record), and set `ADMIN_HOST` if the admin host is ever anything else.
+`ADMIN_HOST` is inlined at build time, so changing it needs a redeploy.
 
 ## Differences from the source design
 

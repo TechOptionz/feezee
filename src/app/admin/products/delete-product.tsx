@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteProductAction } from "@/app/actions/admin";
+import { useAdminPath } from "@/app/admin/admin-path";
 import { cn } from "@/lib/utils";
 
 /**
@@ -26,6 +27,7 @@ export function DeleteProduct({
   variant?: "row" | "form";
 }) {
   const router = useRouter();
+  const adminPath = useAdminPath();
   const [pending, start] = useTransition();
   const [asking, setAsking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +43,7 @@ export function DeleteProduct({
       }
       // The editor's own page is gone with the piece, so it goes back to the
       // list; the list only needs to redraw without the row.
-      if (variant === "form") router.push("/admin/products");
+      if (variant === "form") router.push(adminPath("/products"));
       router.refresh();
     });
   }

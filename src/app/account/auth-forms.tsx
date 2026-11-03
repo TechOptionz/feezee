@@ -47,7 +47,7 @@ export function LoginForm({ next }: { next: string }) {
       */}
       {state.staffDoor && (
         <Link
-          href="/admin/login"
+          href={state.staffDoor}
           className="-mt-2 text-[13px] text-gold-dark hover:text-ink"
         >
           Go to the back office sign-in →

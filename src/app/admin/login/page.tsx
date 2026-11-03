@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminLoginForm } from "@/app/admin/login/login-form";
-import { currentActor } from "@/modules/admin";
+import { currentActor, getAdminBase } from "@/modules/admin";
+import { adminPath } from "@/lib/admin-host";
+import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -15,7 +17,8 @@ export default async function AdminLoginPage({
   searchParams,
 }: PageProps<"/admin/login">) {
   const { next } = await searchParams;
-  if (await currentActor()) redirect("/admin");
+  const base = await getAdminBase();
+  if (await currentActor()) redirect(adminPath(base, "/"));
 
   return (
     <div className="flex min-h-screen items-center justify-center px-5 py-16">
@@ -36,7 +39,7 @@ export default async function AdminLoginPage({
           Staff and administrators only.
         </p>
 
-        <AdminLoginForm next={typeof next === "string" ? next : "/admin"} />
+        <AdminLoginForm next={typeof next === "string" ? next : adminPath(base, "/")} />
 
         {/*
           The layout draws no sidebar until there is somebody to draw it for,
@@ -44,7 +47,7 @@ export default async function AdminLoginPage({
           who followed a link here has nothing to click but the back button.
         */}
         <p className="mt-8 mb-0 text-center text-[12px] font-medium tracking-[0.1em] uppercase">
-          <Link href="/" className="text-taupe hover:text-champagne">
+          <Link href={base === "" ? site.url : "/"} className="text-taupe hover:text-champagne">
             Return to the shop ↗
           </Link>
         </p>

@@ -10,7 +10,15 @@ import {
   StockReason,
 } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
-import { audit, requireStaffAction, ForbiddenError } from "@/modules/admin";
+import { adminPath, isSafeAdminReturn } from "@/lib/admin-host";
+import {
+  audit,
+  getAdminBase,
+  getAdminPath,
+  requestSurface,
+  requireStaffAction,
+  ForbiddenError,
+} from "@/modules/admin";
 import { setStock } from "@/modules/inventory";
 import {
   CheckoutError,
@@ -105,6 +113,13 @@ export async function adminLoginAction(
     return { status: "error", message: "Enter your email and password." };
   }
 
+  // Staff sign in on the admin host and nowhere else, so the shop's host is
+  // never issued a staff session. The form is not served there; this refuses
+  // a direct call to the action, without saying why.
+  if ((await requestSurface()) === "main") {
+    return { status: "error", message: "Something went wrong. Please try again." };
+  }
+
   try {
     // "staff" makes a customer account fail exactly like a wrong password, so
     // this form never confirms that an address exists on the customer side.
@@ -113,13 +128,14 @@ export async function adminLoginAction(
     return fail(error);
   }
 
-  const next = String(formData.get("next") ?? "/admin");
-  redirect(next.startsWith("/admin") ? next : "/admin");
+  const base = await getAdminBase();
+  const next = String(formData.get("next") ?? "");
+  redirect(isSafeAdminReturn(base, next) ? next : adminPath(base, "/"));
 }
 
 export async function adminLogoutAction() {
   await logout();
-  redirect("/admin/login");
+  redirect((await getAdminPath())("/login"));
 }
 
 // ---------------------------------------------------------------------------
@@ -669,7 +685,7 @@ export async function saveProductAction(
     return fail(error);
   }
 
-  redirect("/admin/products");
+  redirect((await getAdminPath())("/products"));
 }
 
 export async function toggleArchiveAction(formData: FormData) {
