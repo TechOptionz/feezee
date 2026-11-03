@@ -41,6 +41,23 @@ export function CheckoutForm({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  /*
+   * Set once the order exists and the page is on its way out. The bag is
+   * cleared at that moment, but Stripe (or the confirmation page) takes a few
+   * seconds to load — without this the form would fall through to "There is
+   * nothing to check out" for the whole wait.
+   */
+  const [leaving, setLeaving] = useState<"payment" | "confirmation" | null>(null);
+
+  /* Back from Stripe can restore this page from the back-forward cache, still
+     saying it is on its way out. */
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) setLeaving(null);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   const preset = addresses.find((a) => a.isDefault) ?? addresses[0] ?? null;
 
@@ -111,6 +128,7 @@ export function CheckoutForm({
       if (result.status === "placed") {
         // The bag is emptied only once the order exists. Clearing it before
         // would lose the basket if the order failed.
+        setLeaving(result.redirectUrl ? "payment" : "confirmation");
         clearBag();
         if (result.redirectUrl) {
           window.location.href = result.redirectUrl;
@@ -122,6 +140,23 @@ export function CheckoutForm({
   };
 
   if (!hydrated) return <div className="min-h-[50vh]" />;
+
+  if (leaving) {
+    return (
+      <div role="status" className="py-[clamp(40px,7vw,90px)] text-center">
+        <p className="m-0 font-display text-[clamp(22px,3vw,32px)]">
+          {leaving === "payment"
+            ? "Taking you to secure payment…"
+            : "Your order is placed."}
+        </p>
+        <p className="mt-3 text-[15px] text-cocoa">
+          {leaving === "payment"
+            ? "Please don't close this page — Stripe will open in a moment."
+            : "Opening your confirmation…"}
+        </p>
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (

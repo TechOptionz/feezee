@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import Link from "next/link";
 import { AdminNav } from "@/app/admin/admin-nav";
 import { ACTION } from "@/app/admin/admin-ui";
@@ -17,9 +17,11 @@ export const metadata: Metadata = {
  * the shop never fetches it. The variable it defines is read by `.fz-admin`
  * in globals.css and by the `font-admin` utility.
  */
-const inter = Inter({
+// Self-hosted for the same reason as the storefront fonts in `app/layout.tsx`.
+const inter = localFont({
+  src: "../fonts/inter-latin.woff2",
   variable: "--font-inter",
-  subsets: ["latin"],
+  weight: "100 900",
   display: "swap",
 });
 

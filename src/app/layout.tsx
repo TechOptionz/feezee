@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
-import { Jost, Marcellus } from "next/font/google";
+import localFont from "next/font/local";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { StoreProvider } from "@/components/store/store-provider";
 import { site } from "@/lib/site";
 import "./globals.css";
 
-const jost = Jost({
+// Self-hosted (latin subset from Google Fonts) rather than `next/font/google`:
+// Google sometimes serves `/l/font?kit=…&skey=…` URLs, which Turbopack's font
+// loader can't parse, and it also keeps builds from depending on the network.
+const jost = localFont({
+  src: "./fonts/jost-latin.woff2",
   variable: "--font-jost",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  weight: "300 600",
   display: "swap",
 });
 
-const marcellus = Marcellus({
+const marcellus = localFont({
+  src: "./fonts/marcellus-latin.woff2",
   variable: "--font-marcellus",
-  subsets: ["latin"],
   weight: "400",
   display: "swap",
 });
