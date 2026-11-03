@@ -60,7 +60,9 @@ export const stripeProvider: PaymentProvider = {
   description: "Visa, Mastercard and Apple Pay, secured by Stripe.",
 
   isAvailable() {
-    return secretKey() !== null;
+    // Without the webhook secret nothing can ever mark a card order paid, so
+    // taking the money would leave it PENDING — and its stock never released.
+    return secretKey() !== null && webhookSecret() !== null;
   },
 
   async createIntent(context: PaymentContext): Promise<PaymentIntentResult> {
