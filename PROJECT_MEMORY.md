@@ -43,7 +43,8 @@ npm run dev
 ```
 
 Default administrator: **admin@feezee.ae** / **FeezeeAdmin2026!** — change it
-before this is on a real domain.
+before this is on a real domain, under **Admin → My account**. To seed a real
+database with a different first password, set `SEED_ADMIN_PASSWORD`.
 
 ### Credentials checklist
 
@@ -54,7 +55,8 @@ before this is on a real domain.
 | `NEXT_PUBLIC_SITE_URL` | metadata, emails, Stripe returns | defaults to `localhost:3000` |
 | `STRIPE_SECRET_KEY` | card / Apple Pay | the card option is not offered at all |
 | `STRIPE_WEBHOOK_SECRET` | marking card orders paid | the webhook returns 400 |
-| `BANK_TRANSFER_IBAN` | bank transfer option | the option is not offered |
+| `BANK_TRANSFER_IBAN` | bank transfer option | the option is not offered (the all-zeros placeholder counts as unset) |
+| `SEED_ADMIN_PASSWORD` | first admin password on a real database | the seed uses the development password |
 | `RESEND_API_KEY` | real email | emails are printed to the server console |
 | `NEXT_PUBLIC_ASSET_BASE` | serving `public/` from a CDN | assets served from the app |
 
@@ -492,9 +494,12 @@ through `basename` and reduced to `[a-z0-9-]` plus a timestamp — needed becaus
 `next.config.ts` caches `/img/*` immutably for a year, so a reused name would
 leave the old picture on screen.
 
-This is a local filesystem write. It is right for a shop running its own server
-and wrong for an ephemeral one (Vercel and the like), where it wants a blob
-store behind the same route.
+On Netlify the file goes to Netlify Blobs instead (`src/lib/photo-store.ts`),
+because a function's disk does not survive a deploy. The column then holds
+`/media/uploads/…`, which `src/app/media/[...key]/route.ts` serves with the
+same year-long cache. Locally there is no Blobs environment and the file is
+written to `public/img/uploads/`. `img()` passes any value starting with `/`
+through untouched, so both kinds of path render the same way.
 
 ### 4.19 Staff have one door, and it is not the shop's
 
@@ -589,10 +594,12 @@ What made the admin slow, and what changed:
   relations and a count.
 - **The guard ran twice per page** — layout and page each called
   `currentActor`. It is memoised per request with React's `cache` (4.8).
-- **Vercel functions default to `iad1` (US East)**, which is ~200 ms from
-  Singapore in each direction. `vercel.json` pins them to `sin1`, next to the
-  database. A staff member in Dubai pays one extra hop to Singapore for the
-  page itself; the page in turn pays nothing for its several hops to the
+- **Functions should run next to the database.** The site is hosted on
+  Netlify, whose functions run in US East unless told otherwise, ~200 ms from
+  the Singapore database in each direction. Set the functions region to
+  Singapore (`ap-southeast-1`) in the Netlify site settings where the plan
+  allows it. A staff member in Dubai then pays one extra hop to Singapore for
+  the page itself, and the page pays nothing for its several hops to the
   database. If the shop ever moves its database closer to the UAE, move this
   region with it.
 
@@ -654,6 +661,42 @@ configuration rather than code. The confirmation page prints it with the order
 number as the reference and a WhatsApp button for the receipt; staff mark it
 paid from the order screen.
 
+### Adding another gateway
+
+The checkout only talks to the `PaymentProvider` interface in
+`src/modules/payments/types.ts`, and a hosted payment page needs no checkout
+change: `createIntent` returns a `redirectUrl` and the browser is sent there.
+A UAE gateway (Telr, Network International N-Genius, PayTabs, Checkout.com,
+Tabby, Tamara) goes in like this:
+
+1. **Enum.** Add the method to `PaymentMethod` in `prisma/schema.prisma` and
+   run `npm run db:push`. Add the same value to `PAYMENT_METHODS` in
+   `src/modules/checkout/index.ts`, which validates the checkout form.
+2. **Provider.** Create `src/modules/payments/<gateway>.ts` on the model of
+   `stripe.ts`. `isAvailable()` checks the gateway's keys, so the option
+   stays hidden until they are set. `createIntent()` creates the hosted
+   payment with the order number as the merchant reference and returns
+   `status: "PENDING"` with the redirect URL.
+3. **Register it** in `PROVIDERS` in `src/modules/payments/index.ts`. The
+   order in that array is the order on the checkout page.
+4. **Webhook.** Copy `src/app/api/webhooks/stripe/route.ts` to
+   `/api/webhooks/<gateway>`. Verify the signature against the raw body, map
+   the event to a `WebhookResult` and call `recordPayment`. Keep §4.5: only
+   the signed callback marks an order paid, never the customer's return URL.
+5. **Refunds.** Card refunds are executed for Stripe only:
+   `refundStripePayment` in the orders module, `resolveReturnAction` in
+   `src/app/actions/admin.ts` and the copy in
+   `src/app/admin/returns/return-actions.tsx`. A new gateway's returns are
+   recorded and paid out from its own dashboard, as COD and bank transfer
+   are, until a refund function is added beside Stripe's.
+6. **Words.** Add the processor to `src/app/privacy-policy/page.tsx`, the
+   payment answer in `src/content/chatbot.ts`, the webhook note in
+   `src/app/admin/orders/[id]/fulfilment-panel.tsx`, and its keys to
+   `.env.example` and the checklist in §2.
+
+If the gateway is Stripe itself, none of this applies: set the three Stripe
+variables and register the webhook as above.
+
 ---
 
 ## 7. Tax and shipping policy
@@ -705,10 +748,10 @@ were exercised against a live database:
 - **No automated test suite.** The verification above was a script run against a
   live database, not something CI can repeat. A Vitest suite over
   `src/modules/` is the obvious next step.
-- **Uploads are a local filesystem write.** `/api/admin/upload` (4.18) writes
-  into `public/img/uploads/`, which is right for a shop running its own server
-  and wrong for an ephemeral one. A hosted deployment wants a blob store behind
-  the same route.
+- **Uploaded photos on Netlify live in Netlify Blobs** (4.18), not in the
+  repository. They are kept across deploys but are not in git, so a backup of
+  the site is the repository plus the database plus the `product-photos`
+  Blobs store.
 - **`npm audit` reports 4 highs**, all inside the `prisma` CLI devDependency
   (`@prisma/config` → `deepmerge-ts`, and `mysql2`, which this project does not
   use). Nothing ships to the runtime bundle. `npm audit fix --force` would

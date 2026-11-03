@@ -1,5 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { img } from "@/lib/assets";
+import { MEDIA_PREFIX, onNetlify, photoStore } from "@/lib/photo-store";
 import { audit, requireStaffAction } from "@/modules/admin";
 
 /**
@@ -8,9 +10,15 @@ import { audit, requireStaffAction } from "@/modules/admin";
  * Before this, putting a garment on the site meant copying a file into
  * `public/img/` by hand and then typing its name into the product form — a
  * two-machine job that only the person with the repository could do. This is
- * the same thing over HTTP, restricted to staff, and it returns the *relative*
- * path (`uploads/kurta-1712…jpg`) rather than a URL, because that is what the
- * `ProductImage.url` column holds and what `img()` prefixes.
+ * the same thing over HTTP, restricted to staff.
+ *
+ * Where the file goes depends on where the shop runs. On Netlify, whose
+ * function disk does not survive a deploy, it goes to Netlify Blobs and the
+ * returned path is `/media/uploads/kurta-1712…jpg`, served by
+ * `/media/[...key]`. Locally it is written to `public/img/uploads/` and
+ * the returned path is relative (`uploads/kurta-1712…jpg`). Either way the
+ * value is what the `ProductImage.url` column holds, and `img()` turns
+ * both into a src.
  *
  * Three things it does not take on trust:
  *
@@ -87,6 +95,36 @@ function safeName(original: string, extension: string): string {
   return `${base || "photo"}-${Date.now().toString(36)}${extension}`;
 }
 
+/**
+ * Saves the photograph and returns what `ProductImage.url` should hold.
+ *
+ * The filename already carries a timestamp, so a key is never reused and the
+ * photo can be cached for a year wherever it is served from.
+ */
+async function store(
+  filename: string,
+  bytes: Uint8Array<ArrayBuffer>,
+  type: AcceptedType,
+): Promise<string> {
+  const key = `uploads/${filename}`;
+  const store = photoStore();
+  if (store) {
+    await store.set(key, new Blob([bytes], { type }), {
+      metadata: { contentType: type },
+    });
+    return `${MEDIA_PREFIX}${key}`;
+  }
+  if (onNetlify()) {
+    // Writing to disk here would look like it worked and then lose the photo
+    // on the next deploy.
+    throw new Error("Netlify Blobs is not available in this function.");
+  }
+
+  await mkdir(UPLOAD_DIR, { recursive: true });
+  await writeFile(path.join(UPLOAD_DIR, filename), bytes);
+  return `uploads/${filename}`;
+}
+
 export async function POST(request: Request) {
   let actor;
   try {
@@ -126,29 +164,27 @@ export async function POST(request: Request) {
 
   const filename = safeName(file.name, ACCEPTED[real]);
 
+  let storedPath: string;
   try {
-    await mkdir(UPLOAD_DIR, { recursive: true });
-    await writeFile(path.join(UPLOAD_DIR, filename), bytes);
+    storedPath = await store(filename, bytes, real);
   } catch (error) {
     console.error("[upload]", error);
     return bad("The photograph could not be saved. Please try again.", 500);
   }
 
-  const relativePath = `uploads/${filename}`;
-
   await audit({
     actor,
     action: "product.image.upload",
     entityType: "ProductImage",
-    entityId: relativePath,
+    entityId: storedPath,
     newState: { bytes: bytes.byteLength, type: real, original: file.name },
   });
 
   return Response.json({
     /** What goes in the product form and the `ProductImage.url` column. */
-    path: relativePath,
+    path: storedPath,
     /** The same file as the browser should request it. */
-    url: `/img/${relativePath}`,
+    url: img(storedPath),
     bytes: bytes.byteLength,
   });
 }

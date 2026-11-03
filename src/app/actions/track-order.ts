@@ -1,9 +1,9 @@
 "use server";
 
-import { headers } from "next/headers";
 import { z } from "zod";
 import { orderNumberNeedsEmail, trackOrder } from "@/modules/orders";
 import type { TrackState } from "@/app/actions/track-order-state";
+import { callerKey, createRateLimit } from "@/lib/rate-limit";
 
 /**
  * Looking up a parcel without an account.
@@ -52,44 +52,10 @@ const trackSchema = z.object({
  * and is far above anything a real customer does — a shared mall or office
  * connection can check a dozen parcels a minute without noticing this exists.
  *
- * In memory, so it resets on deploy and does not span instances. That is the
- * honest limit of it: it raises the cost of guessing, and it is not a defence
- * against a distributed attacker. Move it to the database or a cache if the
- * shop ever runs more than one node.
+ * In memory and per instance — see `createRateLimit` for what that does and
+ * does not buy.
  */
-const WINDOW_MS = 60_000;
-const MAX_PER_WINDOW = 20;
-const attempts = new Map<string, { count: number; resetAt: number }>();
-
-function throttled(key: string): boolean {
-  const now = Date.now();
-
-  // Swept on the way past rather than on a timer, so an idle server holds
-  // nothing and a busy one never accumulates yesterday's callers.
-  if (attempts.size > 5000) {
-    for (const [k, v] of attempts) if (v.resetAt <= now) attempts.delete(k);
-  }
-
-  const current = attempts.get(key);
-  if (!current || current.resetAt <= now) {
-    attempts.set(key, { count: 1, resetAt: now + WINDOW_MS });
-    return false;
-  }
-
-  current.count += 1;
-  return current.count > MAX_PER_WINDOW;
-}
-
-/** Best-effort caller identity. A missing header throttles everyone as one. */
-async function callerKey(): Promise<string> {
-  try {
-    const list = await headers();
-    const forwarded = list.get("x-forwarded-for");
-    return forwarded?.split(",")[0]?.trim() || list.get("x-real-ip") || "unknown";
-  } catch {
-    return "unknown";
-  }
-}
+const throttled = createRateLimit({ windowMs: 60_000, max: 20 });
 
 export async function trackOrderAction(
   _previous: TrackState,

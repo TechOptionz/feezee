@@ -25,10 +25,23 @@ export type PaymentIntentResult = {
   customerInstructions: string[];
 };
 
+export type PaymentContextLine = {
+  variantId: string;
+  productName: string;
+  size: string;
+  image: string;
+  unitPriceAed: number;
+  quantity: number;
+};
+
 export type PaymentContext = {
   orderId: string;
   orderNumber: string;
   amountAed: number;
+  /** The order as priced by the server — what a card sheet itemises. */
+  lines: readonly PaymentContextLine[];
+  shippingFeeAed: number;
+  vatAed: number;
   customerEmail: string;
   customerName: string;
   /** Absolute origin, for building return URLs. */
@@ -54,7 +67,7 @@ export type PaymentProvider = {
 export type WebhookResult = {
   /** The order this event is about, by order number. */
   orderNumber: string;
-  outcome: "PAID" | "FAILED" | "REFUNDED" | "IGNORED";
+  outcome: "PAID" | "FAILED" | "REFUNDED" | "EXPIRED" | "IGNORED";
   transactionId: string | null;
   /**
    * The provider's id for the charge itself, when it differs from

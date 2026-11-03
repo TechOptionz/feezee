@@ -1,6 +1,7 @@
 import "server-only";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import Stripe from "stripe";
 import { PaymentMethod } from "@/generated/prisma/enums";
+import { absoluteImg } from "@/lib/assets";
 import { toFils } from "@/modules/shared/money";
 import type {
   PaymentContext,
@@ -10,19 +11,13 @@ import type {
 } from "@/modules/payments/types";
 
 /**
- * Stripe — cards and Apple Pay — over the REST API.
- *
- * Deliberately no SDK. Two calls and one signature check is not worth a
- * dependency that pulls its own HTTP stack into the server bundle, and doing it
- * by hand keeps what is actually on the wire visible. Swapping in the official
- * `stripe` package later means replacing this file and nothing else.
+ * Stripe — cards and Apple Pay — through the official SDK and a hosted
+ * Checkout Session.
  *
  * Apple Pay needs no separate integration: a Checkout Session offers it
  * automatically on a supporting device once the domain is verified in the
  * Stripe dashboard.
  */
-
-const API = "https://api.stripe.com/v1";
 
 function secretKey(): string | null {
   const key = process.env.STRIPE_SECRET_KEY?.trim();
@@ -34,58 +29,29 @@ function webhookSecret(): string | null {
   return key ? key : null;
 }
 
-/** Stripe takes `application/x-www-form-urlencoded`, including for nesting. */
-function form(params: Record<string, string | number | undefined>): string {
-  const body = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined) body.set(key, String(value));
-  }
-  return body.toString();
+/*
+ * Built on first use rather than at import, so `next build` — which imports
+ * this module with no keys in the environment — does not fail, and a key
+ * changed in the environment is picked up by a fresh instance.
+ */
+let client: { key: string; stripe: Stripe } | null = null;
+
+function stripe(): Stripe {
+  const key = secretKey();
+  if (!key) throw new Error("Stripe is not configured.");
+  if (client?.key !== key) client = { key, stripe: new Stripe(key) };
+  return client.stripe;
 }
 
-async function stripeFetch(
-  path: string,
-  body: string,
-  key: string,
-  /**
-   * Stripe replays the first answer for 24 hours against the same key. Only
-   * the refund uses one, and it is the one call on this site where a retry
-   * after a timeout would otherwise send a second lot of money back.
-   */
-  idempotencyKey?: string,
-): Promise<Record<string, unknown>> {
-  const response = await fetch(`${API}${path}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-      ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
-    },
-    body,
-  });
-
-  const json = (await response.json()) as Record<string, unknown>;
-  if (!response.ok) {
-    const error = json.error as { message?: string } | undefined;
-    throw new Error(error?.message ?? `Stripe returned ${response.status}.`);
-  }
-  return json;
-}
-
-async function stripeGet(
-  path: string,
-  key: string,
-): Promise<Record<string, unknown>> {
-  const response = await fetch(`${API}${path}`, {
-    headers: { Authorization: `Bearer ${key}` },
-  });
-
-  const json = (await response.json()) as Record<string, unknown>;
-  if (!response.ok) {
-    const error = json.error as { message?: string } | undefined;
-    throw new Error(error?.message ?? `Stripe returned ${response.status}.`);
-  }
-  return json;
+/**
+ * Stripe fetches line-item images itself, so it needs a public https URL. A
+ * relative path on a laptop (`http://localhost:3000/img/…`) is unreachable from
+ * Stripe and gets the whole session refused, so it is left off instead.
+ */
+function stripeImage(image: string, origin: string): string[] {
+  if (!image) return [];
+  const url = absoluteImg(image, origin);
+  return url.startsWith("https://") ? [url] : [];
 }
 
 export const stripeProvider: PaymentProvider = {
@@ -98,39 +64,86 @@ export const stripeProvider: PaymentProvider = {
   },
 
   async createIntent(context: PaymentContext): Promise<PaymentIntentResult> {
-    const key = secretKey();
-    if (!key) throw new Error("Stripe is not configured.");
-
     /*
-     * One line for the whole order rather than a line per garment. The bag has
-     * already been priced, VAT'd and totalled by the checkout module; sending
-     * the pieces separately would ask Stripe to re-derive a total it has no
-     * business deriving, and any disagreement between the two would be a
-     * customer charged an amount the invoice does not show.
+     * A line per garment, delivery as a shipping option and VAT as its own
+     * line — each one the exact fils the order row already holds. The bag has
+     * been priced and totalled by the checkout module in fils, so these add up
+     * to `amountAed` to the fil; Stripe is shown the invoice, never asked to
+     * work one out. The webhook checks the total again before marking paid.
      */
-    const session = await stripeFetch(
-      "/checkout/sessions",
-      form({
-        mode: "payment",
-        "payment_method_types[0]": "card",
-        "line_items[0][quantity]": 1,
-        "line_items[0][price_data][currency]": "aed",
-        "line_items[0][price_data][unit_amount]": toFils(context.amountAed),
-        "line_items[0][price_data][product_data][name]": `FEEZEE order ${context.orderNumber}`,
-        customer_email: context.customerEmail,
-        client_reference_id: context.orderNumber,
-        "metadata[orderNumber]": context.orderNumber,
-        "metadata[orderId]": context.orderId,
-        success_url: `${context.origin}/order-confirmation/${context.orderNumber}?paid=1`,
-        cancel_url: `${context.origin}/checkout?cancelled=${context.orderNumber}`,
-      }),
-      key,
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
+      context.lines.map((line) => ({
+        quantity: line.quantity,
+        price_data: {
+          currency: "aed",
+          unit_amount: toFils(line.unitPriceAed),
+          product_data: {
+            name: `${line.productName} (${line.size})`,
+            images: stripeImage(line.image, context.origin),
+          },
+        },
+      }));
+
+    if (context.vatAed > 0) {
+      lineItems.push({
+        quantity: 1,
+        price_data: {
+          currency: "aed",
+          unit_amount: toFils(context.vatAed),
+          product_data: { name: "VAT (5%)" },
+        },
+      });
+    }
+
+    const cart = JSON.stringify(
+      context.lines.map((line) => [line.variantId, line.quantity]),
     );
+
+    const session = await stripe().checkout.sessions.create({
+      mode: "payment",
+      line_items: lineItems,
+      shipping_options: [
+        {
+          shipping_rate_data: {
+            type: "fixed_amount",
+            display_name:
+              context.shippingFeeAed > 0 ? "Standard delivery" : "Free standard delivery",
+            fixed_amount: { amount: toFils(context.shippingFeeAed), currency: "aed" },
+            delivery_estimate: {
+              minimum: { unit: "business_day", value: 2 },
+              maximum: { unit: "business_day", value: 5 },
+            },
+          },
+        },
+      ],
+      // The address and phone were collected and validated by our own form
+      // and are already on the order, so Stripe is not asked for them again.
+      customer_email: context.customerEmail,
+      client_reference_id: context.orderNumber,
+      metadata: {
+        orderNumber: context.orderNumber,
+        orderId: context.orderId,
+        // [variantId, quantity] pairs, for reading in the Stripe dashboard.
+        // Stripe caps a value at 500 characters; a large bag goes without,
+        // since the order itself is the record of what was bought.
+        ...(cart.length <= 500 ? { cart } : {}),
+      },
+      success_url: `${context.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${context.origin}/cart`,
+      /*
+       * The order's stock is held from the moment it is placed, so an
+       * abandoned card sheet should give it back soon rather than after
+       * Stripe's default 24 hours. `checkout.session.expired` releases it.
+       * Thirty minutes is Stripe's minimum; the extra minute keeps a clock
+       * running slightly behind Stripe's from having the session refused.
+       */
+      expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
+    });
 
     return {
       status: "PENDING",
-      redirectUrl: (session.url as string) ?? null,
-      transactionId: (session.id as string) ?? null,
+      redirectUrl: session.url ?? null,
+      transactionId: session.id,
       metadata: { sessionId: session.id },
       customerInstructions: [
         "Your card has not been charged until the payment completes.",
@@ -139,6 +152,19 @@ export const stripeProvider: PaymentProvider = {
     };
   },
 };
+
+/**
+ * The order a Checkout Session belongs to, for the page Stripe sends the
+ * customer back to. Read-only: what the customer sees there is the order as
+ * the webhook has left it, never a status inferred from the session.
+ */
+export async function stripeSessionOrderNumber(
+  sessionId: string,
+): Promise<string | null> {
+  if (!secretKey()) return null;
+  const session = await stripe().checkout.sessions.retrieve(sessionId);
+  return session.metadata?.orderNumber ?? session.client_reference_id ?? null;
+}
 
 // ---------------------------------------------------------------------------
 // Refunds
@@ -165,19 +191,13 @@ export type StripeRefund = {
 export async function resolveStripePaymentIntent(
   id: string,
 ): Promise<string | null> {
-  const key = secretKey();
-  if (!key) throw new Error("Stripe is not configured.");
-
   const value = id.trim();
   if (value.startsWith("pi_")) return value;
   if (!value.startsWith("cs_")) return null;
 
-  const session = await stripeGet(
-    `/checkout/sessions/${encodeURIComponent(value)}`,
-    key,
-  );
+  const session = await stripe().checkout.sessions.retrieve(value);
   const intent = session.payment_intent;
-  return typeof intent === "string" ? intent : null;
+  return typeof intent === "string" ? intent : (intent?.id ?? null);
 }
 
 /**
@@ -198,9 +218,6 @@ export async function createStripeRefund(
   amountAed: number,
   idempotencyKey?: string,
 ): Promise<StripeRefund> {
-  const key = secretKey();
-  if (!key) throw new Error("Stripe is not configured.");
-
   const intent = await resolveStripePaymentIntent(paymentIntentId);
   if (!intent) {
     throw new Error(
@@ -213,17 +230,15 @@ export async function createStripeRefund(
     throw new Error("A refund has to be for more than nothing.");
   }
 
-  const refund = await stripeFetch(
-    "/refunds",
-    form({ payment_intent: intent, amount: fils }),
-    key,
-    idempotencyKey,
+  const refund = await stripe().refunds.create(
+    { payment_intent: intent, amount: fils },
+    idempotencyKey ? { idempotencyKey } : undefined,
   );
 
   return {
-    id: (refund.id as string) ?? "",
-    status: (refund.status as string) ?? "unknown",
-    amountAed: Number(refund.amount ?? fils) / 100,
+    id: refund.id,
+    status: refund.status ?? "unknown",
+    amountAed: refund.amount / 100,
     paymentIntentId: intent,
   };
 }
@@ -232,9 +247,9 @@ export async function createStripeRefund(
  * Verify a webhook and say what it means.
  *
  * The signature check is the security boundary of the whole payment flow:
- * without it, anyone who can reach the endpoint can mark any order paid. It is
- * a timing-safe HMAC-SHA256 over `timestamp.payload`, plus a five-minute
- * replay window.
+ * without it, anyone who can reach the endpoint can mark any order paid.
+ * `constructEvent` does the HMAC-SHA256 over `timestamp.payload` and enforces
+ * Stripe's five-minute replay window.
  *
  * `payload` must be the **raw** request body. Parsing and re-stringifying the
  * JSON changes the bytes and the signature will never match.
@@ -247,77 +262,69 @@ export function verifyStripeWebhook(
   if (!secret) throw new Error("STRIPE_WEBHOOK_SECRET is not set.");
   if (!signatureHeader) throw new Error("Missing Stripe-Signature header.");
 
-  const parts = new Map(
-    signatureHeader.split(",").map((part) => {
-      const [k, ...rest] = part.trim().split("=");
-      return [k, rest.join("=")] as const;
-    }),
-  );
+  // The key is not used to verify, but the SDK client is what carries
+  // `webhooks`; a placeholder keeps verification working without one.
+  const event = (client?.stripe ?? new Stripe(secretKey() ?? "sk_unset")).webhooks
+    .constructEvent(payload, signatureHeader, secret);
 
-  const timestamp = parts.get("t");
-  const signature = parts.get("v1");
-  if (!timestamp || !signature) throw new Error("Malformed Stripe signature.");
-
-  const age = Math.abs(Date.now() / 1000 - Number(timestamp));
-  if (!Number.isFinite(age) || age > 300) {
-    throw new Error("Stripe signature is outside the replay window.");
+  if (
+    event.type !== "checkout.session.completed" &&
+    event.type !== "checkout.session.async_payment_succeeded" &&
+    event.type !== "checkout.session.async_payment_failed" &&
+    event.type !== "checkout.session.expired"
+  ) {
+    return {
+      orderNumber: "",
+      outcome: "IGNORED",
+      transactionId: null,
+      amountAed: null,
+      raw: { type: event.type },
+    };
   }
 
-  const expected = createHmac("sha256", secret)
-    .update(`${timestamp}.${payload}`, "utf8")
-    .digest("hex");
-
-  const a = Buffer.from(expected, "utf8");
-  const b = Buffer.from(signature, "utf8");
-  if (a.length !== b.length || !timingSafeEqual(a, b)) {
-    throw new Error("Stripe signature does not match.");
-  }
-
-  const event = JSON.parse(payload) as {
-    type: string;
-    data: { object: Record<string, unknown> };
-  };
-  const object = event.data?.object ?? {};
-  const metadata = (object.metadata ?? {}) as Record<string, string>;
-  const orderNumber =
-    metadata.orderNumber ?? (object.client_reference_id as string) ?? "";
-
-  const amountFils = Number(object.amount_total ?? object.amount ?? 0);
-  const amountAed = Number.isFinite(amountFils) ? amountFils / 100 : null;
-
-  const outcome: WebhookResult["outcome"] =
-    event.type === "checkout.session.completed" ||
-    event.type === "payment_intent.succeeded"
-      ? "PAID"
-      : event.type === "payment_intent.payment_failed"
-        ? "FAILED"
-        : event.type === "charge.refunded"
-          ? "REFUNDED"
-          : "IGNORED";
+  const session = event.data.object;
 
   /*
-   * The id on a `checkout.session.completed` is the session, not the charge —
-   * and a refund has to be issued against the payment intent. Both are kept:
-   * the session id is what the customer's receipt refers to, the intent is
-   * what `createStripeRefund` needs months later.
+   * `completed` fires when the customer finishes the Checkout page, which for
+   * a card is the moment of payment — but for a delayed method it is only the
+   * promise of one, with `payment_status` still `unpaid`. Only `paid` is
+   * money; the async events settle the rest. `expired` means the customer
+   * never paid at all, and the order's stock should go back.
    */
-  const objectId = typeof object.id === "string" ? object.id : null;
+  const outcome: WebhookResult["outcome"] =
+    event.type === "checkout.session.expired"
+      ? "EXPIRED"
+      : event.type === "checkout.session.async_payment_failed"
+      ? "FAILED"
+      : session.payment_status === "paid"
+        ? "PAID"
+        : "IGNORED";
+
+  /*
+   * The session id is what the customer's receipt refers to and what makes a
+   * replay recognisable; the payment intent is what `createStripeRefund` needs
+   * months later. Both are kept.
+   */
   const paymentIntentId =
-    typeof object.payment_intent === "string"
-      ? object.payment_intent
-      : objectId?.startsWith("pi_")
-        ? objectId
-        : null;
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : (session.payment_intent?.id ?? null);
 
   return {
-    orderNumber,
+    orderNumber:
+      session.metadata?.orderNumber ?? session.client_reference_id ?? "",
     outcome,
-    transactionId: objectId,
+    transactionId: session.id,
     paymentIntentId,
-    amountAed,
+    amountAed: session.amount_total === null ? null : session.amount_total / 100,
     raw: {
       type: event.type,
+      eventId: event.id,
+      sessionId: session.id,
       ...(paymentIntentId ? { paymentIntentId } : {}),
+      ...(session.customer_details?.email
+        ? { customerEmail: session.customer_details.email }
+        : {}),
     },
   };
 }

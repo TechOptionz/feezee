@@ -19,7 +19,7 @@ import {
   refundStripePayment,
 } from "@/modules/orders";
 import { resolveReturn, ReturnError, returnById } from "@/modules/returns";
-import { AuthError, login, logout } from "@/modules/customers";
+import { AuthError, changePassword, login, logout } from "@/modules/customers";
 import { loginSchema } from "@/modules/customers";
 import { toAed, toAedOrNull, toDecimal, round2 } from "@/modules/shared/money";
 import {
@@ -125,6 +125,53 @@ export async function adminLogoutAction() {
 // ---------------------------------------------------------------------------
 // Inventory
 // ---------------------------------------------------------------------------
+
+/**
+ * A staff member changes their own password.
+ *
+ * Staff passwords open the till, the stock and the refunds, so the back office
+ * asks for 12 characters where the shop asks customers for 8.
+ */
+export async function changeStaffPasswordAction(
+  _previous: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  let actor;
+  try {
+    actor = await requireStaffAction();
+  } catch (error) {
+    return fail(error);
+  }
+
+  const next = String(formData.get("newPassword") ?? "");
+  if (next.length < 12) {
+    return {
+      status: "error",
+      fieldErrors: { newPassword: "Use at least 12 characters." },
+    };
+  }
+  if (next !== String(formData.get("confirm") ?? "")) {
+    return {
+      status: "error",
+      fieldErrors: { confirm: "The two passwords do not match." },
+    };
+  }
+
+  try {
+    await changePassword(actor.id, String(formData.get("currentPassword") ?? ""), next);
+  } catch (error) {
+    return fail(error);
+  }
+
+  await audit({
+    actor,
+    action: "staff.password.change",
+    entityType: "User",
+    entityId: actor.id,
+  });
+
+  return { status: "ok", message: "Your password has been changed." };
+}
 
 export async function adjustStockAction(
   _previous: AdminFormState,

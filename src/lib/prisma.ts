@@ -22,7 +22,7 @@ if (!connectionString) {
 /**
  * The pool is tuned for a database that is far away, because it is.
  *
- * The hosted Postgres sits in Singapore; from the UAE, or from a Vercel
+ * The hosted Postgres sits in Singapore; from the UAE, or from a Netlify
  * function in the US, one round trip is ~100 ms and opening a connection
  * (TCP, TLS, then the pooler's handshake) is ~500 ms. pg's defaults were
  * written for a database on the same rack: idle connections are dropped after
