@@ -59,7 +59,7 @@ const bankTransferProvider: PaymentProvider = {
   description: "Transfer to our UAE account and send the receipt on WhatsApp.",
 
   isAvailable() {
-    const iban = (process.env.BANK_TRANSFER_IBAN ?? "").replace(/s+/g, "");
+    const iban = (process.env.BANK_TRANSFER_IBAN ?? "").replace(/\s+/g, "");
     // The .env.example placeholder is all zeros. Offering it would send a
     // customer's money to an account that does not exist.
     return iban.length > 0 && !/^AE0+$/i.test(iban);
