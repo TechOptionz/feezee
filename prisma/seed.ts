@@ -52,7 +52,13 @@ const OPENING_STOCK: Record<string, number> = {
 };
 
 const ADMIN_EMAIL = "admin@feezee.ae";
-const ADMIN_PASSWORD = "FeezeeAdmin2026!";
+/**
+ * Set SEED_ADMIN_PASSWORD when seeding a real database. The fallback is the
+ * development password printed in the README, so it is never safe in
+ * production. It is only used when the admin account does not exist yet.
+ */
+const DEV_ADMIN_PASSWORD = "FeezeeAdmin2026!";
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD?.trim() || DEV_ADMIN_PASSWORD;
 
 function dec(aed: number): Prisma.Decimal {
   return new Prisma.Decimal(aed.toFixed(2));
@@ -89,6 +95,12 @@ async function seedAdmin() {
     update: { role: Role.ADMIN },
   });
   console.log(`  admin         ${ADMIN_EMAIL}`);
+  if (ADMIN_PASSWORD === DEV_ADMIN_PASSWORD) {
+    console.log(
+      "                (development password; set SEED_ADMIN_PASSWORD for a real database,",
+    );
+    console.log("                 or change it under Admin > My account)");
+  }
 }
 
 async function seedCatalogue() {

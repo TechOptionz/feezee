@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Jost, Marcellus } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { StoreProvider } from "@/components/store/store-provider";
@@ -48,7 +47,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <MobileMenu />
           <CartDrawer />
         </StoreProvider>
-        <Analytics />
       </body>
     </html>
   );

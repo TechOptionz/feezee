@@ -34,13 +34,16 @@ Then:
 - Shop — <http://localhost:3000>
 - Back office — <http://localhost:3000/admin> · `admin@feezee.ae` / `FeezeeAdmin2026!`
 
-**Change that password before this goes anywhere real.**
+**Change that password before this goes anywhere real**, under Admin → My
+account. If `npm run dev` shows a Google Fonts "Module not found" error on
+Windows, use `npm run dev:webpack` instead.
 
 ### Scripts
 
 | Command | Description |
 | --- | --- |
 | `npm run dev` | Development server |
+| `npm run dev:webpack` | Development server on webpack instead of Turbopack |
 | `npm run build` | Production build |
 | `npm start` | Serve the production build |
 | `npm run lint` | ESLint |
@@ -209,14 +212,20 @@ cleanly.
 
 ## Deploying
 
-Vercel detects Next.js automatically. Point `DATABASE_URL` at a managed
-PostgreSQL (Neon, Supabase, RDS), set the variables above, and run
-`npx prisma db push` against it once.
+The site is hosted on Netlify, which detects Next.js automatically. Point
+`DATABASE_URL` at a managed PostgreSQL (Neon, Supabase, RDS) and set the
+variables above in the Netlify site settings. Then, from your machine with
+`DATABASE_URL` pointing at the production database, run this once:
 
 ```bash
-vercel            # preview
-vercel --prod     # production
+npm run db:push    # create the tables
+npm run db:seed    # load the 21 products, settings and the first admin
 ```
+
+Set `SEED_ADMIN_PASSWORD` before seeding, and never run `demo:add` against
+the production database. Set the Netlify functions region to Singapore so
+pages run next to the database. Uploaded product photos are stored in Netlify
+Blobs automatically; nothing needs configuring.
 
 Add the Stripe webhook at `https://<your-domain>/api/webhooks/stripe`.
 

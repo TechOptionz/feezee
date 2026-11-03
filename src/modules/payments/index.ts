@@ -13,6 +13,7 @@ export * from "@/modules/payments/types";
 export {
   createStripeRefund,
   resolveStripePaymentIntent,
+  stripeSessionOrderNumber,
   verifyStripeWebhook,
   type StripeRefund,
 } from "@/modules/payments/stripe";
@@ -58,7 +59,10 @@ const bankTransferProvider: PaymentProvider = {
   description: "Transfer to our UAE account and send the receipt on WhatsApp.",
 
   isAvailable() {
-    return Boolean(process.env.BANK_TRANSFER_IBAN?.trim());
+    const iban = (process.env.BANK_TRANSFER_IBAN ?? "").replace(/\s+/g, "");
+    // The .env.example placeholder is all zeros. Offering it would send a
+    // customer's money to an account that does not exist.
+    return iban.length > 0 && !/^AE0+$/i.test(iban);
   },
 
   async createIntent(context): Promise<PaymentIntentResult> {

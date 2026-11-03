@@ -236,6 +236,7 @@ export type PlacedOrder = {
   totals: OrderTotals;
   paymentMethod: PaymentMethod;
   customerEmail: string;
+  lines: PricedLine[];
 };
 
 /**
@@ -320,6 +321,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlacedOrder> {
     totals,
     paymentMethod: order.paymentMethod,
     customerEmail: order.customerEmail,
+    lines: basket.lines,
   };
 }
 
@@ -820,8 +822,24 @@ export async function recordPayment(
     status: PaymentStatus;
     metadata?: Prisma.InputJsonValue;
   },
+  options: {
+    /**
+     * Write nothing if the order is already in `status`, and say so by
+     * returning null. The check and the write are one statement, so two
+     * deliveries of the same webhook racing each other record it once.
+     */
+    onlyIfChanged?: boolean;
+  } = {},
 ) {
   return prisma.$transaction(async (tx) => {
+    if (options.onlyIfChanged) {
+      const claimed = await tx.order.updateMany({
+        where: { id: orderId, paymentStatus: { not: input.status } },
+        data: { paymentStatus: input.status },
+      });
+      if (claimed.count === 0) return null;
+    }
+
     await tx.paymentTransaction.create({
       data: {
         orderId,
@@ -844,6 +862,67 @@ export async function recordPayment(
           : {}),
       },
     });
+  });
+}
+
+/**
+ * Undo an order whose card sheet expired unpaid: payment FAILED, the order
+ * cancelled, and every line's stock put back — the reverse of `placeOrder`.
+ *
+ * Only an order still PENDING on both counts is touched, and that check is
+ * the same statement as the write, so a replayed or doubled webhook releases
+ * the stock once. Cancelling is part of it, not a nicety: an order left
+ * PENDING could later be cancelled from the admin, and `updateFulfillment`
+ * would restock it a second time. Returns null when there was nothing to do.
+ */
+export async function releaseExpiredOrder(
+  orderId: string,
+  input: { transactionId: string | null; metadata?: Prisma.InputJsonValue },
+) {
+  return prisma.$transaction(async (tx) => {
+    const now = new Date();
+    const claimed = await tx.order.updateMany({
+      where: {
+        id: orderId,
+        paymentStatus: PaymentStatus.PENDING,
+        fulfillmentStatus: FulfillmentStatus.PENDING,
+      },
+      data: {
+        paymentStatus: PaymentStatus.FAILED,
+        fulfillmentStatus: FulfillmentStatus.CANCELLED,
+        cancelledAt: now,
+      },
+    });
+    if (claimed.count === 0) return null;
+
+    const order = await tx.order.findUniqueOrThrow({
+      where: { id: orderId },
+      include: { items: true },
+    });
+
+    // Same lock order as `deductMany`.
+    const items = [...order.items].sort((a, b) =>
+      (a.variantId ?? "").localeCompare(b.variantId ?? ""),
+    );
+    for (const item of items) {
+      if (!item.variantId) continue;
+      await restock(tx, item.variantId, item.quantity, StockReason.ORDER_CANCELLED, {
+        note: `Order ${order.orderNumber} payment expired`,
+      });
+    }
+
+    await tx.paymentTransaction.create({
+      data: {
+        orderId,
+        provider: "STRIPE",
+        transactionId: input.transactionId,
+        amountAed: order.totalAed,
+        status: PaymentStatus.FAILED,
+        ...(input.metadata ? { metadata: input.metadata } : {}),
+      },
+    });
+
+    return order;
   });
 }
 

@@ -22,7 +22,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Surfaces in the server logs on Vercel and in the console locally.
+    // Surfaces in the Netlify function logs and in the console locally.
     console.error(error);
   }, [error]);
 

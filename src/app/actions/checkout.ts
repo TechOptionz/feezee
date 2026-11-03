@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { PaymentMethod } from "@/generated/prisma/enums";
 import { checkoutSchema } from "@/modules/checkout";
 import { OutOfStockError } from "@/modules/inventory";
@@ -12,6 +13,7 @@ import {
   sendEmailInBackground,
 } from "@/modules/notifications";
 import { site } from "@/lib/site";
+import { callerKey, createRateLimit } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -33,6 +35,29 @@ export type CheckoutState =
       redirectUrl: string | null;
     };
 
+/**
+ * What a basket may look like on the wire. A whole, positive quantity per
+ * line and a bounded number of lines; anything else is a tampered request,
+ * refused outright rather than quietly coerced into something orderable.
+ * Whether each id is a real garment with stock is `placeOrder`'s question.
+ */
+const basketSchema = z
+  .array(
+    z.object({
+      variantId: z.string().trim().min(1).max(64),
+      quantity: z.number().int().min(1).max(99),
+    }),
+  )
+  .min(1)
+  .max(50);
+
+/**
+ * Every attempt creates an order and, for a card, a Stripe session — so a
+ * script hammering this would fill the admin with PENDING orders and hold
+ * stock against them. Ten a minute is well past a customer correcting a typo.
+ */
+const checkoutLimited = createRateLimit({ windowMs: 60_000, max: 10 });
+
 export async function submitCheckout(
   lines: BasketLine[],
   form: Record<string, unknown>,
@@ -51,22 +76,32 @@ export async function submitCheckout(
     };
   }
 
+  if (!Array.isArray(lines) || lines.length === 0) {
+    return { status: "error", message: "Your bag is empty." };
+  }
+
+  const basket = basketSchema.safeParse(lines);
+  if (!basket.success) {
+    return {
+      status: "error",
+      message: "Something in your bag is not right. Please review it and try again.",
+    };
+  }
+  // Stock is the real ceiling on each quantity; the order transaction checks it.
+  const safeLines = basket.data;
+
+  // Counted after validation, so a fumbled form does not spend an attempt.
+  if (checkoutLimited(await callerKey())) {
+    return {
+      status: "error",
+      message:
+        "That is a lot of attempts at once. Please wait a minute and try again.",
+    };
+  }
+
   const details = parsed.data;
   const session = await getSession();
   const userId = session?.userId ?? null;
-
-  const safeLines = lines
-    .filter((line) => typeof line.variantId === "string" && line.variantId)
-    .map((line) => ({
-      variantId: line.variantId,
-      // A whole number of at least one; stock is the only ceiling, and the
-      // order transaction checks it.
-      quantity: Math.max(1, Math.floor(line.quantity) || 1),
-    }));
-
-  if (safeLines.length === 0) {
-    return { status: "error", message: "Your bag is empty." };
-  }
 
   let placed;
   try {
@@ -95,6 +130,9 @@ export async function submitCheckout(
       orderId: placed.id,
       orderNumber: placed.orderNumber,
       amountAed: placed.totals.totalAed,
+      lines: placed.lines,
+      shippingFeeAed: placed.totals.shippingFeeAed,
+      vatAed: placed.totals.vatAed,
       customerEmail: placed.customerEmail,
       customerName: details.fullName,
       origin: site.url,

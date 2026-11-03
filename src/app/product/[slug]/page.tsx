@@ -14,7 +14,7 @@ import {
   productBySlug,
   relatedProducts,
 } from "@/modules/catalogue";
-import { img } from "@/lib/assets";
+import { absoluteImg, img } from "@/lib/assets";
 import { site } from "@/lib/site";
 
 /**
@@ -85,7 +85,7 @@ export default async function ProductPage({ params }: PageProps<"/product/[slug]
             color: product.colour,
             material: product.fabricFamily,
             brand: { "@type": "Brand", name: site.name },
-            image: product.images.map((file) => `${site.url}${img(file)}`),
+            image: product.images.map((file) => absoluteImg(file, site.url)),
             offers: {
               "@type": "AggregateOffer",
               url,

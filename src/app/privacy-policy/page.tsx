@@ -140,9 +140,9 @@ export default function PrivacyPolicyPage() {
                 "Resend, which sends the order, dispatch and return emails on our behalf.",
             },
             {
-              term: "Hosting and analytics",
+              term: "Hosting",
               detail:
-                "Vercel, which runs the site and provides the aggregate traffic figures we use to improve it.",
+                "Netlify, which runs the site and stores the product photographs it shows.",
             },
             {
               term: "Authorities",
