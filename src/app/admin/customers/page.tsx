@@ -10,7 +10,7 @@ import {
   Th,
   adminDate,
 } from "@/app/admin/admin-ui";
-import { requireStaff } from "@/modules/admin";
+import { getAdminPath, requireStaff } from "@/modules/admin";
 import { customerDirectory } from "@/modules/customers";
 import { formatUaePhone } from "@/modules/checkout";
 import { formatPrice } from "@/lib/currency";
@@ -21,7 +21,8 @@ export const dynamic = "force-dynamic";
 export default async function AdminCustomersPage({
   searchParams,
 }: PageProps<"/admin/customers">) {
-  await requireStaff("/admin/customers");
+  await requireStaff("/customers");
+  const adminPath = await getAdminPath();
 
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
@@ -68,7 +69,7 @@ export default async function AdminCustomersPage({
             </button>
             {q && (
               <Link
-                href="/admin/customers"
+                href={adminPath("/customers")}
                 className="pb-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-taupe hover:text-champagne"
               >
                 Clear
@@ -100,7 +101,7 @@ export default async function AdminCustomersPage({
                     <tr key={customer.id}>
                       <Td>
                         <Link
-                          href={`/admin/orders?q=${encodeURIComponent(customer.email)}`}
+                          href={adminPath(`/orders?q=${encodeURIComponent(customer.email)}`)}
                           className="text-champagne hover:text-gold-light"
                         >
                           {customer.name}

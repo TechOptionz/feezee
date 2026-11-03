@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminHeading, Panel, StatCard } from "@/app/admin/admin-ui";
 import { InventoryTable, type InventoryRow } from "@/app/admin/inventory/inventory-table";
-import { requireStaff } from "@/modules/admin";
+import { getAdminPath, requireStaff } from "@/modules/admin";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = { title: "Inventory" };
@@ -13,7 +13,8 @@ const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL"];
 export default async function AdminInventoryPage({
   searchParams,
 }: PageProps<"/admin/inventory">) {
-  await requireStaff("/admin/inventory");
+  await requireStaff("/inventory");
+  const adminPath = await getAdminPath();
 
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
@@ -82,13 +83,13 @@ export default async function AdminInventoryPage({
           label="Running low"
           value={String(lowCount)}
           tone={lowCount > 0 ? "warn" : "default"}
-          href="/admin/inventory?filter=low"
+          href={adminPath("/inventory?filter=low")}
         />
         <StatCard
           label="Sold out"
           value={String(outCount)}
           tone={outCount > 0 ? "warn" : "default"}
-          href="/admin/inventory?filter=out"
+          href={adminPath("/inventory?filter=out")}
         />
       </div>
 
@@ -132,7 +133,7 @@ export default async function AdminInventoryPage({
 
             {(q || filter) && (
               <Link
-                href="/admin/inventory"
+                href={adminPath("/inventory")}
                 className="pb-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-taupe hover:text-champagne"
               >
                 Clear

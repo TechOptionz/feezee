@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
  * seeded administrator password could only be changed in the database.
  */
 export default async function AdminAccountPage() {
-  const actor = await requireStaff("/admin/account");
+  const actor = await requireStaff("/account");
 
   return (
     <>

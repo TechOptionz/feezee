@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "New product" };
 export const dynamic = "force-dynamic";
 
 export default async function NewProductPage() {
-  await requireStaff("/admin/products/new");
+  await requireStaff("/products/new");
 
   return (
     <>

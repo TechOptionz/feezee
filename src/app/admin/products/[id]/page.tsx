@@ -15,7 +15,7 @@ const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL"];
 export default async function EditProductPage({
   params,
 }: PageProps<"/admin/products/[id]">) {
-  await requireStaff("/admin/products");
+  await requireStaff("/products");
 
   const { id } = await params;
   const productId = Number(id);

@@ -11,7 +11,7 @@ import {
   Th,
   adminDate,
 } from "@/app/admin/admin-ui";
-import { requireStaff } from "@/modules/admin";
+import { getAdminPath, requireStaff } from "@/modules/admin";
 import { listOrders } from "@/modules/orders";
 import { EMIRATES } from "@/modules/checkout";
 import { formatPrice } from "@/lib/currency";
@@ -24,7 +24,8 @@ const PAGE_SIZE = 40;
 export default async function AdminOrdersPage({
   searchParams,
 }: PageProps<"/admin/orders">) {
-  await requireStaff("/admin/orders");
+  await requireStaff("/orders");
+  const adminPath = await getAdminPath();
 
   const params = await searchParams;
   const status = typeof params.status === "string" ? params.status : "";
@@ -56,7 +57,7 @@ export default async function AdminOrdersPage({
     if (emirate) search.set("emirate", emirate);
     if (q) search.set("q", q);
     for (const [key, value] of Object.entries(next)) search.set(key, String(value));
-    return `/admin/orders?${search.toString()}`;
+    return adminPath(`/orders?${search.toString()}`);
   };
 
   return (
@@ -93,7 +94,7 @@ export default async function AdminOrdersPage({
 
           {(q || status || payment || emirate) && (
             <Link
-              href="/admin/orders"
+              href={adminPath("/orders")}
               className="pb-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-taupe hover:text-champagne"
             >
               Clear
@@ -125,7 +126,7 @@ export default async function AdminOrdersPage({
                     <tr key={order.id}>
                       <Td>
                         <Link
-                          href={`/admin/orders/${order.id}`}
+                          href={adminPath(`/orders/${order.id}`)}
                           className="whitespace-nowrap font-medium tabular-nums text-champagne hover:text-gold-light"
                         >
                           {order.orderNumber}

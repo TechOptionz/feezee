@@ -9,7 +9,7 @@ import {
   Th,
   adminDateTime,
 } from "@/app/admin/admin-ui";
-import { auditEntityTypes, listAuditLogs, requireStaff } from "@/modules/admin";
+import { auditEntityTypes, listAuditLogs, getAdminPath, requireStaff } from "@/modules/admin";
 
 export const metadata: Metadata = { title: "Audit log" };
 export const dynamic = "force-dynamic";
@@ -19,7 +19,8 @@ const PAGE_SIZE = 60;
 export default async function AdminAuditLogPage({
   searchParams,
 }: PageProps<"/admin/audit-logs">) {
-  await requireStaff("/admin/audit-logs");
+  await requireStaff("/audit-logs");
+  const adminPath = await getAdminPath();
 
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
@@ -44,7 +45,7 @@ export default async function AdminAuditLogPage({
     if (q) search.set("q", q);
     if (entityType) search.set("entityType", entityType);
     search.set("page", String(n));
-    return `/admin/audit-logs?${search.toString()}`;
+    return adminPath(`/audit-logs?${search.toString()}`);
   };
 
   return (
@@ -95,7 +96,7 @@ export default async function AdminAuditLogPage({
 
           {(q || entityType) && (
             <Link
-              href="/admin/audit-logs"
+              href={adminPath("/audit-logs")}
               className="pb-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-taupe hover:text-champagne"
             >
               Clear

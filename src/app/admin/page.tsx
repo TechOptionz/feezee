@@ -13,7 +13,7 @@ import {
 } from "@/app/admin/admin-ui";
 import { DateRangeTabs, rangeFromParams } from "@/app/admin/date-range";
 import { RevenueChart } from "@/app/admin/revenue-chart";
-import { requireStaff } from "@/modules/admin";
+import { getAdminPath, requireStaff } from "@/modules/admin";
 import {
   metrics,
   revenueSeries,
@@ -31,7 +31,8 @@ export const dynamic = "force-dynamic";
 export default async function AdminDashboard({
   searchParams,
 }: PageProps<"/admin">) {
-  await requireStaff("/admin");
+  await requireStaff("/");
+  const adminPath = await getAdminPath();
 
   const params = await searchParams;
   const { range, preset, from, to } = rangeFromParams({
@@ -58,7 +59,7 @@ export default async function AdminDashboard({
         standfirst="Everything the shop did in the chosen range. Gross counts every order that was not cancelled; net counts only what has actually been collected."
       />
 
-      <DateRangeTabs preset={preset} from={from} to={to} />
+      <DateRangeTabs preset={preset} from={from} to={to} basePath={adminPath("/")} />
 
       <div className="mt-[clamp(20px,2.6vw,30px)] grid grid-cols-2 nav:grid-cols-3 min-[1560px]:grid-cols-6 gap-3">
         <StatCard label="Gross revenue" value={formatPrice(kpis.grossRevenueAed)} />
@@ -79,14 +80,14 @@ export default async function AdminDashboard({
         <StatCard
           label="Pending orders"
           value={String(kpis.pendingOrders)}
-          href="/admin/orders?status=PENDING"
+          href={adminPath("/orders?status=PENDING")}
           tone={kpis.pendingOrders > 0 ? "warn" : "default"}
         />
         <StatCard
           label="Low stock"
           value={String(kpis.lowStockCount)}
           hint={kpis.openReturns > 0 ? `${kpis.openReturns} open returns` : undefined}
-          href="/admin/inventory"
+          href={adminPath("/inventory")}
           tone={kpis.lowStockCount > 0 ? "warn" : "default"}
         />
       </div>
@@ -165,7 +166,7 @@ export default async function AdminDashboard({
           title="Running out"
           action={
             <Link
-              href="/admin/inventory"
+              href={adminPath("/inventory")}
               className="text-[12px] font-medium tracking-[0.1em] uppercase text-gold-light hover:text-champagne"
             >
               Restock →
@@ -189,7 +190,7 @@ export default async function AdminDashboard({
                     <tr key={row.variantId}>
                       <Td>
                         <Link
-                          href={`/admin/inventory?q=${encodeURIComponent(row.productName)}`}
+                          href={adminPath(`/inventory?q=${encodeURIComponent(row.productName)}`)}
                           className="text-champagne hover:text-gold-light"
                         >
                           {row.productName}
@@ -220,7 +221,7 @@ export default async function AdminDashboard({
           title="Latest orders"
           action={
             <Link
-              href="/admin/orders"
+              href={adminPath("/orders")}
               className="text-[12px] font-medium tracking-[0.1em] uppercase text-gold-light hover:text-champagne"
             >
               All orders →
@@ -247,7 +248,7 @@ export default async function AdminDashboard({
                     <tr key={order.id}>
                       <Td>
                         <Link
-                          href={`/admin/orders/${order.id}`}
+                          href={adminPath(`/orders/${order.id}`)}
                           className="whitespace-nowrap font-medium tabular-nums text-champagne hover:text-gold-light"
                         >
                           {order.orderNumber}

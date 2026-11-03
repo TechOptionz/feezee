@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
+import { DEV_ADMIN_HOSTNAME } from "./src/lib/admin-host";
 
 const nextConfig: NextConfig = {
+  // The back office's host, read by the proxy, the server and the shop's
+  // links into the admin alike — so it is inlined at build time, and changing
+  // it means a redeploy. Empty falls back to the default in admin-host.ts.
+  env: {
+    ADMIN_HOST: process.env.ADMIN_HOST ?? "",
+  },
+  // The dev server refuses HMR and dev assets to hosts other than localhost.
+  allowedDevOrigins: [DEV_ADMIN_HOSTNAME],
   images: {
     // Design images are local (`public/img/`), and photographs uploaded on
     // Netlify are served from this site's own `/media/` route. Add remote
