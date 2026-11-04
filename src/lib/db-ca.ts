@@ -53,8 +53,12 @@ type DbSsl = { ca: string; rejectUnauthorized: true };
  * and rejects DO's CA before our `ssl` object is consulted. Removing it hands
  * TLS entirely to the `ssl` option, which verifies against the bundled CA.
  *
- * A local Postgres (localhost/loopback, no TLS) keeps its string untouched and
- * gets no `ssl`, so development is unchanged.
+ * The CA is applied **only** to DigitalOcean hosts (`*.ondigitalocean.com`).
+ * Every other host — a local docker Postgres, or another provider such as
+ * Supabase whose certificate already chains to a public CA — keeps its
+ * connection string untouched and gets no `ssl` override. That keeps this safe
+ * to deploy before the database is actually switched over: the running app on
+ * the old host is unaffected until its connection string points at DO.
  */
 export function dbConnection(connectionString: string | undefined): {
   connectionString: string | undefined;
@@ -69,8 +73,9 @@ export function dbConnection(connectionString: string | undefined): {
     return { connectionString };
   }
 
-  const host = url.hostname;
-  if (host === "localhost" || host === "127.0.0.1" || host === "::1") {
+  // Only DigitalOcean Managed Postgres needs the bundled CA. Leave every other
+  // host (localhost, Supabase, …) exactly as configured.
+  if (!url.hostname.endsWith(".ondigitalocean.com")) {
     return { connectionString };
   }
 
