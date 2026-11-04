@@ -78,6 +78,12 @@ export type WebhookResult = {
   paymentIntentId?: string | null;
   amountAed: number | null;
   /**
+   * The currency the session settled in, lower-case ISO ("aed"). The webhook
+   * checks it alongside the amount: the right number of fils in the wrong
+   * currency is not payment of an AED order.
+   */
+  currency: string | null;
+  /**
    * Kept as strings so it drops straight into the `metadata` Json column
    * without a cast — Prisma's `InputJsonValue` will not take `unknown`.
    */

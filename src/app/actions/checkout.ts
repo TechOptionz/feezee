@@ -5,7 +5,7 @@ import { PaymentMethod } from "@/generated/prisma/enums";
 import { checkoutSchema } from "@/modules/checkout";
 import { OutOfStockError } from "@/modules/inventory";
 import { CheckoutError, placeOrder, recordPayment, type BasketLine } from "@/modules/orders";
-import { createPaymentIntent } from "@/modules/payments";
+import { availablePaymentOptions, createPaymentIntent } from "@/modules/payments";
 import { getSession } from "@/modules/customers/session";
 import { saveAddress, addressSchema } from "@/modules/customers";
 import {
@@ -100,6 +100,22 @@ export async function submitCheckout(
   }
 
   const details = parsed.data;
+
+  /*
+   * The schema only proves the method is a real enum value, not that the shop
+   * can take it right now. A card order placed while Stripe is unconfigured
+   * would otherwise create a PENDING order with no way to ever pay it. Reject
+   * any method not currently on offer before any order or stock is touched.
+   */
+  const offered = availablePaymentOptions().map((option) => option.method);
+  if (!offered.includes(details.paymentMethod)) {
+    return {
+      status: "error",
+      message: "That payment method is not available right now. Please choose another.",
+      fieldErrors: { paymentMethod: "Please choose an available payment method." },
+    };
+  }
+
   const session = await getSession();
   const userId = session?.userId ?? null;
 

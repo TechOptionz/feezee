@@ -3,7 +3,13 @@ export const site = {
   title: "FEEZEE Fashion — Embroidered Kurtas, Luxury Pret & Made-to-Order Silai",
   description:
     "FEEZEE Fashion — embroidered kurtas, luxury pret and made-to-order silai for women, delivered across Dubai and all 7 Emirates, and worldwide.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  // `||` not `??`: an empty-string env var (a Netlify variable defined but left
+  // blank) must fall back to a real origin, not pass through as "" and leave
+  // every absolute URL relative. The trailing slash is trimmed so joins like
+  // `${site.url}/checkout/success` never produce a double slash.
+  url:
+    process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "") ||
+    "http://localhost:3000",
 } as const;
 
 /**
