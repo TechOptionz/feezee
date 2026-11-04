@@ -1,5 +1,6 @@
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { dbConnection } from "@/lib/db-ca";
 
 /**
  * The one Prisma client the app uses.
@@ -41,9 +42,13 @@ if (!connectionString) {
  *   unreachable.
  */
 function createClient() {
+  const { connectionString: conn, ssl } = dbConnection(connectionString);
   return new PrismaClient({
     adapter: new PrismaPg({
-      connectionString,
+      connectionString: conn,
+      // Verify the managed database's TLS against its bundled CA; undefined for
+      // a local Postgres, which speaks no TLS. See db-ca.ts.
+      ...(ssl ? { ssl } : {}),
       max: 6,
       idleTimeoutMillis: 10 * 60 * 1000,
       keepAlive: true,
