@@ -1,4 +1,4 @@
-import { PaymentStatus } from "@/generated/prisma/enums";
+import { FulfillmentStatus, PaymentStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { verifyStripeWebhook } from "@/modules/payments";
 import { recordPayment, releaseExpiredOrder } from "@/modules/orders";
@@ -42,20 +42,22 @@ export async function POST(request: Request) {
     return new Response("Invalid signature.", { status: 400 });
   }
 
+  const eventId = event.raw.eventId ?? "?";
+
   if (event.outcome === "IGNORED" || !event.orderNumber) {
-    console.info(`[stripe] ignored ${event.raw.type}`);
+    console.info(`[stripe] ${eventId} ignored ${event.raw.type}`);
     return Response.json({ received: true, handled: false });
   }
 
   const order = await prisma.order.findUnique({
     where: { orderNumber: event.orderNumber },
-    select: { id: true, paymentStatus: true, totalAed: true },
+    select: { id: true, paymentStatus: true, fulfillmentStatus: true, totalAed: true },
   });
 
   if (!order) {
     // Acknowledged: an order we do not have is not something Stripe can fix by
     // retrying, and a 4xx here would have it try for days.
-    console.warn(`[stripe] no order ${event.orderNumber}`);
+    console.warn(`[stripe] ${eventId} no order ${event.orderNumber}`);
     return Response.json({ received: true, handled: false });
   }
 
@@ -107,9 +109,38 @@ export async function POST(request: Request) {
     (event.amountAed === null || Math.round(event.amountAed * 100) < totalFils)
   ) {
     console.error(
-      `[stripe] ${event.transactionId} paid ${event.amountAed} AED against ${event.orderNumber} totalling ${order.totalAed} — not marking paid`,
+      `[stripe] ${eventId} ${event.transactionId} paid ${event.amountAed} AED against ${event.orderNumber} totalling ${order.totalAed} — not marking paid`,
     );
     return Response.json({ received: true, handled: false, reason: "amount" });
+  }
+
+  /*
+   * The right number of fils in the wrong currency is not payment of an AED
+   * order. Every session we create is in AED, so a non-AED settlement means
+   * the session was not ours — acknowledged so Stripe stops, left for a person.
+   */
+  if (
+    status === PaymentStatus.PAID &&
+    event.currency !== null &&
+    event.currency.toLowerCase() !== "aed"
+  ) {
+    console.error(
+      `[stripe] ${eventId} ${event.transactionId} settled in ${event.currency} against ${event.orderNumber} — not marking paid`,
+    );
+    return Response.json({ received: true, handled: false, reason: "currency" });
+  }
+
+  /*
+   * A payment arriving on an order that was already cancelled must be recorded
+   * (the money is real and owed back) but must not revive the order — its stock
+   * has already gone back on the rail. Paid + cancelled is the admin's signal
+   * that a refund is due.
+   */
+  const reviveOnPaid = order.fulfillmentStatus !== FulfillmentStatus.CANCELLED;
+  if (status === PaymentStatus.PAID && !reviveOnPaid) {
+    console.error(
+      `[stripe] ${eventId} ${event.transactionId} paid ${event.amountAed} AED on CANCELLED order ${event.orderNumber} — recording payment, NOT reviving. Refund is due.`,
+    );
   }
 
   const recorded = await recordPayment(
@@ -121,8 +152,11 @@ export async function POST(request: Request) {
       status,
       metadata: event.raw,
     },
-    { onlyIfChanged: true },
+    { onlyIfChanged: true, reviveOnPaid },
   );
 
+  console.info(
+    `[stripe] ${eventId} ${event.outcome} ${event.orderNumber} handled=${recorded !== null}`,
+  );
   return Response.json({ received: true, handled: recorded !== null });
 }

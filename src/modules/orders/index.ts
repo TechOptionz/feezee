@@ -13,7 +13,7 @@ import { getSettings } from "@/modules/shared/settings";
 import { calculateTotals, formatAddressLine } from "@/modules/checkout";
 import type { CheckoutDetails } from "@/modules/checkout";
 import { deductMany, restock } from "@/modules/inventory";
-import { createStripeRefund } from "@/modules/payments/stripe";
+import { createStripeRefund, expireStripeSession } from "@/modules/payments/stripe";
 import { trackingUrlFor, transitFor } from "@/modules/shipping";
 import type { OrderTotals } from "@/modules/checkout";
 
@@ -741,19 +741,22 @@ export async function updateFulfillment(
   update: FulfillmentUpdate,
   actorId?: string | null,
 ) {
-  return prisma.$transaction(async (tx) => {
+  const { view, expireSessionId } = await prisma.$transaction(async (tx) => {
     const current = await tx.order.findUniqueOrThrow({
       where: { id: orderId },
       include: { items: true },
     });
 
     if (current.fulfillmentStatus === update.status) {
-      return toOrderView(
-        await tx.order.findUniqueOrThrow({
-          where: { id: orderId },
-          include: orderInclude,
-        }),
-      );
+      return {
+        view: toOrderView(
+          await tx.order.findUniqueOrThrow({
+            where: { id: orderId },
+            include: orderInclude,
+          }),
+        ),
+        expireSessionId: null as string | null,
+      };
     }
 
     if (!canTransition(current.fulfillmentStatus, update.status)) {
@@ -790,6 +793,8 @@ export async function updateFulfillment(
       }
     }
 
+    let expireSessionId: string | null = null;
+
     if (update.status === "CANCELLED") {
       data.cancelledAt = now;
       for (const item of current.items) {
@@ -799,17 +804,54 @@ export async function updateFulfillment(
           userId: actorId ?? null,
         });
       }
+
+      /*
+       * A card order being cancelled while still unpaid may have a Checkout
+       * Session open in the customer's browser. The session id is expired
+       * after this transaction commits, so they cannot pay for an order whose
+       * stock has just gone back. (A payment that still slips through the race
+       * is caught by the webhook, which refuses to revive a cancelled order.)
+       */
+      if (
+        current.paymentMethod === PaymentMethod.STRIPE &&
+        current.paymentStatus === PaymentStatus.PENDING
+      ) {
+        const pending = await tx.paymentTransaction.findFirst({
+          where: { orderId, provider: "STRIPE", transactionId: { startsWith: "cs_" } },
+          orderBy: { createdAt: "desc" },
+          select: { transactionId: true },
+        });
+        expireSessionId = pending?.transactionId ?? null;
+      }
     }
 
     await tx.order.update({ where: { id: orderId }, data });
 
-    return toOrderView(
-      await tx.order.findUniqueOrThrow({
-        where: { id: orderId },
-        include: orderInclude,
-      }),
-    );
+    return {
+      view: toOrderView(
+        await tx.order.findUniqueOrThrow({
+          where: { id: orderId },
+          include: orderInclude,
+        }),
+      ),
+      expireSessionId,
+    };
   });
+
+  if (expireSessionId) {
+    try {
+      await expireStripeSession(expireSessionId);
+    } catch (error) {
+      // Already paid, already expired, or Stripe is unreachable. The webhook's
+      // cancelled-order guard is the backstop, so this is logged, not fatal.
+      console.warn(
+        `[orders] could not expire Stripe session ${expireSessionId} for cancelled order ${orderId}:`,
+        error instanceof Error ? error.message : error,
+      );
+    }
+  }
+
+  return view;
 }
 
 /** Record a payment outcome, and the transaction row that evidences it. */
@@ -829,8 +871,18 @@ export async function recordPayment(
      * deliveries of the same webhook racing each other record it once.
      */
     onlyIfChanged?: boolean;
+    /**
+     * Whether a PAID payment should move fulfillment to PROCESSING. True for a
+     * normal payment. False when the order has already been cancelled: a late
+     * payment on a cancelled order must be recorded (the money is real and owed
+     * back) but must never revive the order, whose stock has already gone back
+     * on the rail. Paid + cancelled is the signal to the admin that a refund is
+     * due.
+     */
+    reviveOnPaid?: boolean;
   } = {},
 ) {
+  const reviveOnPaid = options.reviveOnPaid ?? true;
   return prisma.$transaction(async (tx) => {
     if (options.onlyIfChanged) {
       const claimed = await tx.order.updateMany({
@@ -856,8 +908,10 @@ export async function recordPayment(
       data: {
         paymentStatus: input.status,
         ...(input.status === PaymentStatus.PAID ? { paidAt: new Date() } : {}),
-        // A paid order is one the workshop can start on.
-        ...(input.status === PaymentStatus.PAID
+        // A paid order is one the workshop can start on — unless it was already
+        // cancelled, in which case reviving it would oversell stock that has
+        // already been returned. There it stays cancelled and awaits a refund.
+        ...(input.status === PaymentStatus.PAID && reviveOnPaid
           ? { fulfillmentStatus: FulfillmentStatus.PROCESSING }
           : {}),
       },

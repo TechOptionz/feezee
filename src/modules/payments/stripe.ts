@@ -168,6 +168,22 @@ export async function stripeSessionOrderNumber(
   return session.metadata?.orderNumber ?? session.client_reference_id ?? null;
 }
 
+/**
+ * Close an open Checkout Session so it can never be paid.
+ *
+ * Called when an order is cancelled while its card sheet may still be open in
+ * the customer's browser: expiring the session is what stops them paying for an
+ * order whose stock has already been returned. Best-effort — a session that is
+ * already completed or expired cannot be expired again and Stripe throws, which
+ * the caller swallows. The webhook is the real safety net for a payment that
+ * slips through the race; this just narrows the window.
+ */
+export async function expireStripeSession(sessionId: string): Promise<void> {
+  const id = sessionId.trim();
+  if (!id.startsWith("cs_") || !secretKey()) return;
+  await stripe().checkout.sessions.expire(id);
+}
+
 // ---------------------------------------------------------------------------
 // Refunds
 // ---------------------------------------------------------------------------
@@ -280,6 +296,7 @@ export function verifyStripeWebhook(
       outcome: "IGNORED",
       transactionId: null,
       amountAed: null,
+      currency: null,
       raw: { type: event.type },
     };
   }
@@ -319,6 +336,7 @@ export function verifyStripeWebhook(
     transactionId: session.id,
     paymentIntentId,
     amountAed: session.amount_total === null ? null : session.amount_total / 100,
+    currency: session.currency ?? null,
     raw: {
       type: event.type,
       eventId: event.id,
