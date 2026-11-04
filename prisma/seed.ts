@@ -2,6 +2,7 @@ import "dotenv/config";
 import { PrismaClient, Prisma, Role } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+import { dbConnection } from "../src/lib/db-ca";
 
 import {
   products,
@@ -39,8 +40,9 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is not set — copy .env.example to .env first.");
 }
 
+const { connectionString: conn, ssl } = dbConnection(connectionString);
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString }),
+  adapter: new PrismaPg({ connectionString: conn, ...(ssl ? { ssl } : {}) }),
 });
 
 /** Opening stock for a size, from the state the design file recorded. */
