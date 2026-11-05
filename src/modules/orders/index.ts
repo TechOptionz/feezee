@@ -617,6 +617,21 @@ export type OrderFilter = {
   skip?: number;
 };
 
+/**
+ * A search term as it would appear inside a stored phone number.
+ *
+ * Phones are saved as `971501234567`, but staff search with whatever WhatsApp
+ * shows them — `+971 50 123 4567`, `050 123 4567`, `00971…`. Spacing and
+ * punctuation go, then the country code or trunk zero, leaving the local
+ * digits, which every stored number contains. Anything that is not a phone
+ * number is passed through untouched.
+ */
+function phoneSearch(search: string): string {
+  const digits = search.replace(/[\s()\-.+]/g, "");
+  if (!/^\d{4,}$/.test(digits)) return search;
+  return digits.replace(/^(?:00971|971|0)/, "");
+}
+
 /** The admin's order list. */
 export async function listOrders(filter: OrderFilter = {}) {
   const where: Prisma.OrderWhereInput = {
@@ -639,7 +654,7 @@ export async function listOrders(filter: OrderFilter = {}) {
             { orderNumber: { contains: filter.search, mode: "insensitive" } },
             { customerEmail: { contains: filter.search, mode: "insensitive" } },
             { customerName: { contains: filter.search, mode: "insensitive" } },
-            { customerPhone: { contains: filter.search } },
+            { customerPhone: { contains: phoneSearch(filter.search) } },
           ],
         }
       : {}),

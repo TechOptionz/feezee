@@ -11,10 +11,12 @@ import {
   adminDateTime,
 } from "@/app/admin/admin-ui";
 import { FulfilmentPanel } from "@/app/admin/orders/[id]/fulfilment-panel";
+import { StartReturnPanel } from "@/app/admin/orders/[id]/start-return-panel";
 import { PrintButton } from "@/components/orders/print-button";
 import { PrintInvoice } from "@/components/orders/print-invoice";
 import { getAdminPath, requireStaff } from "@/modules/admin";
 import { nextStatuses, orderById } from "@/modules/orders";
+import { checkEligibility } from "@/modules/returns";
 import { courierNames } from "@/modules/shipping";
 import { formatUaePhone } from "@/modules/checkout";
 import { img } from "@/lib/assets";
@@ -33,6 +35,10 @@ export default async function AdminOrderPage({
   const { id } = await params;
   const order = await orderById(id);
   if (!order) notFound();
+
+  // Only a delivered order can come back, so only then is there anything to say.
+  const eligibility =
+    order.fulfillmentStatus === "DELIVERED" ? await checkEligibility(order.id) : null;
 
   return (
     <>
@@ -186,6 +192,28 @@ export default async function AdminOrderPage({
                 trackingNumber={order.trackingNumber}
               />
             </Panel>
+
+            {eligibility && (
+              <Panel title="Start a return">
+                {eligibility.eligible ? (
+                  <StartReturnPanel
+                    orderId={order.id}
+                    customerPhone={formatUaePhone(order.customerPhone)}
+                    daysLeft={eligibility.daysLeft}
+                    items={order.items.map((item) => ({
+                      id: item.id,
+                      productName: item.productName,
+                      variantSize: item.variantSize,
+                      quantity: item.quantity,
+                    }))}
+                  />
+                ) : (
+                  <p className="m-0 text-[13px] leading-[1.7] text-taupe">
+                    {eligibility.reason}
+                  </p>
+                )}
+              </Panel>
+            )}
 
             <Panel title="Customer">
               <div className="flex flex-col gap-3 text-[14px] leading-[1.7]">

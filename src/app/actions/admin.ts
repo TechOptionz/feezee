@@ -26,7 +26,12 @@ import {
   orderById,
   refundStripePayment,
 } from "@/modules/orders";
-import { resolveReturn, ReturnError, returnById } from "@/modules/returns";
+import {
+  requestReturn,
+  resolveReturn,
+  ReturnError,
+  returnById,
+} from "@/modules/returns";
 import { AuthError, changePassword, login, logout } from "@/modules/customers";
 import { loginSchema } from "@/modules/customers";
 import { toAed, toAedOrNull, toDecimal, round2 } from "@/modules/shared/money";
@@ -514,6 +519,98 @@ export async function resolveReturnAction(
     return {
       status: "ok",
       message: `Return marked ${status.toLowerCase()}.${note}`,
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/**
+ * Opening a return on the customer's behalf.
+ *
+ * For the guest who asked on WhatsApp — there is no account for them to open
+ * one from. It goes through the same `requestReturn` as the customer's own
+ * form, so the policy (delivered, inside the window, nothing already open, no
+ * more than was bought) holds either way; staff only skip the ownership check,
+ * which is theirs to make by matching the number messaging them to the order.
+ * From here it is an ordinary PENDING return on the Returns page.
+ */
+export async function openReturnForCustomerAction(
+  _previous: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  let actor;
+  try {
+    actor = await requireStaffAction();
+  } catch (error) {
+    return fail(error);
+  }
+
+  const orderId = String(formData.get("orderId") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  const customerNotes = String(formData.get("customerNotes") ?? "").trim();
+
+  if (!reason) {
+    return { status: "error", fieldErrors: { reason: "Choose why it is coming back." } };
+  }
+
+  // Same `item:<orderItemId>` = quantity shape as the customer's form.
+  const items: { orderItemId: string; quantity: number }[] = [];
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith("item:")) continue;
+    const quantity = Number(value);
+    if (Number.isFinite(quantity) && quantity > 0) {
+      items.push({ orderItemId: key.slice(5), quantity });
+    }
+  }
+
+  if (items.length === 0) {
+    return { status: "error", message: "Tick at least one piece that is coming back." };
+  }
+
+  try {
+    const created = await requestReturn(
+      { orderId, reason, customerNotes: customerNotes || undefined, items },
+      null,
+    );
+    const view = await returnById(created.id);
+    if (!view) throw new ReturnError("The return could not be read back.");
+
+    await audit({
+      actor,
+      action: "return.opened_by_staff",
+      entityType: "ReturnRequest",
+      entityId: view.returnNumber,
+      newState: {
+        orderNumber: view.orderNumber,
+        status: view.status,
+        reason: view.reason,
+        items: view.items.map((item) => ({
+          productName: item.productName,
+          size: item.size,
+          quantity: item.quantity,
+        })),
+      },
+    });
+
+    sendEmailInBackground({
+      to: view.customerEmail,
+      ...returnUpdateEmail({
+        returnNumber: view.returnNumber,
+        orderNumber: view.orderNumber,
+        customerName: view.customerName,
+        status: view.status,
+      }),
+    });
+
+    revalidatePath(`/admin/orders/${orderId}`);
+    revalidatePath("/admin/returns");
+    revalidatePath("/admin");
+    revalidatePath("/account/returns");
+
+    return {
+      status: "ok",
+      message: `Return ${view.returnNumber} opened. Approve it on the Returns page once the pieces are on their way.`,
     };
   } catch (error) {
     return fail(error);
