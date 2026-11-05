@@ -10,7 +10,7 @@ import {
 } from "@/components/forms/form-kit";
 import { cn } from "@/lib/utils";
 
-const REASONS = [
+export const RETURN_REASONS = [
   "Too small",
   "Too large",
   "Not as pictured",
@@ -124,7 +124,7 @@ export function ReturnRequestForm({
           <option value="" disabled>
             Choose a reason
           </option>
-          {REASONS.map((reason) => (
+          {RETURN_REASONS.map((reason) => (
             <option key={reason} value={reason}>
               {reason}
             </option>
