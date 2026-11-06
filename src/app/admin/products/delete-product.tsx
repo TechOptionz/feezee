@@ -42,9 +42,9 @@ export function DeleteProduct({
         return;
       }
       // The editor's own page is gone with the piece, so it goes back to the
-      // list; the list only needs to redraw without the row.
+      // list. In the list, the action's `revalidatePath` means its response
+      // already carries the table without the row — no second fetch needed.
       if (variant === "form") router.push(adminPath("/products"));
-      router.refresh();
     });
   }
 

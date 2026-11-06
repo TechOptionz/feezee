@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Form from "next/form";
 import Link from "next/link";
 import {
   AdminHeading,
@@ -11,6 +12,7 @@ import {
 } from "@/app/admin/admin-ui";
 import { toggleArchiveAction } from "@/app/actions/admin";
 import { DeleteProduct } from "@/app/admin/products/delete-product";
+import { PendingButton } from "@/app/admin/pending-button";
 import { SaleControls, SalePill } from "@/app/admin/products/sale-controls";
 import { getAdminPath, requireStaff } from "@/modules/admin";
 import { prisma } from "@/lib/prisma";
@@ -137,7 +139,7 @@ export default async function AdminProductsPage({
           ))}
         </nav>
 
-        <form method="get" className="flex flex-wrap items-end gap-3">
+        <Form action={adminPath("/products")} className="flex flex-wrap items-end gap-3">
           {/* The tab lives in the URL, and this form rewrites the URL out of
               its own fields — without this the chosen tab would fall off the
               moment anyone pressed Filter. */}
@@ -217,7 +219,7 @@ export default async function AdminProductsPage({
               Clear
             </Link>
           )}
-        </form>
+        </Form>
       </Panel>
 
       <div className="mt-4">
@@ -312,12 +314,12 @@ export default async function AdminProductsPage({
                                 name="productId"
                                 value={product.id}
                               />
-                              <button
-                                type="submit"
-                                className="cursor-pointer border-none bg-transparent p-0 text-[12px] font-medium tracking-[0.1em] uppercase text-taupe hover:text-wine-bright"
+                              <PendingButton
+                                pendingLabel={product.isArchived ? "Restoring…" : "Archiving…"}
+                                className="cursor-pointer border-none bg-transparent p-0 text-[12px] font-medium tracking-[0.1em] uppercase text-taupe hover:text-wine-bright disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 {product.isArchived ? "Restore" : "Archive"}
-                              </button>
+                              </PendingButton>
                             </form>
                           </span>
                           {/* On its own line under the two links: putting a

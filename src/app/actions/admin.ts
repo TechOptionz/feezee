@@ -232,7 +232,8 @@ export async function adjustStockAction(
       newState: { stock: result.current, delta: result.delta, reason, note },
     });
 
-    await revalidateStorefrontFor([variantId]);
+    // `setStock` already knows the garment's slug, so no second lookup.
+    revalidatePath(`/product/${result.slug}`);
     revalidatePath("/admin/inventory");
     revalidatePath("/admin");
     return {
@@ -279,14 +280,22 @@ export async function updateOrderStatusAction(
       actor.id,
     );
 
-    await audit({
-      actor,
-      action: `order.${status.toLowerCase()}`,
-      entityType: "Order",
-      entityId: order.orderNumber,
-      previousState: { fulfillmentStatus: before?.fulfillmentStatus },
-      newState: { fulfillmentStatus: status, courierName, trackingNumber },
-    });
+    // The audit row and the storefront refresh are independent of each other,
+    // so they share one wait rather than queueing two round trips (§4.21).
+    // Cancelling restocks every line, so those garments are buyable again.
+    await Promise.all([
+      audit({
+        actor,
+        action: `order.${status.toLowerCase()}`,
+        entityType: "Order",
+        entityId: order.orderNumber,
+        previousState: { fulfillmentStatus: before?.fulfillmentStatus },
+        newState: { fulfillmentStatus: status, courierName, trackingNumber },
+      }),
+      status === "CANCELLED"
+        ? revalidateStorefrontFor(order.items.map((item) => item.variantId))
+        : Promise.resolve(),
+    ]);
 
     if (status === "DISPATCHED") {
       sendEmailInBackground({
@@ -299,11 +308,6 @@ export async function updateOrderStatusAction(
           trackingUrl: trackingUrlFor(courierName, trackingNumber),
         }),
       });
-    }
-
-    // Cancelling restocks every line, so those garments are buyable again.
-    if (status === "CANCELLED") {
-      await revalidateStorefrontFor(order.items.map((item) => item.variantId));
     }
 
     revalidatePath(`/admin/orders/${orderId}`);
@@ -460,7 +464,7 @@ export async function resolveReturnAction(
       actor.id,
     );
 
-    await audit({
+    const recorded = audit({
       actor,
       action: `return.${status.toLowerCase()}`,
       entityType: "ReturnRequest",
@@ -496,10 +500,14 @@ export async function resolveReturnAction(
       }),
     });
 
-    // Only when this save is what actually put them back on the rail.
-    if (updated.isRestocked && !before.isRestocked) {
-      await revalidateStorefrontFor(updated.items.map((item) => item.variantId));
-    }
+    // Only when this save is what actually put them back on the rail. Waited
+    // for beside the audit write rather than after it (§4.21).
+    await Promise.all([
+      recorded,
+      updated.isRestocked && !before.isRestocked
+        ? revalidateStorefrontFor(updated.items.map((item) => item.variantId))
+        : Promise.resolve(),
+    ]);
 
     revalidatePath(`/admin/orders/${before.orderId}`);
     revalidatePath("/admin/returns");

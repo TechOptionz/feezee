@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Form from "next/form";
 import { AdminHeading, Panel, StatCard } from "@/app/admin/admin-ui";
 import { InventoryTable, type InventoryRow } from "@/app/admin/inventory/inventory-table";
 import { getAdminPath, requireStaff } from "@/modules/admin";
@@ -95,7 +96,7 @@ export default async function AdminInventoryPage({
 
       <div className="mt-4">
         <Panel>
-          <form method="get" className="flex flex-wrap items-end gap-3">
+          <Form action={adminPath("/inventory")} className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-2">
               <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
                 Search
@@ -139,7 +140,7 @@ export default async function AdminInventoryPage({
                 Clear
               </Link>
             )}
-          </form>
+          </Form>
         </Panel>
       </div>
 
