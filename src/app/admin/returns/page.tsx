@@ -29,7 +29,15 @@ export default async function AdminReturnsPage({
     <>
       <AdminHeading
         title="Returns"
-        standfirst="The refund and the restock are separate decisions — a piece that comes back damaged is still refunded, but it does not go back on the rail."
+        standfirst="A return is opened from the order it belongs to, once that order is marked delivered. The refund and the restock are separate decisions — a piece that comes back damaged is still refunded, but it does not go back on the rail."
+        action={
+          <Link
+            href={adminPath("/orders?status=DELIVERED")}
+            className="text-[12px] font-medium tracking-[0.1em] uppercase text-gold-light hover:text-champagne"
+          >
+            Open a return from a delivered order →
+          </Link>
+        }
       />
 
       <div className="mb-4 flex flex-wrap gap-1">
@@ -46,8 +54,21 @@ export default async function AdminReturnsPage({
 
       {returns.length === 0 ? (
         <Panel>
-          <p className="m-0 py-10 text-center text-[14px] text-taupe">
+          <p className="m-0 py-10 text-center text-[14px] leading-[1.7] text-taupe">
             No returns {filter ? `marked ${filter.toLowerCase()}` : "yet"}.
+            {!filter && (
+              <>
+                <br />
+                To open one, go to{" "}
+                <Link
+                  href={adminPath("/orders?status=DELIVERED")}
+                  className="text-gold-light hover:text-champagne"
+                >
+                  a delivered order
+                </Link>{" "}
+                and press &ldquo;Start a return&rdquo;.
+              </>
+            )}
           </p>
         </Panel>
       ) : (

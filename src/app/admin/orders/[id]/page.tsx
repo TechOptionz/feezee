@@ -36,9 +36,23 @@ export default async function AdminOrderPage({
   const order = await orderById(id);
   if (!order) notFound();
 
-  // Only a delivered order can come back, so only then is there anything to say.
+  /*
+   * Only a delivered order can come back, so only then is the database asked.
+   * Everything still on its way out gets the panel anyway, with the one-line
+   * reason: without it, staff looking for where a return starts found nothing
+   * on the order and nothing on the Returns page either. A cancelled order
+   * has nothing to return, so it alone goes without.
+   */
   const eligibility =
-    order.fulfillmentStatus === "DELIVERED" ? await checkEligibility(order.id) : null;
+    order.fulfillmentStatus === "DELIVERED"
+      ? await checkEligibility(order.id)
+      : order.fulfillmentStatus === "CANCELLED"
+        ? null
+        : {
+            eligible: false as const,
+            reason:
+              "A return can be opened once this order is marked delivered — use “Move to” above.",
+          };
 
   return (
     <>
