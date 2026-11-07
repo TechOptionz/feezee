@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Form from "next/form";
 import {
   AdminHeading,
   EmptyRow,
@@ -56,7 +57,7 @@ export default async function AdminAuditLogPage({
       />
 
       <Panel>
-        <form method="get" className="flex flex-wrap items-end gap-3">
+        <Form action={adminPath("/audit-logs")} className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-2">
             <span className="text-[11.5px] font-medium tracking-[0.12em] uppercase text-taupe">
               Search
@@ -102,7 +103,7 @@ export default async function AdminAuditLogPage({
               Clear
             </Link>
           )}
-        </form>
+        </Form>
       </Panel>
 
       <div className="mt-4">

@@ -4,8 +4,10 @@ import Link from "next/link";
 import { AdminNav } from "@/app/admin/admin-nav";
 import { AdminPathProvider } from "@/app/admin/admin-path";
 import { ACTION } from "@/app/admin/admin-ui";
+import { PendingButton } from "@/app/admin/pending-button";
 import { adminLogoutAction } from "@/app/actions/admin";
-import { currentActor, getAdminBase } from "@/modules/admin";
+import { getAdminBase } from "@/modules/admin";
+import { getSession, isStaff } from "@/modules/customers/session";
 import { adminPath } from "@/lib/admin-host";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -33,13 +35,21 @@ const inter = Inter({
  * and a layout that redirected unauthenticated visitors would bounce the login
  * page to itself forever. What it does instead is decide which chrome to draw —
  * the sidebar only exists once there is somebody to draw it for.
+ *
+ * It reads the signed session cookie, not the database. The name, email and
+ * role it prints are all in the token, and the chrome is not a permission:
+ * `requireStaff` on every page still re-reads the user, so a demoted account
+ * is bounced to the login page regardless of what is drawn around it. Not
+ * waiting on the database here lets the shell — and the loading skeleton
+ * under it — paint before the first query has even left the server (§4.21).
  */
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [actor, base] = await Promise.all([currentActor(), getAdminBase()]);
+  const [session, base] = await Promise.all([getSession(), getAdminBase()]);
+  const actor = isStaff(session) ? session : null;
 
   // On the admin host "/" is the dashboard, so the shop is the other host.
   // On a preview the two share one, and the relative link keeps it there.
@@ -114,15 +124,15 @@ export default async function AdminLayout({
               </div>
 
               <form action={adminLogoutAction}>
-                <button
-                  type="submit"
+                <PendingButton
+                  pendingLabel="Signing out…"
                   className={cn(
                     ACTION,
-                    "cursor-pointer border border-ink-border bg-transparent px-4 py-2 text-sandstone hover:border-champagne hover:text-champagne",
+                    "cursor-pointer border border-ink-border bg-transparent px-4 py-2 text-sandstone hover:border-champagne hover:text-champagne disabled:cursor-not-allowed disabled:opacity-60",
                   )}
                 >
                   Sign out
-                </button>
+                </PendingButton>
               </form>
             </header>
 

@@ -143,18 +143,21 @@ export async function setStock(
   newStock: number,
   reason: StockReason,
   options: { note?: string; userId?: string | null } = {},
-): Promise<{ previous: number; current: number; delta: number }> {
+): Promise<{ previous: number; current: number; delta: number; slug: string }> {
   if (newStock < 0) throw new Error("Stock cannot be negative.");
 
   return prisma.$transaction(async (tx) => {
+    // The slug comes back with the count so the caller can revalidate the
+    // garment's page without a second lookup of its own.
     const before = await tx.productVariant.findUniqueOrThrow({
       where: { id: variantId },
-      select: { stock: true },
+      select: { stock: true, product: { select: { slug: true } } },
     });
+    const slug = before.product.slug;
 
     const delta = newStock - before.stock;
     if (delta === 0) {
-      return { previous: before.stock, current: before.stock, delta: 0 };
+      return { previous: before.stock, current: before.stock, delta: 0, slug };
     }
 
     await tx.productVariant.update({
@@ -173,7 +176,7 @@ export async function setStock(
       },
     });
 
-    return { previous: before.stock, current: newStock, delta };
+    return { previous: before.stock, current: newStock, delta, slug };
   });
 }
 

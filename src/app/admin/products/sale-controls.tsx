@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import {
   putOnSaleAction,
   removeFromSaleAction,
@@ -39,7 +38,6 @@ export function SaleControls({
   wasAed: number | null;
   variant?: "row" | "form";
 }) {
-  const router = useRouter();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,9 +76,9 @@ export function SaleControls({
       }
       setOpen(false);
       setCustom("");
-      // `revalidatePath` clears the server's copy; this is what makes the row
-      // the buyer is looking at redraw with the price they just set.
-      router.refresh();
+      // Nothing more to do: the action called `revalidatePath`, so its own
+      // response already carries the page redrawn with the new price. A
+      // `router.refresh()` here used to fetch the whole page a second time.
     });
   }
 

@@ -45,11 +45,14 @@ export type Eligibility =
  * has not eaten a week of the customer's seven days.
  */
 export async function checkEligibility(orderId: string): Promise<Eligibility> {
-  const settings = await getSettings();
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: { returns: true },
-  });
+  // Two independent reads, one wait (§4.21).
+  const [settings, order] = await Promise.all([
+    getSettings(),
+    prisma.order.findUnique({
+      where: { id: orderId },
+      include: { returns: true },
+    }),
+  ]);
 
   if (!order) return { eligible: false, reason: "That order does not exist." };
 

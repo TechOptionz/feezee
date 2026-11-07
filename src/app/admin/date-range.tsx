@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Form from "next/form";
 import { RANGE_PRESETS, type DateRange, resolveRange } from "@/modules/reporting";
 import { ACTION } from "@/app/admin/admin-ui";
 import { endOfShopDay, startOfShopDay } from "@/lib/shop-time";
@@ -49,7 +50,7 @@ export function DateRangeTabs({
       })}
 
       {/* A GET form, so the custom range lands in the URL like the presets do. */}
-      <form method="get" action={basePath} className="flex flex-wrap items-center gap-1">
+      <Form action={basePath} className="flex flex-wrap items-center gap-1">
         <input
           type="date"
           name="from"
@@ -76,7 +77,7 @@ export function DateRangeTabs({
         >
           Apply
         </button>
-      </form>
+      </Form>
     </div>
   );
 }
