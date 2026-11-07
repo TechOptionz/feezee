@@ -13,6 +13,7 @@ import {
 } from "@/app/admin/admin-ui";
 import { DateRangeTabs, rangeFromParams } from "@/app/admin/date-range";
 import { RevenueChart } from "@/app/admin/revenue-chart";
+import { Filtered, type SearchParams } from "@/app/admin/filtered";
 import { getAdminPath, requireStaff } from "@/modules/admin";
 import {
   metrics,
@@ -28,20 +29,24 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-export default async function AdminDashboard({
-  searchParams,
-}: PageProps<"/admin">) {
-  await requireStaff("/");
-  const adminPath = await getAdminPath();
+export default function AdminDashboard({ searchParams }: PageProps<"/admin">) {
+  return (
+    <Filtered searchParams={searchParams}>
+      {(params) => <AdminDashboardContent params={params} />}
+    </Filtered>
+  );
+}
 
-  const params = await searchParams;
+async function AdminDashboardContent({ params }: { params: SearchParams }) {
+  const adminPath = await getAdminPath();
   const { range, preset, from, to } = rangeFromParams({
     range: typeof params.range === "string" ? params.range : undefined,
     from: typeof params.from === "string" ? params.from : undefined,
     to: typeof params.to === "string" ? params.to : undefined,
   });
 
-  const [kpis, series, byCollection, sellers, lowStock, recent] = await Promise.all([
+  const [, kpis, series, byCollection, sellers, lowStock, recent] = await Promise.all([
+    requireStaff("/"),
     metrics(range),
     revenueSeries(range),
     salesByCollection(range),

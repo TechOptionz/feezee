@@ -138,6 +138,17 @@
  * Hero slideshow motion. The durations come from the component (they are tied
  * to HERO_SLIDE_MS), so only the shape of each move lives here.
  */
+/* The pending dot inside an admin filter link — see admin/link-hint.tsx. */
+@keyframes fz-hint {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 @keyframes fz-zoom-left {
   from {
     transform: scale(1.02) translate3d(0.8%, 0, 0);

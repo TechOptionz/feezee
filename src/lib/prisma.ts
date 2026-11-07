@@ -23,16 +23,17 @@ if (!connectionString) {
 /**
  * The pool is tuned for a database that is far away, because it is.
  *
- * The hosted Postgres sits in Singapore; from the UAE, or from a Netlify
- * function in the US, one round trip is ~100 ms and opening a connection
- * (TCP, TLS, then the pooler's handshake) is ~500 ms. pg's defaults were
+ * The hosted Postgres (DigitalOcean) is not in the Netlify functions' region;
+ * from the UAE, or from a function in the US, one round trip is ~100 ms or
+ * more and opening a connection (TCP, TLS, then the pooler's handshake) is
+ * ~500 ms. pg's defaults were
  * written for a database on the same rack: idle connections are dropped after
  * ten seconds, so every admin click after a short pause paid the full
  * handshake again — and a page that fires several queries in parallel paid it
  * once *per connection*, all at the same time. See PROJECT_MEMORY §4.21.
  *
  * - `idleTimeoutMillis`: keep warm connections for ten minutes, the length of
- *   a working session rather than a single click. Supabase's pooler is built
+ *   a working session rather than a single click. A managed pooler is built
  *   to hold many idle client connections; that is what it is for.
  * - `keepAlive`: stop a NAT or load balancer from silently dropping an idle
  *   socket, which would surface as a slow failure on the next query.

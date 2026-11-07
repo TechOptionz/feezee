@@ -12,8 +12,10 @@ import {
 } from "@/app/admin/admin-ui";
 import { toggleArchiveAction } from "@/app/actions/admin";
 import { DeleteProduct } from "@/app/admin/products/delete-product";
+import { LinkHint } from "@/app/admin/link-hint";
 import { PendingButton } from "@/app/admin/pending-button";
 import { SaleControls, SalePill } from "@/app/admin/products/sale-controls";
+import { Filtered, type SearchParams } from "@/app/admin/filtered";
 import { getAdminPath, requireStaff } from "@/modules/admin";
 import { prisma } from "@/lib/prisma";
 import { toAed, toAedOrNull } from "@/modules/shared/money";
@@ -37,13 +39,16 @@ const SALE_TABS = [
   { param: "0", value: "off", label: "Full price" },
 ] as const;
 
-export default async function AdminProductsPage({
-  searchParams,
-}: PageProps<"/admin/products">) {
-  await requireStaff("/products");
-  const adminPath = await getAdminPath();
+export default function AdminProductsPage({ searchParams }: PageProps<"/admin/products">) {
+  return (
+    <Filtered searchParams={searchParams}>
+      {(params) => <AdminProductsContent params={params} />}
+    </Filtered>
+  );
+}
 
-  const params = await searchParams;
+async function AdminProductsContent({ params }: { params: SearchParams }) {
+  const adminPath = await getAdminPath();
   const q = typeof params.q === "string" ? params.q : "";
   const collection = typeof params.collection === "string" ? params.collection : "";
   const stock = typeof params.stock === "string" ? params.stock : "";
@@ -64,26 +69,29 @@ export default async function AdminProductsPage({
     return adminPath(query ? `/products?${query}` : "/products");
   };
 
-  const rows = await prisma.product.findMany({
-    where: {
-      isArchived: archived,
-      ...(collection ? { collection } : {}),
-      ...(q
-        ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" as const } },
-              { slug: { contains: q, mode: "insensitive" as const } },
-              { fabric: { contains: q, mode: "insensitive" as const } },
-            ],
-          }
-        : {}),
-    },
-    include: {
-      images: { orderBy: { sortOrder: "asc" }, take: 1 },
-      variants: true,
-    },
-    orderBy: { id: "asc" },
-  });
+  const [, rows] = await Promise.all([
+    requireStaff("/products"),
+    prisma.product.findMany({
+      where: {
+        isArchived: archived,
+        ...(collection ? { collection } : {}),
+        ...(q
+          ? {
+              OR: [
+                { name: { contains: q, mode: "insensitive" as const } },
+                { slug: { contains: q, mode: "insensitive" as const } },
+                { fabric: { contains: q, mode: "insensitive" as const } },
+              ],
+            }
+          : {}),
+      },
+      include: {
+        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+        variants: true,
+      },
+      orderBy: { id: "asc" },
+    }),
+  ]);
 
   /*
    * Two filters the query cannot do. Stock is a property of the variants
@@ -135,6 +143,7 @@ export default async function AdminProductsPage({
               )}
             >
               {tab.label}
+              <LinkHint />
             </Link>
           ))}
         </nav>
@@ -204,12 +213,12 @@ export default async function AdminProductsPage({
             Archived only
           </label>
 
-          <button
-            type="submit"
-            className="cursor-pointer border border-ink-border bg-transparent px-5 py-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
+          <PendingButton
+            pendingLabel="Filtering…"
+            className="cursor-pointer border border-ink-border bg-transparent px-5 py-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-sandstone hover:border-champagne hover:text-champagne disabled:cursor-wait"
           >
             Filter
-          </button>
+          </PendingButton>
 
           {(q || collection || stock || archived || sale) && (
             <Link

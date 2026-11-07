@@ -574,9 +574,14 @@ not theirs to be met with. Two tiles now, on a two-column grid.
 
 ### 4.21 The database is a hundred milliseconds away
 
-The hosted Postgres is Supabase in `ap-southeast-1` (Singapore). Measured from
-the UAE: ~100 ms per round trip, ~480 ms to open a connection (TCP + TLS + the
-pooler's handshake). The data itself is tiny — a few orders, ~130 variants —
+The hosted Postgres is a DigitalOcean database in Singapore (confirmed by the
+owner, November 2026; these notes were first written against Supabase, also in
+Singapore, so the numbers still hold). Measured from the UAE: ~100 ms per round
+trip, ~480 ms to open a connection (TCP + TLS + the pooler's handshake). On
+7 November 2026 the Netlify functions region was found set to CMH (Ohio, US
+East) — every query was crossing the Pacific twice — and the owner was asked to
+switch it to Singapore (`ap-southeast-1`) under Cloud compute → Functions →
+Region → Configure. The data itself is tiny — a few orders, ~130 variants —
 so **every admin page's load time is network, not query time**, and the rules
 that follow are about counting round trips and connections, not rows.
 
@@ -602,9 +607,25 @@ What made the admin slow, and what changed:
   the page itself, and the page pays nothing for its several hops to the
   database. If the shop ever moves its database closer to the UAE, move this
   region with it.
+- **A filter did not look like a click.** `loading.tsx` only shows on a
+  *segment* change; a filter, a date tab or a page number changes the query
+  string and keeps the segment, so React held the old table on screen for the
+  whole round trip. Every admin page now renders inside `<Filtered>`
+  (`src/app/admin/filtered.tsx`), a Suspense boundary keyed on the query
+  string, so the skeleton paints as soon as the server's first chunk arrives.
+  Filter buttons say "Filtering…" (`PendingButton`) and tabs grow a dot
+  (`LinkHint`, on `useLinkStatus`) for the gap before that chunk.
+- **The guard ran before the data.** `await requireStaff()` and then `await
+  query()` was two sequential trips on every page. Pages now put both in one
+  `Promise.all`: the query never needs the actor, and nothing renders until
+  both resolve, so an expired session still redirects before a row is drawn.
+- **The orders table loaded three relations it never showed.** The old list
+  query included items, transactions and returns, each a query of its own.
+  `listOrderSummaries` selects the shown columns and the item quantities: the
+  rows, their quantities and the count, with the count in parallel.
 
-The rule going forward: **a new admin page should need one round trip after
-the guard.** Prefer one SQL statement with several aggregates over several
+The rule going forward: **a new admin page should need one round trip, started
+alongside the guard, inside `<Filtered>`.** Prefer one SQL statement with several aggregates over several
 Prisma calls in a `Promise.all`; the latter looks parallel and is, but each
 branch wants a connection of its own.
 

@@ -10,6 +10,8 @@ import {
   Th,
   adminDateTime,
 } from "@/app/admin/admin-ui";
+import { PendingButton } from "@/app/admin/pending-button";
+import { Filtered, type SearchParams } from "@/app/admin/filtered";
 import { auditEntityTypes, listAuditLogs, getAdminPath, requireStaff } from "@/modules/admin";
 
 export const metadata: Metadata = { title: "Audit log" };
@@ -17,18 +19,22 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 60;
 
-export default async function AdminAuditLogPage({
-  searchParams,
-}: PageProps<"/admin/audit-logs">) {
-  await requireStaff("/audit-logs");
-  const adminPath = await getAdminPath();
+export default function AdminAuditLogPage({ searchParams }: PageProps<"/admin/audit-logs">) {
+  return (
+    <Filtered searchParams={searchParams}>
+      {(params) => <AdminAuditLogContent params={params} />}
+    </Filtered>
+  );
+}
 
-  const params = await searchParams;
+async function AdminAuditLogContent({ params }: { params: SearchParams }) {
+  const adminPath = await getAdminPath();
   const q = typeof params.q === "string" ? params.q : "";
   const entityType = typeof params.entityType === "string" ? params.entityType : "";
   const page = Math.max(1, Number(params.page) || 1);
 
-  const [{ logs, total }, types] = await Promise.all([
+  const [, { logs, total }, types] = await Promise.all([
+    requireStaff("/audit-logs"),
     listAuditLogs({
       search: q || undefined,
       entityType: entityType || undefined,
@@ -88,12 +94,12 @@ export default async function AdminAuditLogPage({
             </select>
           </label>
 
-          <button
-            type="submit"
-            className="cursor-pointer border border-ink-border bg-transparent px-5 py-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
+          <PendingButton
+            pendingLabel="Filtering…"
+            className="cursor-pointer border border-ink-border bg-transparent px-5 py-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-sandstone hover:border-champagne hover:text-champagne disabled:cursor-wait"
           >
             Filter
-          </button>
+          </PendingButton>
 
           {(q || entityType) && (
             <Link

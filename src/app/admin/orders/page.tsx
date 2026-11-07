@@ -12,8 +12,11 @@ import {
   Th,
   adminDate,
 } from "@/app/admin/admin-ui";
+import { LinkHint } from "@/app/admin/link-hint";
+import { PendingButton } from "@/app/admin/pending-button";
+import { Filtered, type SearchParams } from "@/app/admin/filtered";
 import { getAdminPath, requireStaff } from "@/modules/admin";
-import { listOrders } from "@/modules/orders";
+import { listOrderSummaries } from "@/modules/orders";
 import { EMIRATES } from "@/modules/checkout";
 import { formatPrice } from "@/lib/currency";
 
@@ -22,33 +25,40 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 40;
 
-export default async function AdminOrdersPage({
-  searchParams,
-}: PageProps<"/admin/orders">) {
-  await requireStaff("/orders");
-  const adminPath = await getAdminPath();
+export default function AdminOrdersPage({ searchParams }: PageProps<"/admin/orders">) {
+  return (
+    <Filtered searchParams={searchParams}>
+      {(params) => <AdminOrdersContent params={params} />}
+    </Filtered>
+  );
+}
 
-  const params = await searchParams;
+async function AdminOrdersContent({ params }: { params: SearchParams }) {
+  const adminPath = await getAdminPath();
   const status = typeof params.status === "string" ? params.status : "";
   const payment = typeof params.payment === "string" ? params.payment : "";
   const emirate = typeof params.emirate === "string" ? params.emirate : "";
   const q = typeof params.q === "string" ? params.q : "";
   const page = Math.max(1, Number(params.page) || 1);
 
-  const { orders, total } = await listOrders({
-    fulfillmentStatus: Object.values(FulfillmentStatus).includes(
-      status as FulfillmentStatus,
-    )
-      ? (status as FulfillmentStatus)
-      : undefined,
-    paymentStatus: Object.values(PaymentStatus).includes(payment as PaymentStatus)
-      ? (payment as PaymentStatus)
-      : undefined,
-    emirate: emirate || undefined,
-    search: q || undefined,
-    take: PAGE_SIZE,
-    skip: (page - 1) * PAGE_SIZE,
-  });
+  // The guard and the query leave together — see `requireStaff`.
+  const [, { orders, total }] = await Promise.all([
+    requireStaff("/orders"),
+    listOrderSummaries({
+      fulfillmentStatus: Object.values(FulfillmentStatus).includes(
+        status as FulfillmentStatus,
+      )
+        ? (status as FulfillmentStatus)
+        : undefined,
+      paymentStatus: Object.values(PaymentStatus).includes(payment as PaymentStatus)
+        ? (payment as PaymentStatus)
+        : undefined,
+      emirate: emirate || undefined,
+      search: q || undefined,
+      take: PAGE_SIZE,
+      skip: (page - 1) * PAGE_SIZE,
+    }),
+  ]);
 
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const query = (next: Record<string, string | number>) => {
@@ -86,12 +96,12 @@ export default async function AdminOrdersPage({
           <Filter label="Payment" name="payment" value={payment} options={Object.values(PaymentStatus)} />
           <Filter label="Emirate" name="emirate" value={emirate} options={[...EMIRATES]} />
 
-          <button
-            type="submit"
-            className="cursor-pointer border border-ink-border bg-transparent px-5 py-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-sandstone hover:border-champagne hover:text-champagne"
+          <PendingButton
+            pendingLabel="Filtering…"
+            className="cursor-pointer border border-ink-border bg-transparent px-5 py-2.5 text-[12px] font-medium tracking-[0.1em] uppercase text-sandstone hover:border-champagne hover:text-champagne disabled:cursor-wait"
           >
             Filter
-          </button>
+          </PendingButton>
 
           {(q || status || payment || emirate) && (
             <Link
@@ -133,7 +143,7 @@ export default async function AdminOrdersPage({
                           {order.orderNumber}
                         </Link>
                         <span className="block text-[12px] text-taupe">
-                          {order.items.reduce((n, i) => n + i.quantity, 0)} pieces
+                          {order.pieces} pieces
                         </span>
                       </Td>
                       <Td>{adminDate(order.placedAt)}</Td>
@@ -174,7 +184,7 @@ export default async function AdminOrdersPage({
             <div className="mt-5 flex items-center justify-between gap-4 text-[12px] font-medium tracking-[0.1em] uppercase">
               {page > 1 ? (
                 <Link href={query({ page: page - 1 })} className="text-gold-light hover:text-champagne">
-                  ← Previous
+                  <LinkHint />← Previous
                 </Link>
               ) : (
                 <span className="text-taupe/50">← Previous</span>
@@ -184,7 +194,7 @@ export default async function AdminOrdersPage({
               </span>
               {page < pages ? (
                 <Link href={query({ page: page + 1 })} className="text-gold-light hover:text-champagne">
-                  Next →
+                  Next →<LinkHint />
                 </Link>
               ) : (
                 <span className="text-taupe/50">Next →</span>
