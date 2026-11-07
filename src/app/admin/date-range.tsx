@@ -2,6 +2,8 @@ import Link from "next/link";
 import Form from "next/form";
 import { RANGE_PRESETS, type DateRange, resolveRange } from "@/modules/reporting";
 import { ACTION } from "@/app/admin/admin-ui";
+import { LinkHint } from "@/app/admin/link-hint";
+import { PendingButton } from "@/app/admin/pending-button";
 import { endOfShopDay, startOfShopDay } from "@/lib/shop-time";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +47,7 @@ export function DateRangeTabs({
             )}
           >
             {option}
+            <LinkHint />
           </Link>
         );
       })}
@@ -65,18 +68,18 @@ export function DateRangeTabs({
           aria-label="To date"
           className="border border-ink-line bg-admin-surface px-2.5 py-[6px] text-[13px] tabular-nums text-sandstone outline-none focus:border-gold"
         />
-        <button
-          type="submit"
+        <PendingButton
+          pendingLabel="Applying…"
           className={cn(
             ACTION,
-            "cursor-pointer border px-3.5 py-2",
+            "cursor-pointer border px-3.5 py-2 disabled:cursor-wait",
             custom
               ? "border-gold bg-gold/10 text-champagne"
               : "border-ink-line bg-admin-surface text-taupe hover:border-ink-border hover:text-champagne",
           )}
         >
           Apply
-        </button>
+        </PendingButton>
       </Form>
     </div>
   );

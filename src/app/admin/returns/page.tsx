@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ReturnStatus } from "@/generated/prisma/enums";
 import { AdminHeading, AdminPill, Panel, adminDate } from "@/app/admin/admin-ui";
+import { LinkHint } from "@/app/admin/link-hint";
 import { ReturnActions } from "@/app/admin/returns/return-actions";
+import { Filtered, type SearchParams } from "@/app/admin/filtered";
 import { getAdminPath, requireStaff } from "@/modules/admin";
 import { listReturns } from "@/modules/returns";
 import { formatPrice } from "@/lib/currency";
@@ -11,19 +13,22 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Returns" };
 export const dynamic = "force-dynamic";
 
-export default async function AdminReturnsPage({
-  searchParams,
-}: PageProps<"/admin/returns">) {
-  await requireStaff("/returns");
-  const adminPath = await getAdminPath();
+export default function AdminReturnsPage({ searchParams }: PageProps<"/admin/returns">) {
+  return (
+    <Filtered searchParams={searchParams}>
+      {(params) => <AdminReturnsContent params={params} />}
+    </Filtered>
+  );
+}
 
-  const params = await searchParams;
+async function AdminReturnsContent({ params }: { params: SearchParams }) {
+  const adminPath = await getAdminPath();
   const status = typeof params.status === "string" ? params.status : "";
   const filter = Object.values(ReturnStatus).includes(status as ReturnStatus)
     ? (status as ReturnStatus)
     : undefined;
 
-  const returns = await listReturns(filter);
+  const [, returns] = await Promise.all([requireStaff("/returns"), listReturns(filter)]);
 
   return (
     <>
@@ -154,6 +159,7 @@ function Tab({
       )}
     >
       {label}
+      <LinkHint />
     </Link>
   );
 }

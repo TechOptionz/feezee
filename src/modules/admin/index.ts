@@ -83,6 +83,18 @@ export async function getAdminPath(): Promise<(path: string) => string> {
  * expired session lands somewhere useful instead of on an error page.
  *
  * `returnTo` is written without the prefix, like any other `adminPath`.
+ *
+ * Pages run it *alongside* their data rather than before it:
+ *
+ *     const [, rows] = await Promise.all([requireStaff("/returns"), listReturns()]);
+ *
+ * The guard is one database round trip, and awaiting it first made every page
+ * two sequential trips at minimum (§4.21). The query never needs the actor —
+ * it filters by the URL, not by who is asking — and nothing is rendered until
+ * both have resolved, so an expired session is still redirected before a row
+ * is drawn. The query it started simply finishes unobserved. Anything that
+ * *does* depend on the actor (an admin-only branch, an audit write) still
+ * awaits the guard's result first.
  */
 export async function requireStaff(returnTo?: string): Promise<Actor> {
   const actor = await currentActor();

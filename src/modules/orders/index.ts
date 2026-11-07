@@ -632,9 +632,9 @@ function phoneSearch(search: string): string {
   return digits.replace(/^(?:00971|971|0)/, "");
 }
 
-/** The admin's order list. */
-export async function listOrders(filter: OrderFilter = {}) {
-  const where: Prisma.OrderWhereInput = {
+/** What an `OrderFilter` means in SQL. */
+function orderWhere(filter: OrderFilter): Prisma.OrderWhereInput {
+  return {
     ...(filter.fulfillmentStatus
       ? { fulfillmentStatus: filter.fulfillmentStatus }
       : {}),
@@ -659,11 +659,37 @@ export async function listOrders(filter: OrderFilter = {}) {
         }
       : {}),
   };
+}
+
+/**
+ * The admin's order list, as the table shows it.
+ *
+ * This used to include items, transactions and returns in full, and Prisma
+ * fetches each relation with a query of its own — four round trips for a table
+ * that prints none of the transactions or returns and only counts the items.
+ * This selects the dozen columns the rows display and the item quantities: the
+ * rows, their quantities and the count, with the count in parallel.
+ */
+export async function listOrderSummaries(filter: OrderFilter = {}) {
+  const where = orderWhere(filter);
 
   const [rows, total] = await Promise.all([
     prisma.order.findMany({
       where,
-      include: orderInclude,
+      select: {
+        id: true,
+        orderNumber: true,
+        placedAt: true,
+        customerName: true,
+        customerEmail: true,
+        shippingCity: true,
+        shippingEmirate: true,
+        paymentStatus: true,
+        paymentMethod: true,
+        fulfillmentStatus: true,
+        totalAed: true,
+        items: { select: { quantity: true } },
+      },
       orderBy: { placedAt: "desc" },
       take: filter.take ?? 50,
       skip: filter.skip ?? 0,
@@ -671,15 +697,33 @@ export async function listOrders(filter: OrderFilter = {}) {
     prisma.order.count({ where }),
   ]);
 
-  return { orders: rows.map(toOrderView), total };
+  return {
+    total,
+    orders: rows.map((row) => ({
+      id: row.id,
+      orderNumber: row.orderNumber,
+      placedAt: row.placedAt.toISOString(),
+      customerName: row.customerName,
+      customerEmail: row.customerEmail,
+      shippingCity: row.shippingCity,
+      shippingEmirate: row.shippingEmirate,
+      paymentStatus: row.paymentStatus,
+      paymentMethod: row.paymentMethod,
+      fulfillmentStatus: row.fulfillmentStatus,
+      totalAed: toAed(row.totalAed),
+      pieces: row.items.reduce((n, item) => n + item.quantity, 0),
+    })),
+  };
 }
+
+export type OrderSummary = Awaited<ReturnType<typeof listOrderSummaries>>["orders"][number];
 
 /**
  * The dashboard's "latest orders" strip.
  *
- * Deliberately not `listOrders`: that loads items, transactions and returns
- * and runs a count alongside, which for six rows that display none of it is
- * several round trips to a database ~100 ms away (§4.21). This is one.
+ * Deliberately not `listOrderSummaries`: that runs a count alongside and
+ * loads item quantities, which for six rows that display neither is extra
+ * round trips to a database ~100 ms away (§4.21). This is one.
  */
 export async function recentOrders(limit = 6) {
   const rows = await prisma.order.findMany({
